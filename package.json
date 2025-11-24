@@ -8,7 +8,7 @@
         "start": "next start"
     },
     "dependencies": {
-        "@sis-thesqd/mmq-component": "^1.0.16",
+        "@sis-thesqd/mmq-component": "^1.0.17",
         "@tailwindcss/postcss": "^4.1.11",
         "@tailwindcss/typography": "^0.5.16",
         "@untitledui/file-icons": "^0.0.8",

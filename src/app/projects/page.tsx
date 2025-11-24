@@ -8,12 +8,10 @@ import { Button } from '@/components/base/buttons/button';
 import {
     BarChartSquare02,
     CheckDone01,
-    DownloadCloud02,
     HomeLine,
     PieChart03,
     Rows01,
     SearchLg,
-    Settings03,
     Users01,
 } from '@untitledui/icons';
 
@@ -109,15 +107,9 @@ export default function ProjectsPage() {
             />
             <main className="flex min-w-0 flex-1 flex-col gap-8 pt-8 pb-12">
                 <div className="flex flex-col justify-between gap-4 px-4 lg:flex-row lg:px-8">
-                    <p className="text-xl font-semibold text-primary lg:text-display-xs">Welcome back, Olivia</p>
+                    <p className="text-xl font-semibold text-primary lg:text-display-xs">MyProjects</p>
                     <div className="flex gap-3">
                         <Button size="md" color="tertiary" iconLeading={SearchLg} className="hidden lg:inline-flex" />
-                        <Button size="md" color="secondary" iconLeading={Settings03}>
-                            Customize
-                        </Button>
-                        <Button size="md" color="secondary" iconLeading={DownloadCloud02}>
-                            Export
-                        </Button>
                         {showAccountInput ? (
                             <div className="flex gap-2">
                                 <input
@@ -125,7 +117,7 @@ export default function ProjectsPage() {
                                     value={accountInput}
                                     onChange={(e) => setAccountInput(e.target.value)}
                                     placeholder="Account #"
-                                    className="w-24 px-3 rounded border border-border bg-card text-foreground"
+                                    className="w-36 px-3 rounded border border-border bg-card text-foreground"
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter') handleAccountOverride();
                                         if (e.key === 'Escape') {
