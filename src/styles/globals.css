@@ -2,9 +2,20 @@
 @import "./theme.css";
 @import "./typography.css";
 
+@source "../../node_modules/@sis-thesqd/mmq-component/dist/**/*.{js,mjs}";
+
 @plugin "@tailwindcss/typography";
 @plugin "tailwindcss-react-aria-components";
 @plugin "tailwindcss-animate";
+
+@theme {
+    --color-card: initial;
+    --color-card-foreground: initial;
+    --color-muted-foreground: initial;
+    --color-border: initial;
+    --color-background: initial;
+    --color-foreground: initial;
+}
 
 @custom-variant dark (&:where(.dark-mode, .dark-mode *));
 @custom-variant label (& [data-label]);
@@ -20,6 +31,54 @@
     /* For IE, Edge and Firefox */
     -ms-overflow-style: none; /* IE and Edge */
     scrollbar-width: none; /* Firefox */
+}
+
+@utility scrollbar-auto {
+    /* Show scrollbar only when scrolling - Webkit */
+    &::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: transparent;
+        border-radius: 4px;
+    }
+
+    &:hover::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.2);
+    }
+
+    .dark-mode &:hover::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 0, 0, 0.3);
+    }
+
+    .dark-mode &::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+
+    &:hover {
+        scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+    }
+
+    .dark-mode &:hover {
+        scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    }
+
+    /* Disable horizontal scrollbar */
+    overflow-x: hidden;
 }
 
 @utility transition-inherit-all {
@@ -59,4 +118,30 @@ input[type="number"] {
 /* Hide the default clear button (X) from search inputs. */
 input[type="search"]::-webkit-search-cancel-button {
     -webkit-appearance: none;
+}
+
+/* Minimal shadcn-compatible variables mapped to Untitled UI colors */
+@layer base {
+    * {
+        border-color: var(--color-border);
+    }
+
+    :root {
+        /* Light mode defaults */
+        --color-card: var(--color-white);
+        --color-card-foreground: var(--color-gray-900);
+        --color-muted-foreground: var(--color-gray-600);
+        --color-border: var(--color-gray-300);
+        --color-background: var(--color-white);
+        --color-foreground: var(--color-gray-900);
+    }
+
+    .dark-mode {
+        --color-card: var(--color-gray-900);
+        --color-card-foreground: var(--color-gray-50);
+        --color-muted-foreground: var(--color-gray-400);
+        --color-border: var(--color-gray-700);
+        --color-background: var(--color-gray-950);
+        --color-foreground: var(--color-gray-50);
+    }
 }
