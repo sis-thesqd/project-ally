@@ -14,44 +14,88 @@ interface ProjectsContentProps {
 function ProjectsContent({ accountNumber, onAccountChange }: ProjectsContentProps) {
     const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [cachedData, setCachedData] = useState<any>(null);
+    const [shouldFetch, setShouldFetch] = useState(true);
+    const [cacheTimestamp, setCacheTimestamp] = useState<number | null>(null);
 
     const apiUrl = process.env.NEXT_PUBLIC_MMQ_API_URL || '';
     const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes in milliseconds
     const CACHE_KEY = `mmq_cache_${accountNumber}`;
+    const CACHE_TIMESTAMP_KEY = `mmq_cache_timestamp_${accountNumber}`;
 
     useEffect(() => {
         // Check for cached data on mount
         const cached = sessionStorage.getItem(CACHE_KEY);
-        if (cached) {
+        const cachedTimestamp = sessionStorage.getItem(CACHE_TIMESTAMP_KEY);
+
+        if (cached && cachedTimestamp) {
             try {
-                const { data, timestamp } = JSON.parse(cached);
+                const data = JSON.parse(cached);
+                const timestamp = parseInt(cachedTimestamp, 10);
                 const now = Date.now();
-                if (now - timestamp < CACHE_DURATION) {
+
+                // Validate data structure has required properties
+                if (data && typeof data === 'object' && Array.isArray(data.tasks) && now - timestamp < CACHE_DURATION) {
                     setCachedData(data);
-                    console.log('Using cached data for account', accountNumber);
+                    setCacheTimestamp(timestamp);
+                    setShouldFetch(false);
+                    console.log('Using cached data for account', accountNumber, 'Age:', Math.round((now - timestamp) / 1000), 'seconds', 'Tasks:', data.tasks.length);
                 } else {
                     sessionStorage.removeItem(CACHE_KEY);
-                    console.log('Cache expired for account', accountNumber);
+                    sessionStorage.removeItem(CACHE_TIMESTAMP_KEY);
+                    setShouldFetch(true);
+                    console.log('Cache invalid or expired for account', accountNumber);
                 }
             } catch (error) {
                 console.error('Error parsing cached data:', error);
                 sessionStorage.removeItem(CACHE_KEY);
+                sessionStorage.removeItem(CACHE_TIMESTAMP_KEY);
+                setShouldFetch(true);
             }
+        } else {
+            setShouldFetch(true);
         }
         setIsInitialLoad(false);
-    }, [accountNumber, CACHE_KEY, CACHE_DURATION]);
+    }, [accountNumber, CACHE_KEY, CACHE_TIMESTAMP_KEY, CACHE_DURATION]);
 
     const handleDataLoaded = (data: any) => {
-        console.log('Data loaded:', data);
-        // Store data in cache with timestamp
-        sessionStorage.setItem(CACHE_KEY, JSON.stringify({
-            data,
-            timestamp: Date.now()
-        }));
+        const now = Date.now();
+        console.log('Fresh data loaded for account', accountNumber, 'Tasks:', data?.tasks?.length || 0);
+
+        // Only cache if data has valid structure
+        if (data && typeof data === 'object' && Array.isArray(data.tasks)) {
+            sessionStorage.setItem(CACHE_KEY, JSON.stringify(data));
+            sessionStorage.setItem(CACHE_TIMESTAMP_KEY, now.toString());
+            setCacheTimestamp(now);
+        } else {
+            console.warn('Invalid data structure, not caching');
+        }
     };
 
     if (isInitialLoad) {
         return <MMQSkeleton />;
+    }
+
+    // If we have valid cached data, show it without fetching
+    if (!shouldFetch && cachedData) {
+        return (
+            <div>
+                <MMQ
+                    accountNumber={accountNumber}
+                    supabaseUrl=""
+                    supabaseKey=""
+                    dataEndpoint={`${apiUrl}/api/queue-data`}
+                    reorderEndpoint={`${apiUrl}/api/reorder`}
+                    playPauseEndpoint={`${apiUrl}/api/play-pause`}
+                    showAccountOverride={false}
+                    showCountdownTimers={true}
+                    showTitle={false}
+                    initialData={cachedData}
+                    onError={(error) => console.error('MMQ Error:', error)}
+                    onDataLoaded={handleDataLoaded}
+                    onChangesApplied={() => console.log('Changes applied')}
+                />
+            </div>
+        );
     }
 
     return (

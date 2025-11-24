@@ -28,23 +28,48 @@ interface SidebarPagesContextType {
 
 const SidebarPagesContext = createContext<SidebarPagesContextType | undefined>(undefined);
 
+// Check cache synchronously before component mounts
+function getInitialData() {
+    try {
+        const cached = sessionStorage.getItem('sidebar_pages');
+        const cachedTimestamp = sessionStorage.getItem('sidebar_pages_timestamp');
+
+        if (cached && cachedTimestamp) {
+            const timestamp = parseInt(cachedTimestamp, 10);
+            const now = Date.now();
+            const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+            if (now - timestamp < CACHE_DURATION) {
+                const data = JSON.parse(cached);
+                if (Array.isArray(data)) {
+                    console.log('Using cached sidebar pages. Age:', Math.round((now - timestamp) / 1000), 'seconds');
+                    return { pages: data, isLoading: false };
+                }
+            } else {
+                // Clear expired cache
+                sessionStorage.removeItem('sidebar_pages');
+                sessionStorage.removeItem('sidebar_pages_timestamp');
+            }
+        }
+    } catch (err) {
+        console.error('Failed to parse cached sidebar pages:', err);
+        sessionStorage.removeItem('sidebar_pages');
+        sessionStorage.removeItem('sidebar_pages_timestamp');
+    }
+
+    return { pages: [], isLoading: true };
+}
+
 export function SidebarPagesProvider({ children }: { children: React.ReactNode }) {
-    const [pages, setPages] = useState<PageItem[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const initialData = getInitialData();
+    const [pages, setPages] = useState<PageItem[]>(initialData.pages);
+    const [isLoading, setIsLoading] = useState(initialData.isLoading);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        // Check if data is already cached
-        const cached = sessionStorage.getItem('sidebar_pages');
-        if (cached) {
-            try {
-                const cachedData = JSON.parse(cached);
-                setPages(cachedData);
-                setIsLoading(false);
-                return;
-            } catch (err) {
-                console.error('Failed to parse cached pages:', err);
-            }
+        // If we already have cached data, don't fetch
+        if (pages.length > 0) {
+            return;
         }
 
         async function fetchPages() {
@@ -53,8 +78,11 @@ export function SidebarPagesProvider({ children }: { children: React.ReactNode }
                 const data = await response.json();
                 if (data.pages) {
                     setPages(data.pages);
-                    // Cache the data
+                    // Cache the data with timestamp
+                    const now = Date.now();
                     sessionStorage.setItem('sidebar_pages', JSON.stringify(data.pages));
+                    sessionStorage.setItem('sidebar_pages_timestamp', now.toString());
+                    console.log('Fetched and cached fresh sidebar pages');
                 } else if (data.error) {
                     setError(data.error);
                 }
@@ -66,7 +94,7 @@ export function SidebarPagesProvider({ children }: { children: React.ReactNode }
             }
         }
         fetchPages();
-    }, []);
+    }, [pages.length]);
 
     const sidebarItems: SidebarItem[] = pages.map((page) => ({
         label: page.label,
