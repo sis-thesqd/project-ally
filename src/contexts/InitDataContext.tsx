@@ -28,6 +28,7 @@ interface InitData {
     email: string;
     name: string | null;
     employee: boolean;
+    profile_picture: string | null;
     accounts: AccountItem[];
     pages: PageItem[];
 }

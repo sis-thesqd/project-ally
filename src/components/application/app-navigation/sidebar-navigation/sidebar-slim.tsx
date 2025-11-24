@@ -14,12 +14,13 @@ import { UntitledLogo } from "@/components/foundations/logo/untitledui-logo";
 import { UntitledLogoMinimal } from "@/components/foundations/logo/untitledui-logo-minimal";
 import { cx } from "@/utils/cx";
 import { MobileNavigationHeader } from "../base-components/mobile-header";
-import { NavAccountMenu } from "../base-components/nav-account-card";
+import { NavAccountMenu, type AccountItem } from "../base-components/nav-account-card";
 import { NavItemBase } from "../base-components/nav-item";
 import { NavItemButton } from "../base-components/nav-item-button";
 import { NavList } from "../base-components/nav-list";
 import type { NavItemType } from "../config";
 import { UserSettingsModal } from "@/components/application/modals/UserSettingsModal";
+import { useInitData } from "@/contexts/InitDataContext";
 
 interface SidebarNavigationSlimProps {
     /** URL of the currently active item. */
@@ -34,16 +35,38 @@ interface SidebarNavigationSlimProps {
     hideRightBorder?: boolean;
 }
 
+// Get initials from first two words of a name
+function getInitials(name: string | null | undefined): string {
+    if (!name) return '';
+    const words = name.trim().split(/\s+/);
+    if (words.length === 0) return '';
+    if (words.length === 1) return words[0].charAt(0).toUpperCase();
+    return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
+}
+
 export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hideBorder, hideRightBorder }: SidebarNavigationSlimProps) => {
+    const { data } = useInitData();
+    const accounts = data?.accounts ?? [];
+    const userName = data?.name ?? data?.username ?? 'User';
+    const userEmail = data?.email ?? '';
+    const profilePicture = data?.profile_picture ?? undefined;
+    const userInitials = getInitials(data?.username ?? data?.name);
+
     const activeItem = [...items, ...footerItems].find((item) => item.href === activeUrl || item.items?.some((subItem) => subItem.href === activeUrl));
     const [currentItem, setCurrentItem] = useState(activeItem || items[1]);
     const [isHovering, setIsHovering] = useState(false);
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+    const [selectedAccountNumber, setSelectedAccountNumber] = useState<number | undefined>(accounts[0]?.account_number);
 
     const handleSettingsClick = () => {
         setIsPopoverOpen(false); // Close the popover
         setIsSettingsModalOpen(true); // Open the settings modal
+    };
+
+    const handleAccountSelect = (accountNumber: number) => {
+        setSelectedAccountNumber(accountNumber);
+        setIsPopoverOpen(false);
     };
 
     const isSecondarySidebarVisible = isHovering && Boolean(currentItem.items?.length);
@@ -113,7 +136,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                                 cx("group relative inline-flex rounded-full", (isPressed || isFocused) && "outline-2 outline-offset-2 outline-focus-ring")
                             }
                         >
-                            <Avatar status="online" src="https://www.untitledui.com/images/avatars/olivia-rhye?fm=webp&q=80" size="md" alt="Olivia Rhye" />
+                            <Avatar status="online" src={profilePicture} initials={userInitials} size="md" alt={userName} />
                         </AriaButton>
                         <AriaPopover
                             placement="right bottom"
@@ -129,7 +152,12 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                                 )
                             }
                         >
-                            <NavAccountMenu onSettingsClick={handleSettingsClick} />
+                            <NavAccountMenu
+                                accounts={accounts}
+                                selectedAccountNumber={selectedAccountNumber}
+                                onAccountSelect={handleAccountSelect}
+                                onSettingsClick={handleSettingsClick}
+                            />
                         </AriaPopover>
                     </AriaDialogTrigger>
                 </div>
@@ -163,8 +191,8 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                         </ul>
                         <div className="sticky bottom-0 mt-auto flex justify-between border-t border-secondary bg-primary px-2 py-5">
                             <div>
-                                <p className="text-sm font-semibold text-primary">Olivia Rhye</p>
-                                <p className="text-sm text-tertiary">olivia@untitledui.com</p>
+                                <p className="text-sm font-semibold text-primary">{userName}</p>
+                                <p className="text-sm text-tertiary">{userEmail}</p>
                             </div>
                             <div className="absolute top-2.5 right-0">
                                 <ButtonUtility size="sm" color="tertiary" tooltip="Log out" icon={LogOut01} />
@@ -219,9 +247,10 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                             <AvatarLabelGroup
                                 status="online"
                                 size="md"
-                                src="https://www.untitledui.com/images/avatars/olivia-rhye?fm=webp&q=80"
-                                title="Olivia Rhye"
-                                subtitle="olivia@untitledui.com"
+                                src={profilePicture}
+                                initials={userInitials}
+                                title={userName}
+                                subtitle={userEmail}
                             />
 
                             <div className="absolute top-1/2 right-0 -translate-y-1/2">

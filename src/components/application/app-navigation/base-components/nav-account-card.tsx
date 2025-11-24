@@ -14,42 +14,25 @@ import { useBreakpoint } from "@/hooks/use-breakpoint";
 import { cx } from "@/utils/cx";
 import { UserSettingsModal } from "@/components/application/modals/UserSettingsModal";
 
-type NavAccountType = {
-    /** Unique identifier for the nav item. */
-    id: string;
-    /** Name of the account holder. */
-    name: string;
-    /** Email address of the account holder. */
-    email: string;
-    /** Avatar image URL. */
-    avatar: string;
-    /** Online status of the account holder. This is used to display the online status indicator. */
-    status: "online" | "offline";
+export type AccountItem = {
+    account_number: number;
+    church_name: string;
 };
-
-const placeholderAccounts: NavAccountType[] = [
-    {
-        id: "olivia",
-        name: "Olivia Rhye",
-        email: "olivia@untitledui.com",
-        avatar: "https://www.untitledui.com/images/avatars/olivia-rhye?fm=webp&q=80",
-        status: "online",
-    },
-    {
-        id: "sienna",
-        name: "Sienna Hewitt",
-        email: "sienna@untitledui.com",
-        avatar: "https://www.untitledui.com/images/avatars/transparent/sienna-hewitt?bg=%23E0E0E0",
-        status: "online",
-    },
-];
 
 export const NavAccountMenu = ({
     className,
-    selectedAccountId = "olivia",
+    accounts = [],
+    selectedAccountNumber,
+    onAccountSelect,
     onSettingsClick,
     ...dialogProps
-}: AriaDialogProps & { className?: string; accounts?: NavAccountType[]; selectedAccountId?: string; onSettingsClick?: () => void }) => {
+}: AriaDialogProps & {
+    className?: string;
+    accounts?: AccountItem[];
+    selectedAccountNumber?: number;
+    onAccountSelect?: (accountNumber: number) => void;
+    onSettingsClick?: () => void;
+}) => {
     const focusManager = useFocusManager();
     const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -80,8 +63,6 @@ export const NavAccountMenu = ({
         };
     }, [onKeyDown]);
 
-    const selectedAccount = placeholderAccounts.find((account) => account.id === selectedAccountId);
-
     return (
         <>
             <AriaDialog
@@ -91,35 +72,35 @@ export const NavAccountMenu = ({
             >
                 <div className="rounded-xl bg-primary ring-1 ring-secondary">
                     {/* Account list */}
-                    <div className="flex flex-col gap-2 p-3">
-                        {placeholderAccounts.map((account) => (
-                            <label
-                                key={account.id}
-                                className={cx(
-                                    "group flex cursor-pointer items-center gap-3 rounded-lg p-2 transition-colors",
-                                    selectedAccountId === account.id ? "bg-secondary" : "hover:bg-primary_hover",
-                                )}
-                            >
-                                <RadioButtonBase
-                                    size="md"
-                                    name="account"
-                                    value={account.id}
-                                    checked={selectedAccountId === account.id}
-                                    onChange={() => {}}
-                                />
-                                <AvatarLabelGroup
-                                    size="sm"
-                                    src={account.avatar}
-                                    title={account.name}
-                                    subtitle={account.email}
-                                    status={account.status}
-                                />
-                            </label>
-                        ))}
-                    </div>
+                    {accounts.length > 0 && (
+                        <div className="flex flex-col gap-2 p-3">
+                            {accounts.map((account) => (
+                                <label
+                                    key={account.account_number}
+                                    className={cx(
+                                        "group flex cursor-pointer items-center gap-3 rounded-lg p-2 transition-colors",
+                                        selectedAccountNumber === account.account_number ? "bg-secondary" : "hover:bg-primary_hover",
+                                    )}
+                                    onClick={() => onAccountSelect?.(account.account_number)}
+                                >
+                                    <RadioButtonBase
+                                        size="md"
+                                        name="account"
+                                        value={String(account.account_number)}
+                                        checked={selectedAccountNumber === account.account_number}
+                                        onChange={() => onAccountSelect?.(account.account_number)}
+                                    />
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-medium text-primary">{account.church_name}</span>
+                                        <span className="text-xs text-tertiary">Account #{account.account_number}</span>
+                                    </div>
+                                </label>
+                            ))}
+                        </div>
+                    )}
 
                     {/* Menu items */}
-                    <div className="flex flex-col gap-0.5 border-t border-secondary py-1.5">
+                    <div className={cx("flex flex-col gap-0.5 py-1.5", accounts.length > 0 && "border-t border-secondary")}>
                         <NavAccountCardMenuItem
                             label="Account settings"
                             icon={Settings01}
