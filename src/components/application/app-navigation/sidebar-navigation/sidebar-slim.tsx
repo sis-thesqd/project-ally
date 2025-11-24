@@ -3,13 +3,15 @@
 import React from "react";
 import type { FC } from "react";
 import { useState } from "react";
-import { LifeBuoy01, LogOut01, Settings01 } from "@untitledui/icons";
+import { LogOut01, Moon01, Settings01 } from "@untitledui/icons";
 import { AnimatePresence, motion } from "motion/react";
+import { useTheme } from "next-themes";
 import { Button as AriaButton, DialogTrigger as AriaDialogTrigger, Popover as AriaPopover } from "react-aria-components";
 import { Avatar } from "@/components/base/avatar/avatar";
 import { AvatarLabelGroup } from "@/components/base/avatar/avatar-label-group";
 import { Button } from "@/components/base/buttons/button";
 import { ButtonUtility } from "@/components/base/buttons/button-utility";
+import { Toggle } from "@/components/base/toggle/toggle";
 import { UntitledLogo } from "@/components/foundations/logo/untitledui-logo";
 import { UntitledLogoMinimal } from "@/components/foundations/logo/untitledui-logo-minimal";
 import { cx } from "@/utils/cx";
@@ -46,6 +48,8 @@ function getInitials(name: string | null | undefined): string {
 
 export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hideBorder, hideRightBorder }: SidebarNavigationSlimProps) => {
     const { data } = useInitData();
+    const { theme, setTheme } = useTheme();
+    const isDarkMode = theme === 'dark';
     const accounts = data?.accounts ?? [];
     const userName = data?.name ?? data?.username ?? 'User';
     const userEmail = data?.email ?? '';
@@ -235,10 +239,18 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
 
                     <div className="mt-auto flex flex-col gap-5 px-2 py-4">
                         <div className="flex flex-col gap-2">
-                            <NavItemBase current={activeUrl === "/support"} type="link" href="/support" icon={LifeBuoy01}>
-                                Support
-                            </NavItemBase>
-                            <NavItemBase current={activeUrl === "/settings"} type="link" href="/settings" icon={Settings01}>
+                            <div className="flex items-center justify-between rounded-md px-3 py-2">
+                                <div className="flex items-center gap-3">
+                                    <Moon01 className="size-5 text-fg-quaternary" />
+                                    <span className="text-md font-semibold text-secondary">Dark mode</span>
+                                </div>
+                                <Toggle
+                                    size="sm"
+                                    isSelected={isDarkMode}
+                                    onChange={(isSelected) => setTheme(isSelected ? 'dark' : 'light')}
+                                />
+                            </div>
+                            <NavItemBase type="button" icon={Settings01} onClick={() => setIsSettingsModalOpen(true)}>
                                 Settings
                             </NavItemBase>
                         </div>
