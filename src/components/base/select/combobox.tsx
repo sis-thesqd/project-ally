@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import type { FocusEventHandler, PointerEventHandler, RefAttributes, RefObject } from "react";
 import { useCallback, useContext, useRef, useState } from "react";
 import { SearchLg as SearchIcon } from "@untitledui/icons";

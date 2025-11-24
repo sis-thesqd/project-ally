@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import type { FC, ReactNode } from "react";
 import { useId } from "react";
 import { ArrowDown, ArrowDownRight, ArrowUp, ArrowUpRight, Copy01, Eye, Share01, TrendDown01, TrendUp01, Zap } from "@untitledui/icons";

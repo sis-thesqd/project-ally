@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import type { ReactNode, Ref } from "react";
 import { Checkbox as AriaCheckbox, type CheckboxProps as AriaCheckboxProps } from "react-aria-components";
 import { cx } from "@/utils/cx";

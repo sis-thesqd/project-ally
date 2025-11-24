@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import type { FC, HTMLAttributes } from "react";
 import { useCallback, useEffect, useRef } from "react";
 import type { Placement } from "@react-types/overlays";
