@@ -17,7 +17,11 @@ export const MobileNavigationHeader = ({ children }: PropsWithChildren) => {
     return (
         <AriaDialogTrigger>
             <header className="flex h-16 items-center justify-between border-b border-secondary bg-primary py-3 pr-2 pl-4 lg:hidden">
-                <UntitledLogo />
+                <img
+                    src="/logos/Badge Slanted_Blue-01.svg"
+                    alt="MySquad Logo"
+                    className="h-10"
+                />
 
                 <AriaButton
                     aria-label="Expand navigation menu"

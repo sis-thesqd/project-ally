@@ -1,19 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, usePathname } from 'next/navigation';
 import { MMQ, MMQSkeleton } from '@sis-thesqd/mmq-component';
 import { SidebarNavigationSlim } from '@/components/application/app-navigation/sidebar-navigation/sidebar-slim';
 import { Button } from '@/components/base/buttons/button';
-import {
-    BarChartSquare02,
-    CheckDone01,
-    HomeLine,
-    PieChart03,
-    Rows01,
-    SearchLg,
-    Users01,
-} from '@untitledui/icons';
+import { SearchLg } from '@untitledui/icons';
+import { useSidebarPages } from '@/contexts/SidebarPagesContext';
 
 interface ProjectsContentProps {
     accountNumber: number;
@@ -22,12 +15,42 @@ interface ProjectsContentProps {
 
 function ProjectsContent({ accountNumber, onAccountChange }: ProjectsContentProps) {
     const [isInitialLoad, setIsInitialLoad] = useState(true);
+    const [cachedData, setCachedData] = useState<any>(null);
 
     const apiUrl = process.env.NEXT_PUBLIC_MMQ_API_URL || '';
+    const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes in milliseconds
+    const CACHE_KEY = `mmq_cache_${accountNumber}`;
 
     useEffect(() => {
+        // Check for cached data on mount
+        const cached = sessionStorage.getItem(CACHE_KEY);
+        if (cached) {
+            try {
+                const { data, timestamp } = JSON.parse(cached);
+                const now = Date.now();
+                if (now - timestamp < CACHE_DURATION) {
+                    setCachedData(data);
+                    console.log('Using cached data for account', accountNumber);
+                } else {
+                    sessionStorage.removeItem(CACHE_KEY);
+                    console.log('Cache expired for account', accountNumber);
+                }
+            } catch (error) {
+                console.error('Error parsing cached data:', error);
+                sessionStorage.removeItem(CACHE_KEY);
+            }
+        }
         setIsInitialLoad(false);
-    }, []);
+    }, [accountNumber, CACHE_KEY, CACHE_DURATION]);
+
+    const handleDataLoaded = (data: any) => {
+        console.log('Data loaded:', data);
+        // Store data in cache with timestamp
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify({
+            data,
+            timestamp: Date.now()
+        }));
+    };
 
     if (isInitialLoad) {
         return <MMQSkeleton />;
@@ -44,20 +67,23 @@ function ProjectsContent({ accountNumber, onAccountChange }: ProjectsContentProp
             showAccountOverride={false}
             showCountdownTimers={true}
             showTitle={false}
+            initialData={cachedData}
             onError={(error) => console.error('MMQ Error:', error)}
-            onDataLoaded={(data) => console.log('Data loaded:', data)}
+            onDataLoaded={handleDataLoaded}
             onChangesApplied={() => console.log('Changes applied')}
         />
     );
 }
 
 export default function ProjectsPage() {
+    const pathname = usePathname();
     const searchParams = useSearchParams();
     const urlAccountNumber = searchParams.get('accountNumber');
     const defaultAccount = urlAccountNumber ? parseInt(urlAccountNumber, 10) : 306;
     const [accountNumber, setAccountNumber] = useState(defaultAccount);
     const [showAccountInput, setShowAccountInput] = useState(false);
     const [accountInput, setAccountInput] = useState('');
+    const { sidebarItems, isLoading: isLoadingPages } = useSidebarPages();
 
     const handleAccountOverride = () => {
         const num = parseInt(accountInput, 10);
@@ -68,45 +94,22 @@ export default function ProjectsPage() {
         }
     };
 
+    if (isLoadingPages || sidebarItems.length === 0) {
+        return (
+            <div className="flex items-center justify-center h-screen">
+                <p>Loading...</p>
+            </div>
+        );
+    }
+
     return (
-        <div className="flex flex-col bg-primary lg:flex-row">
+        <div className="flex flex-col bg-primary lg:flex-row h-screen overflow-hidden lg:overflow-auto">
             <SidebarNavigationSlim
-                activeUrl="/projects"
-                items={[
-                    {
-                        label: 'Home',
-                        href: '/',
-                        icon: HomeLine,
-                    },
-                    {
-                        label: 'Dashboard',
-                        href: '/dashboard',
-                        icon: BarChartSquare02,
-                    },
-                    {
-                        label: 'Projects',
-                        href: '/projects',
-                        icon: Rows01,
-                    },
-                    {
-                        label: 'Tasks',
-                        href: '/tasks',
-                        icon: CheckDone01,
-                    },
-                    {
-                        label: 'Reporting',
-                        href: '/reporting',
-                        icon: PieChart03,
-                    },
-                    {
-                        label: 'Users',
-                        href: '/users',
-                        icon: Users01,
-                    },
-                ]}
+                activeUrl={pathname}
+                items={sidebarItems}
             />
-            <main className="flex min-w-0 flex-1 flex-col gap-8 pt-8 pb-12">
-                <div className="flex flex-col justify-between gap-4 px-4 lg:flex-row lg:px-8">
+            <main className="flex min-w-0 flex-1 flex-col gap-8 pt-8 pb-12 overflow-y-hidden lg:overflow-y-auto">
+                <div className="flex flex-row items-center justify-between gap-4 px-4 lg:px-8">
                     <p className="text-xl font-semibold text-primary lg:text-display-xs">MyProjects</p>
                     <div className="flex gap-3">
                         <Button size="md" color="tertiary" iconLeading={SearchLg} className="hidden lg:inline-flex" />

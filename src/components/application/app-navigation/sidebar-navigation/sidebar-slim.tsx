@@ -19,6 +19,7 @@ import { NavItemBase } from "../base-components/nav-item";
 import { NavItemButton } from "../base-components/nav-item-button";
 import { NavList } from "../base-components/nav-list";
 import type { NavItemType } from "../config";
+import { UserSettingsModal } from "@/components/application/modals/UserSettingsModal";
 
 interface SidebarNavigationSlimProps {
     /** URL of the currently active item. */
@@ -37,6 +38,13 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
     const activeItem = [...items, ...footerItems].find((item) => item.href === activeUrl || item.items?.some((subItem) => subItem.href === activeUrl));
     const [currentItem, setCurrentItem] = useState(activeItem || items[1]);
     const [isHovering, setIsHovering] = useState(false);
+    const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+
+    const handleSettingsClick = () => {
+        setIsPopoverOpen(false); // Close the popover
+        setIsSettingsModalOpen(true); // Open the settings modal
+    };
 
     const isSecondarySidebarVisible = isHovering && Boolean(currentItem.items?.length);
 
@@ -60,7 +68,11 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                 )}
             >
                 <div className="flex justify-center px-3">
-                    <UntitledLogoMinimal className="size-8" />
+                    <img
+                        src="/logos/Badge Slanted_Blue-01.svg"
+                        alt="Logo"
+                        className="h-8"
+                    />
                 </div>
 
                 <ul className="mt-4 flex flex-col gap-0.5 px-3">
@@ -95,7 +107,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                         </ul>
                     )}
 
-                    <AriaDialogTrigger>
+                    <AriaDialogTrigger isOpen={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
                         <AriaButton
                             className={({ isPressed, isFocused }) =>
                                 cx("group relative inline-flex rounded-full", (isPressed || isFocused) && "outline-2 outline-offset-2 outline-focus-ring")
@@ -109,7 +121,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                             crossOffset={6}
                             className={({ isEntering, isExiting }) =>
                                 cx(
-                                    "will-change-transform",
+                                    "z-40 will-change-transform",
                                     isEntering &&
                                         "duration-300 ease-out animate-in fade-in placement-right:slide-in-from-left-2 placement-top:slide-in-from-bottom-2 placement-bottom:slide-in-from-top-2",
                                     isExiting &&
@@ -117,7 +129,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                                 )
                             }
                         >
-                            <NavAccountMenu />
+                            <NavAccountMenu onSettingsClick={handleSettingsClick} />
                         </AriaPopover>
                     </AriaDialogTrigger>
                 </div>
@@ -224,6 +236,8 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                     </div>
                 </aside>
             </MobileNavigationHeader>
+
+            <UserSettingsModal isOpen={isSettingsModalOpen} onOpenChange={setIsSettingsModalOpen} />
         </>
     );
 };

@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import type { FC, RefAttributes } from "react";
 import { DotsVertical } from "@untitledui/icons";
 import type {

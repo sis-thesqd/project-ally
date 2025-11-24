@@ -158,3 +158,6 @@ When modifying synced components, be aware that changes may be overwritten by fu
 - Optimized package imports for `@untitledui/icons`
 - App Router with TypeScript support
 - Turbopack enabled for faster development builds
+
+**Supabase**:
+- Always use Supabase MCP when asked to create something or interact with anything in Supabase
