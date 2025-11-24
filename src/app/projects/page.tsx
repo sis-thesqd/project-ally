@@ -117,7 +117,7 @@ export default function ProjectsPage() {
                                     value={accountInput}
                                     onChange={(e) => setAccountInput(e.target.value)}
                                     placeholder="Account #"
-                                    className="w-36 px-3 rounded border border-border bg-card text-foreground"
+                                    className="w-24 px-3 rounded border border-border bg-card text-foreground text-sm placeholder:text-placeholder text-center"
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter') handleAccountOverride();
                                         if (e.key === 'Escape') {
