@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { usePathname } from "next/navigation";
 import {
     ArrowDown,
     ArrowUp,
@@ -15,10 +14,8 @@ import {
     UploadCloud02,
     Zap,
 } from "@untitledui/icons";
-import { useSidebarPages } from "@/contexts/SidebarPagesContext";
 import type { SortDescriptor } from "react-aria-components";
 import { Bar, BarChart, CartesianGrid, Label, Tooltip as RechartsTooltip, ResponsiveContainer, XAxis, YAxis } from "recharts";
-import { SidebarNavigationSlim } from "@/components/application/app-navigation/sidebar-navigation/sidebar-slim";
 import { ChartTooltipContent } from "@/components/application/charts/charts-base";
 import { MetricChangeIndicator } from "@/components/application/metrics/metrics";
 import { PaginationCardMinimal } from "@/components/application/pagination/pagination";
@@ -217,10 +214,8 @@ const colors: Record<string, string> = {
 };
 
 export const Dashboard09 = () => {
-    const pathname = usePathname();
     const isDesktop = useBreakpoint("lg");
     const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>();
-    const { sidebarItems, isLoading: isLoadingPages } = useSidebarPages();
 
     const sortedItems = useMemo(() => {
         if (!sortDescriptor) return movements;
@@ -252,21 +247,8 @@ export const Dashboard09 = () => {
         });
     }, [sortDescriptor]);
 
-    if (isLoadingPages || sidebarItems.length === 0) {
-        return (
-            <div className="flex items-center justify-center h-screen">
-                <p>Loading...</p>
-            </div>
-        );
-    }
-
     return (
-        <div className="flex flex-col bg-primary lg:flex-row">
-            <SidebarNavigationSlim
-                activeUrl={pathname}
-                items={sidebarItems}
-            />
-            <main className="flex min-w-0 flex-1 flex-col gap-8 pt-8 pb-12">
+        <main className="flex min-w-0 flex-1 flex-col gap-8 pt-8 pb-12 overflow-y-hidden lg:overflow-y-auto">
                 <div className="flex flex-col justify-between gap-4 px-4 lg:flex-row lg:px-8">
                     <p className="text-xl font-semibold text-primary lg:text-display-xs">Welcome back, Olivia</p>
                     <div className="flex gap-3">
@@ -527,6 +509,5 @@ export const Dashboard09 = () => {
                     </TableCard.Root>
                 </div>
             </main>
-        </div>
     );
 };

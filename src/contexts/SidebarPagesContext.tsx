@@ -34,12 +34,27 @@ export function SidebarPagesProvider({ children }: { children: React.ReactNode }
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        // Check if data is already cached
+        const cached = sessionStorage.getItem('sidebar_pages');
+        if (cached) {
+            try {
+                const cachedData = JSON.parse(cached);
+                setPages(cachedData);
+                setIsLoading(false);
+                return;
+            } catch (err) {
+                console.error('Failed to parse cached pages:', err);
+            }
+        }
+
         async function fetchPages() {
             try {
                 const response = await fetch('/api/pages');
                 const data = await response.json();
                 if (data.pages) {
                     setPages(data.pages);
+                    // Cache the data
+                    sessionStorage.setItem('sidebar_pages', JSON.stringify(data.pages));
                 } else if (data.error) {
                     setError(data.error);
                 }

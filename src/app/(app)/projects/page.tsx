@@ -1,12 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
-import { useSearchParams, usePathname } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { MMQ, MMQSkeleton } from '@sis-thesqd/mmq-component';
-import { SidebarNavigationSlim } from '@/components/application/app-navigation/sidebar-navigation/sidebar-slim';
 import { Button } from '@/components/base/buttons/button';
 import { SearchLg } from '@untitledui/icons';
-import { useSidebarPages } from '@/contexts/SidebarPagesContext';
 
 interface ProjectsContentProps {
     accountNumber: number;
@@ -76,14 +74,12 @@ function ProjectsContent({ accountNumber, onAccountChange }: ProjectsContentProp
 }
 
 export default function ProjectsPage() {
-    const pathname = usePathname();
     const searchParams = useSearchParams();
     const urlAccountNumber = searchParams.get('accountNumber');
     const defaultAccount = urlAccountNumber ? parseInt(urlAccountNumber, 10) : 306;
     const [accountNumber, setAccountNumber] = useState(defaultAccount);
     const [showAccountInput, setShowAccountInput] = useState(false);
     const [accountInput, setAccountInput] = useState('');
-    const { sidebarItems, isLoading: isLoadingPages } = useSidebarPages();
 
     const handleAccountOverride = () => {
         const num = parseInt(accountInput, 10);
@@ -94,21 +90,8 @@ export default function ProjectsPage() {
         }
     };
 
-    if (isLoadingPages || sidebarItems.length === 0) {
-        return (
-            <div className="flex items-center justify-center h-screen">
-                <p>Loading...</p>
-            </div>
-        );
-    }
-
     return (
-        <div className="flex flex-col bg-primary lg:flex-row h-screen overflow-hidden lg:overflow-auto">
-            <SidebarNavigationSlim
-                activeUrl={pathname}
-                items={sidebarItems}
-            />
-            <main className="flex min-w-0 flex-1 flex-col gap-8 pt-8 pb-12 overflow-y-hidden lg:overflow-y-auto">
+        <main className="flex min-w-0 flex-1 flex-col gap-8 pt-8 pb-12 overflow-y-hidden lg:overflow-y-auto">
                 <div className="flex flex-row items-center justify-between gap-4 px-4 lg:px-8">
                     <p className="text-xl font-semibold text-primary lg:text-display-xs">MyProjects</p>
                     <div className="flex gap-3">
@@ -157,6 +140,5 @@ export default function ProjectsPage() {
                     </Suspense>
                 </div>
             </main>
-        </div>
     );
 }

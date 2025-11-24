@@ -32,6 +32,20 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en" suppressHydrationWarning>
+            <head>
+                <script
+                    dangerouslySetInnerHTML={{
+                        __html: `
+                            try {
+                                const theme = localStorage.getItem('theme') ||
+                                             (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                                const className = theme === 'dark' ? 'dark-mode' : 'light-mode';
+                                document.documentElement.classList.add(className);
+                            } catch (e) {}
+                        `,
+                    }}
+                />
+            </head>
             <body className={cx(inter.variable, "bg-primary antialiased")}>
                 <RouteProvider>
                     <Theme>
