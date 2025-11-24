@@ -22,9 +22,15 @@ export async function updateSession(request: NextRequest) {
     });
 
     // Refreshing the auth token
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+    let user = null;
+    try {
+        const { data, error } = await supabase.auth.getUser();
+        if (!error) {
+            user = data.user;
+        }
+    } catch (e) {
+        console.error('Middleware auth error:', e);
+    }
 
     // If user is not authenticated and trying to access protected routes, redirect to login
     const isLoginPage = request.nextUrl.pathname === "/login";

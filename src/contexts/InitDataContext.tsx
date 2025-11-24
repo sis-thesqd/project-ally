@@ -97,8 +97,23 @@ function saveToSessionStorage(data: InitData): void {
 }
 
 async function fetchInitData(): Promise<InitData | null> {
+    // Don't fetch on login or auth pages
+    if (typeof window !== 'undefined') {
+        const pathname = window.location.pathname;
+        if (pathname === '/login' || pathname.startsWith('/auth')) {
+            return null;
+        }
+    }
+
     try {
         const response = await fetch('/api/init');
+        if (response.status === 401) {
+            // User not authenticated - redirect to login
+            if (typeof window !== 'undefined') {
+                window.location.href = '/login';
+            }
+            return null;
+        }
         if (!response.ok) throw new Error('Failed to fetch');
         const data = await response.json();
         return data;

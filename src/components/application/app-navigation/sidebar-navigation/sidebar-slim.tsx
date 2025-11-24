@@ -61,7 +61,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
     const defaultAccount = preferences?.default_account ?? accounts[0]?.account_number;
 
     const activeItem = [...items, ...footerItems].find((item) => item.href === activeUrl || item.items?.some((subItem) => subItem.href === activeUrl));
-    const [currentItem, setCurrentItem] = useState(activeItem || items[1]);
+    const [currentItem, setCurrentItem] = useState(activeItem || items[0] || null);
     const [isHovering, setIsHovering] = useState(false);
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
     const [selectedAccountNumber, setSelectedAccountNumber] = useState<number | undefined>(undefined);
@@ -104,7 +104,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
         form.submit();
     };
 
-    const isSecondarySidebarVisible = isHovering && Boolean(currentItem.items?.length);
+    const isSecondarySidebarVisible = isHovering && Boolean(currentItem?.items?.length);
 
     const MAIN_SIDEBAR_WIDTH = 68;
     const SECONDARY_SIDEBAR_WIDTH = 268;
@@ -138,7 +138,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                         <li key={item.label}>
                             <NavItemButton
                                 size="md"
-                                current={currentItem.href === item.href}
+                                current={currentItem?.href === item.href}
                                 href={item.href}
                                 label={item.label || ""}
                                 icon={item.icon}
@@ -154,7 +154,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                                 <li key={item.label}>
                                     <NavItemButton
                                         size="md"
-                                        current={currentItem.href === item.href}
+                                        current={currentItem?.href === item.href}
                                         label={item.label || ""}
                                         href={item.href}
                                         icon={item.icon}
@@ -216,9 +216,9 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                     )}
                 >
                     <div style={{ width: SECONDARY_SIDEBAR_WIDTH }} className="flex h-full flex-col px-4 pt-6">
-                        <h3 className="text-sm font-semibold text-brand-secondary">{currentItem.label}</h3>
+                        <h3 className="text-sm font-semibold text-brand-secondary">{currentItem?.label}</h3>
                         <ul className="py-2">
-                            {currentItem.items?.map((item) => (
+                            {currentItem?.items?.map((item) => (
                                 <li key={item.label} className="py-0.5">
                                     <NavItemBase current={activeUrl === item.href} href={item.href} icon={item.icon} badge={item.badge} type="link">
                                         {item.label}
