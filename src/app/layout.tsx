@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { RouteProvider } from "@/providers/router-provider";
 import { Theme } from "@/providers/theme";
-import { SidebarPagesProvider } from "@/contexts/SidebarPagesContext";
+import { InitDataProvider } from "@/contexts/InitDataContext";
 import "@/styles/globals.css";
 import { cx } from "@/utils/cx";
 
@@ -59,9 +59,9 @@ export default function RootLayout({
             <body className={cx(inter.variable, "bg-primary antialiased")}>
                 <RouteProvider>
                     <Theme>
-                        <SidebarPagesProvider>
+                        <InitDataProvider>
                             {children}
-                        </SidebarPagesProvider>
+                        </InitDataProvider>
                     </Theme>
                 </RouteProvider>
             </body>
