@@ -157,13 +157,13 @@ export default function ProjectsPage() {
                                     }}
                                     autoFocus
                                 />
-                                <Button size="md" color="secondary" onPress={handleAccountOverride}>
+                                <Button size="md" color="secondary" onClick={handleAccountOverride}>
                                     Apply
                                 </Button>
                                 <Button
                                     size="md"
                                     color="tertiary"
-                                    onPress={() => {
+                                    onClick={() => {
                                         setShowAccountInput(false);
                                         setAccountInput('');
                                     }}
@@ -172,7 +172,7 @@ export default function ProjectsPage() {
                                 </Button>
                             </div>
                         ) : (
-                            <Button size="md" color="secondary" onPress={() => setShowAccountInput(true)}>
+                            <Button size="md" color="secondary" onClick={() => setShowAccountInput(true)}>
                                 Override Account
                             </Button>
                         )}

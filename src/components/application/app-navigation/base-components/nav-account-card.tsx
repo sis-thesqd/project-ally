@@ -27,6 +27,7 @@ export const NavAccountMenu = ({
     selectedAccountNumber,
     onAccountSelect,
     onSettingsClick,
+    onLogout,
     ...dialogProps
 }: AriaDialogProps & {
     className?: string;
@@ -34,6 +35,7 @@ export const NavAccountMenu = ({
     selectedAccountNumber?: number;
     onAccountSelect?: (accountNumber: number) => void;
     onSettingsClick?: () => void;
+    onLogout?: () => void;
 }) => {
     const focusManager = useFocusManager();
     const dialogRef = useRef<HTMLDivElement>(null);
@@ -128,7 +130,7 @@ export const NavAccountMenu = ({
 
                 {/* Bottom section */}
                 <div className="pt-1 pb-1.5">
-                    <NavAccountCardMenuItem label="Log out" icon={LogOut01} shortcut="⌥⇧Q" />
+                    <NavAccountCardMenuItem label="Log out" icon={LogOut01} shortcut="⌥⇧Q" onClick={onLogout} />
                 </div>
             </AriaDialog>
         </>

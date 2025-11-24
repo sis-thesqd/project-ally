@@ -73,6 +73,16 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
         setIsPopoverOpen(false);
     };
 
+    const handleLogout = async () => {
+        setIsPopoverOpen(false);
+        // Submit to the signout route handler
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = "/auth/signout";
+        document.body.appendChild(form);
+        form.submit();
+    };
+
     const isSecondarySidebarVisible = isHovering && Boolean(currentItem.items?.length);
 
     const MAIN_SIDEBAR_WIDTH = 68;
@@ -161,6 +171,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                                 selectedAccountNumber={selectedAccountNumber}
                                 onAccountSelect={handleAccountSelect}
                                 onSettingsClick={handleSettingsClick}
+                                onLogout={handleLogout}
                             />
                         </AriaPopover>
                     </AriaDialogTrigger>
@@ -199,7 +210,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                                 <p className="text-sm text-tertiary">{userEmail}</p>
                             </div>
                             <div className="absolute top-2.5 right-0">
-                                <ButtonUtility size="sm" color="tertiary" tooltip="Log out" icon={LogOut01} />
+                                <ButtonUtility size="sm" color="tertiary" tooltip="Log out" icon={LogOut01} onClick={handleLogout} />
                             </div>
                         </div>
                     </div>
@@ -271,6 +282,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                                     color="tertiary"
                                     iconLeading={<LogOut01 className="size-5 text-fg-quaternary transition-inherit-all group-hover:text-fg-quaternary_hover" />}
                                     className="p-1.5!"
+                                    onPress={handleLogout}
                                 />
                             </div>
                         </div>
