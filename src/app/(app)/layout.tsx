@@ -1,66 +1,15 @@
-'use client';
+import { redirect } from 'next/navigation';
+import { createClient } from '@/utils/supabase/server';
+import { AppLayoutClient } from './layout-client';
 
-import { useEffect, useRef, useState } from 'react';
-import { usePathname } from 'next/navigation';
-import { useTheme } from 'next-themes';
-import { SidebarNavigationSlim } from '@/components/application/app-navigation/sidebar-navigation/sidebar-slim';
-import { useInitData } from '@/contexts/InitDataContext';
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+    const supabase = await createClient();
+    const { data: { user }, error } = await supabase.auth.getUser();
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
-    const pathname = usePathname();
-    const { data, sidebarItems, isReady, updatePreferences } = useInitData();
-    const { setTheme, resolvedTheme } = useTheme();
-    const preferencesInitialized = useRef(false);
-    const [mounted, setMounted] = useState(false);
-
-    // Wait for next-themes to mount
-    useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    // Apply user's preferred theme from preferences on first load
-    // Or create default preferences if none exist
-    useEffect(() => {
-        if (!mounted || !isReady || !data || preferencesInitialized.current) return;
-
-        const hasPreferences = data.preferences?.default_theme !== null || data.preferences?.default_account !== null;
-
-        if (hasPreferences) {
-            // Apply existing preferences
-            if (data.preferences.default_theme) {
-                setTheme(data.preferences.default_theme);
-            }
-        } else {
-            // No preferences exist - create defaults
-            const defaultAccount = data.accounts[0]?.account_number;
-            const defaultTheme = 'light' as const;
-
-            // Set the theme locally
-            setTheme(defaultTheme);
-
-            // Save defaults to database
-            updatePreferences({
-                default_account: defaultAccount,
-                default_theme: defaultTheme,
-            });
-        }
-
-        preferencesInitialized.current = true;
-    }, [mounted, isReady, data, setTheme, updatePreferences]);
-
-    // Don't render anything until we have data - prevents skeleton flash
-    // The root layout will show a brief blank state on first load only
-    if (!isReady) {
-        return null;
+    // Server-side auth check - redirect before any client code runs
+    if (error || !user) {
+        redirect('/login');
     }
 
-    return (
-        <div className="flex flex-col bg-primary lg:flex-row h-screen overflow-hidden lg:overflow-auto">
-            <SidebarNavigationSlim
-                activeUrl={pathname}
-                items={sidebarItems}
-            />
-            {children}
-        </div>
-    );
+    return <AppLayoutClient>{children}</AppLayoutClient>;
 }

@@ -156,10 +156,8 @@ export default function LoginPage() {
                             <img src="/logos/Badge Slanted_Blue-01.svg" alt="Logo" className="relative z-10 h-12 max-md:h-10" />
                         </div>
                         <div className="z-10 flex flex-col gap-2 md:gap-3">
-                            <h1 className="text-display-xs font-semibold text-primary md:text-display-sm">Log in to your account</h1>
-                            <p className="self-stretch p-0 text-md text-tertiary">Welcome back! Please enter your email.</p>
+                            <h1 className="text-display-xs font-semibold text-primary md:text-display-sm">Log in to your account</h1>                        </div>
                         </div>
-                    </div>
 
                     {error && (
                         <div className="z-10 rounded-lg bg-error-secondary p-4 text-sm text-error-primary">
@@ -176,7 +174,7 @@ export default function LoginPage() {
                                     label="Email"
                                     type="email"
                                     name="email"
-                                    placeholder="Enter your email"
+                                    placeholder="me@email.com"
                                     size="md"
                                     value={email}
                                     onChange={(value) => setEmail(value)}
@@ -186,7 +184,7 @@ export default function LoginPage() {
 
                             <div className="flex flex-col gap-4">
                                 <Button type="submit" size="lg" isDisabled={isLoading || !email}>
-                                    {isLoading ? "Sending..." : "Continue with email"}
+                                    {isLoading ? "Sending..." : "Continue"}
                                 </Button>
 
                                 {isGoogleEnabled && (
