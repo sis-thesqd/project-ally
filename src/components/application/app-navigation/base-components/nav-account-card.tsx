@@ -4,12 +4,14 @@ import React from "react";
 import type { FC, HTMLAttributes } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Placement } from "@react-types/overlays";
-import { ChevronSelectorVertical, Container, LogOut01, Settings01, User01 } from "@untitledui/icons";
+import { ChevronSelectorVertical, LogOut01, Moon01, Settings01, User01 } from "@untitledui/icons";
 import { useFocusManager } from "react-aria";
 import type { DialogProps as AriaDialogProps } from "react-aria-components";
 import { Button as AriaButton, Dialog as AriaDialog, DialogTrigger as AriaDialogTrigger, Popover as AriaPopover } from "react-aria-components";
+import { useTheme } from "next-themes";
 import { AvatarLabelGroup } from "@/components/base/avatar/avatar-label-group";
 import { RadioButtonBase } from "@/components/base/radio-buttons/radio-buttons";
+import { Toggle } from "@/components/base/toggle/toggle";
 import { useBreakpoint } from "@/hooks/use-breakpoint";
 import { cx } from "@/utils/cx";
 import { UserSettingsModal } from "@/components/application/modals/UserSettingsModal";
@@ -35,6 +37,8 @@ export const NavAccountMenu = ({
 }) => {
     const focusManager = useFocusManager();
     const dialogRef = useRef<HTMLDivElement>(null);
+    const { theme, setTheme } = useTheme();
+    const isDarkMode = theme === 'dark';
 
     const onKeyDown = useCallback(
         (e: KeyboardEvent) => {
@@ -107,7 +111,18 @@ export const NavAccountMenu = ({
                             shortcut="⌘S"
                             onClick={onSettingsClick}
                         />
-                        <NavAccountCardMenuItem label="Documentation" icon={Container} />
+                        <div className="group/item w-full px-1.5">
+                            <div className="flex w-full items-center justify-between gap-3 rounded-md p-2">
+                                <div className="flex gap-2 text-sm font-semibold text-secondary">
+                                    <Moon01 className="size-5 text-fg-quaternary" /> Dark mode
+                                </div>
+                                <Toggle
+                                    size="sm"
+                                    isSelected={isDarkMode}
+                                    onChange={(isSelected) => setTheme(isSelected ? 'dark' : 'light')}
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
 
