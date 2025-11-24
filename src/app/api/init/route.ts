@@ -1,15 +1,19 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL_READ_ONLY!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export async function GET() {
     try {
-        const supabase = createClient(supabaseUrl, supabaseKey);
-        const inputEmail = 'jacob@churchmediasquad.com';
+        const supabase = await createClient();
 
-        const { data, error } = await supabase.rpc('pa_init_data', { input_email: inputEmail }, { get: true });
+        // Get the authenticated user
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+        if (authError || !user?.email) {
+            console.error('Auth error:', authError);
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const { data, error } = await supabase.rpc('pa_init_data', { input_email: user.email }, { get: true });
 
         if (error) {
             console.error('Supabase error:', error);

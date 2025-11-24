@@ -1,31 +1,31 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/utils/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
 interface PreferencesBody {
-    email: string;
     default_account?: number;
     default_theme?: 'light' | 'dark';
 }
 
 export async function POST(request: NextRequest) {
     try {
-        const body: PreferencesBody = await request.json();
-        const { email, default_account, default_theme } = body;
+        const supabase = await createClient();
 
-        if (!email) {
-            return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+        // Get the authenticated user
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+        if (authError || !user?.email) {
+            console.error('Auth error:', authError);
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const supabase = createClient(supabaseUrl, supabaseKey);
+        const body: PreferencesBody = await request.json();
+        const { default_account, default_theme } = body;
 
         const { data, error } = await supabase
             .from('pa_user_preferences')
             .upsert(
                 {
-                    email,
+                    email: user.email,
                     default_account,
                     default_theme,
                     row_updated: new Date().toISOString(),

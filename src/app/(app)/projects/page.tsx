@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { MMQ, MMQSkeleton } from '@sis-thesqd/mmq-component';
 import { Button } from '@/components/base/buttons/button';
 import { SearchLg } from '@untitledui/icons';
+import { useInitData } from '@/contexts/InitDataContext';
 
 interface ProjectsContentProps {
     accountNumber: number;
@@ -119,11 +120,28 @@ function ProjectsContent({ accountNumber, onAccountChange }: ProjectsContentProp
 
 export default function ProjectsPage() {
     const searchParams = useSearchParams();
+    const { data } = useInitData();
     const urlAccountNumber = searchParams.get('accountNumber');
-    const defaultAccount = urlAccountNumber ? parseInt(urlAccountNumber, 10) : 306;
-    const [accountNumber, setAccountNumber] = useState(defaultAccount);
+
+    // Priority: URL param > user preference > first account > fallback
+    const defaultAccount = urlAccountNumber
+        ? parseInt(urlAccountNumber, 10)
+        : data?.preferences?.default_account ?? data?.accounts?.[0]?.account_number ?? 306;
+
+    const [accountNumber, setAccountNumber] = useState<number | null>(null);
     const [showAccountInput, setShowAccountInput] = useState(false);
     const [accountInput, setAccountInput] = useState('');
+
+    // Update account number when data loads or URL changes
+    useEffect(() => {
+        if (urlAccountNumber) {
+            setAccountNumber(parseInt(urlAccountNumber, 10));
+        } else if (data?.preferences?.default_account) {
+            setAccountNumber(data.preferences.default_account);
+        } else if (data?.accounts?.[0]?.account_number) {
+            setAccountNumber(data.accounts[0].account_number);
+        }
+    }, [urlAccountNumber, data?.preferences?.default_account, data?.accounts]);
 
     const handleAccountOverride = () => {
         const num = parseInt(accountInput, 10);
@@ -180,7 +198,11 @@ export default function ProjectsPage() {
                 </div>
                 <div className="px-4 lg:px-8">
                     <Suspense fallback={<MMQSkeleton />}>
-                        <ProjectsContent accountNumber={accountNumber} onAccountChange={setAccountNumber} />
+                        {accountNumber ? (
+                            <ProjectsContent accountNumber={accountNumber} onAccountChange={setAccountNumber} />
+                        ) : (
+                            <MMQSkeleton />
+                        )}
                     </Suspense>
                 </div>
             </main>

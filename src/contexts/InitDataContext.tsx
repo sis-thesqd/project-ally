@@ -167,16 +167,13 @@ export function InitDataProvider({ children }: { children: React.ReactNode }) {
     }));
 
     const updatePreferences = async (preferences: Partial<Preferences>) => {
-        if (!data?.email) return;
+        if (!data) return;
 
         try {
             const response = await fetch('/api/preferences', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    email: data.email,
-                    ...preferences,
-                }),
+                body: JSON.stringify(preferences),
             });
 
             if (!response.ok) {
