@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import type { PropsWithChildren } from "react";
+import React, { createContext, useContext } from "react";
+import type { ReactNode } from "react";
 import { X as CloseIcon, Menu02 } from "@untitledui/icons";
 import {
     Button as AriaButton,
@@ -13,7 +13,17 @@ import {
 import { UntitledLogo } from "@/components/foundations/logo/untitledui-logo";
 import { cx } from "@/utils/cx";
 
-export const MobileNavigationHeader = ({ children }: PropsWithChildren) => {
+interface MobileNavContextType {
+    close: () => void;
+}
+
+const MobileNavContext = createContext<MobileNavContextType | null>(null);
+
+export const useMobileNav = () => {
+    return useContext(MobileNavContext);
+};
+
+export const MobileNavigationHeader = ({ children }: { children: ReactNode }) => {
     return (
         <AriaDialogTrigger>
             <header className="flex h-16 items-center justify-between border-b border-secondary bg-primary py-3 pr-2 pl-4 lg:hidden">
@@ -53,7 +63,11 @@ export const MobileNavigationHeader = ({ children }: PropsWithChildren) => {
                         </AriaButton>
 
                         <AriaModal className="w-full cursor-auto will-change-transform">
-                            <AriaDialog className="h-dvh outline-hidden focus:outline-hidden">{children}</AriaDialog>
+                            <AriaDialog className="h-dvh outline-hidden focus:outline-hidden">
+                                <MobileNavContext.Provider value={{ close: () => state.close() }}>
+                                    {children}
+                                </MobileNavContext.Provider>
+                            </AriaDialog>
                         </AriaModal>
                     </>
                 )}

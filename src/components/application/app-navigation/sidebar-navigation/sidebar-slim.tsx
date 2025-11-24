@@ -2,10 +2,11 @@
 
 import React from "react";
 import type { FC } from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LogOut01, Moon01, Settings01 } from "@untitledui/icons";
 import { AnimatePresence, motion } from "motion/react";
 import { useTheme } from "next-themes";
+import { useRouter } from "next/navigation";
 import { Button as AriaButton, DialogTrigger as AriaDialogTrigger, Popover as AriaPopover } from "react-aria-components";
 import { Avatar } from "@/components/base/avatar/avatar";
 import { AvatarLabelGroup } from "@/components/base/avatar/avatar-label-group";
@@ -13,7 +14,6 @@ import { Button } from "@/components/base/buttons/button";
 import { ButtonUtility } from "@/components/base/buttons/button-utility";
 import { Toggle } from "@/components/base/toggle/toggle";
 import { UntitledLogo } from "@/components/foundations/logo/untitledui-logo";
-import { UntitledLogoMinimal } from "@/components/foundations/logo/untitledui-logo-minimal";
 import { cx } from "@/utils/cx";
 import { MobileNavigationHeader } from "../base-components/mobile-header";
 import { NavAccountMenu, type AccountItem } from "../base-components/nav-account-card";
@@ -21,7 +21,6 @@ import { NavItemBase } from "../base-components/nav-item";
 import { NavItemButton } from "../base-components/nav-item-button";
 import { NavList } from "../base-components/nav-list";
 import type { NavItemType } from "../config";
-import { UserSettingsModal } from "@/components/application/modals/UserSettingsModal";
 import { useInitData } from "@/contexts/InitDataContext";
 
 interface SidebarNavigationSlimProps {
@@ -47,30 +46,52 @@ function getInitials(name: string | null | undefined): string {
 }
 
 export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hideBorder, hideRightBorder }: SidebarNavigationSlimProps) => {
-    const { data } = useInitData();
+    const { data, updatePreferences } = useInitData();
     const { theme, setTheme } = useTheme();
+    const router = useRouter();
     const isDarkMode = theme === 'dark';
     const accounts = data?.accounts ?? [];
+    const preferences = data?.preferences;
     const userName = data?.name ?? data?.username ?? 'User';
     const userEmail = data?.email ?? '';
     const profilePicture = data?.profile_picture ?? undefined;
     const userInitials = getInitials(data?.username ?? data?.name);
 
+    // Get default account from preferences, fallback to first account
+    const defaultAccount = preferences?.default_account ?? accounts[0]?.account_number;
+
     const activeItem = [...items, ...footerItems].find((item) => item.href === activeUrl || item.items?.some((subItem) => subItem.href === activeUrl));
     const [currentItem, setCurrentItem] = useState(activeItem || items[1]);
     const [isHovering, setIsHovering] = useState(false);
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-    const [selectedAccountNumber, setSelectedAccountNumber] = useState<number | undefined>(accounts[0]?.account_number);
+    const [selectedAccountNumber, setSelectedAccountNumber] = useState<number | undefined>(undefined);
+    const accountInitialized = useRef(false);
+
+    // Set default account from preferences when data loads
+    useEffect(() => {
+        if (defaultAccount !== undefined && !accountInitialized.current) {
+            setSelectedAccountNumber(defaultAccount);
+            accountInitialized.current = true;
+        }
+    }, [defaultAccount]);
 
     const handleSettingsClick = () => {
-        setIsPopoverOpen(false); // Close the popover
-        setIsSettingsModalOpen(true); // Open the settings modal
+        setIsPopoverOpen(false);
+        router.push("/settings");
     };
 
     const handleAccountSelect = (accountNumber: number) => {
         setSelectedAccountNumber(accountNumber);
         setIsPopoverOpen(false);
+        // Persist to database
+        updatePreferences({ default_account: accountNumber });
+    };
+
+    const handleThemeChange = (isDark: boolean) => {
+        const newTheme = isDark ? 'dark' : 'light';
+        setTheme(newTheme);
+        // Persist to database
+        updatePreferences({ default_theme: newTheme });
     };
 
     const handleLogout = async () => {
@@ -172,6 +193,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                                 onAccountSelect={handleAccountSelect}
                                 onSettingsClick={handleSettingsClick}
                                 onLogout={handleLogout}
+                                onThemeChange={handleThemeChange}
                             />
                         </AriaPopover>
                     </AriaDialogTrigger>
@@ -243,7 +265,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
             <MobileNavigationHeader>
                 <aside className="group flex h-full max-h-full w-full max-w-full flex-col justify-between overflow-y-auto bg-primary pt-4">
                     <div className="px-4">
-                        <UntitledLogo className="h-8" />
+                        <img src="/logos/Badge Slanted_Blue-01.svg" alt="Logo" className="h-10" />
                     </div>
 
                     <NavList items={items} />
@@ -252,16 +274,15 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                         <div className="flex flex-col gap-2">
                             <div className="flex items-center justify-between rounded-md px-3 py-2">
                                 <div className="flex items-center gap-3">
-                                    <Moon01 className="size-5 text-fg-quaternary" />
                                     <span className="text-md font-semibold text-secondary">Dark mode</span>
                                 </div>
                                 <Toggle
                                     size="sm"
                                     isSelected={isDarkMode}
-                                    onChange={(isSelected) => setTheme(isSelected ? 'dark' : 'light')}
+                                    onChange={handleThemeChange}
                                 />
                             </div>
-                            <NavItemBase type="button" icon={Settings01} onClick={() => setIsSettingsModalOpen(true)}>
+                            <NavItemBase type="link" href="/settings">
                                 Settings
                             </NavItemBase>
                         </div>
@@ -282,15 +303,13 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                                     color="tertiary"
                                     iconLeading={<LogOut01 className="size-5 text-fg-quaternary transition-inherit-all group-hover:text-fg-quaternary_hover" />}
                                     className="p-1.5!"
-                                    onPress={handleLogout}
+                                    onClick={handleLogout}
                                 />
                             </div>
                         </div>
                     </div>
                 </aside>
             </MobileNavigationHeader>
-
-            <UserSettingsModal isOpen={isSettingsModalOpen} onOpenChange={setIsSettingsModalOpen} />
         </>
     );
 };

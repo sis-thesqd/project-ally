@@ -9,17 +9,35 @@ import { useFocusManager } from "react-aria";
 import type { DialogProps as AriaDialogProps } from "react-aria-components";
 import { Button as AriaButton, Dialog as AriaDialog, DialogTrigger as AriaDialogTrigger, Popover as AriaPopover } from "react-aria-components";
 import { useTheme } from "next-themes";
+import { useRouter } from "next/navigation";
 import { AvatarLabelGroup } from "@/components/base/avatar/avatar-label-group";
 import { RadioButtonBase } from "@/components/base/radio-buttons/radio-buttons";
 import { Toggle } from "@/components/base/toggle/toggle";
 import { useBreakpoint } from "@/hooks/use-breakpoint";
 import { cx } from "@/utils/cx";
-import { UserSettingsModal } from "@/components/application/modals/UserSettingsModal";
 
 export type AccountItem = {
     account_number: number;
     church_name: string;
 };
+
+export type NavAccountType = {
+    id: string;
+    name: string;
+    email: string;
+    avatar: string;
+    status?: "online" | "offline";
+};
+
+const placeholderAccounts: NavAccountType[] = [
+    {
+        id: "olivia",
+        name: "Olivia Rhye",
+        email: "olivia@untitledui.com",
+        avatar: "https://www.untitledui.com/images/avatars/olivia-rhye?fm=webp&q=80",
+        status: "online",
+    },
+];
 
 export const NavAccountMenu = ({
     className,
@@ -28,6 +46,7 @@ export const NavAccountMenu = ({
     onAccountSelect,
     onSettingsClick,
     onLogout,
+    onThemeChange,
     ...dialogProps
 }: AriaDialogProps & {
     className?: string;
@@ -36,11 +55,17 @@ export const NavAccountMenu = ({
     onAccountSelect?: (accountNumber: number) => void;
     onSettingsClick?: () => void;
     onLogout?: () => void;
+    onThemeChange?: (isDark: boolean) => void;
 }) => {
     const focusManager = useFocusManager();
     const dialogRef = useRef<HTMLDivElement>(null);
     const { theme, setTheme } = useTheme();
     const isDarkMode = theme === 'dark';
+
+    const handleThemeToggle = (isDark: boolean) => {
+        setTheme(isDark ? 'dark' : 'light');
+        onThemeChange?.(isDark);
+    };
 
     const onKeyDown = useCallback(
         (e: KeyboardEvent) => {
@@ -91,10 +116,7 @@ export const NavAccountMenu = ({
                                 >
                                     <RadioButtonBase
                                         size="md"
-                                        name="account"
-                                        value={String(account.account_number)}
-                                        checked={selectedAccountNumber === account.account_number}
-                                        onChange={() => onAccountSelect?.(account.account_number)}
+                                        isSelected={selectedAccountNumber === account.account_number}
                                     />
                                     <div className="flex flex-col">
                                         <span className="text-sm font-medium text-primary">{account.church_name}</span>
@@ -121,7 +143,7 @@ export const NavAccountMenu = ({
                                 <Toggle
                                     size="sm"
                                     isSelected={isDarkMode}
-                                    onChange={(isSelected) => setTheme(isSelected ? 'dark' : 'light')}
+                                    onChange={handleThemeToggle}
                                 />
                             </div>
                         </div>
@@ -179,14 +201,14 @@ export const NavAccountCard = ({
 }) => {
     const triggerRef = useRef<HTMLDivElement>(null);
     const isDesktop = useBreakpoint("lg");
+    const router = useRouter();
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
     const selectedAccount = placeholderAccounts.find((account) => account.id === selectedAccountId);
 
     const handleSettingsClick = () => {
-        setIsPopoverOpen(false); // Close the popover
-        setIsSettingsModalOpen(true); // Open the settings modal
+        setIsPopoverOpen(false);
+        router.push("/settings");
     };
 
     if (!selectedAccount) {
@@ -195,18 +217,17 @@ export const NavAccountCard = ({
     }
 
     return (
-        <>
-            <div ref={triggerRef} className="relative flex items-center gap-3 rounded-xl p-3 ring-1 ring-secondary ring-inset">
-                <AvatarLabelGroup
-                    size="md"
-                    src={selectedAccount.avatar}
-                    title={selectedAccount.name}
-                    subtitle={selectedAccount.email}
-                    status={selectedAccount.status}
-                />
+        <div ref={triggerRef} className="relative flex items-center gap-3 rounded-xl p-3 ring-1 ring-secondary ring-inset">
+            <AvatarLabelGroup
+                size="md"
+                src={selectedAccount.avatar}
+                title={selectedAccount.name}
+                subtitle={selectedAccount.email}
+                status={selectedAccount.status}
+            />
 
-                <div className="absolute top-1.5 right-1.5">
-                    <AriaDialogTrigger isOpen={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+            <div className="absolute top-1.5 right-1.5">
+                <AriaDialogTrigger isOpen={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
                     <AriaButton className="flex cursor-pointer items-center justify-center rounded-md p-1.5 text-fg-quaternary outline-focus-ring transition duration-100 ease-linear hover:bg-primary_hover hover:text-fg-quaternary_hover focus-visible:outline-2 focus-visible:outline-offset-2 pressed:bg-primary_hover pressed:text-fg-quaternary_hover">
                         <ChevronSelectorVertical className="size-4 shrink-0" />
                     </AriaButton>
@@ -224,13 +245,10 @@ export const NavAccountCard = ({
                             )
                         }
                     >
-                        <NavAccountMenu selectedAccountId={selectedAccountId} accounts={items} onSettingsClick={handleSettingsClick} />
+                        <NavAccountMenu onSettingsClick={handleSettingsClick} />
                     </AriaPopover>
                 </AriaDialogTrigger>
             </div>
         </div>
-
-        <UserSettingsModal isOpen={isSettingsModalOpen} onOpenChange={setIsSettingsModalOpen} />
-        </>
     );
 };

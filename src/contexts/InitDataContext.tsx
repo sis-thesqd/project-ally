@@ -13,8 +13,13 @@ interface PageItem {
 }
 
 interface AccountItem {
-    account_number: string;
+    account_number: number;
     church_name: string;
+}
+
+interface Preferences {
+    default_account: number | null;
+    default_theme: 'light' | 'dark' | null;
 }
 
 interface SidebarItem {
@@ -29,6 +34,7 @@ interface InitData {
     name: string | null;
     employee: boolean;
     profile_picture: string | null;
+    preferences: Preferences;
     accounts: AccountItem[];
     pages: PageItem[];
 }
@@ -37,6 +43,7 @@ interface InitDataContextType {
     data: InitData | null;
     sidebarItems: SidebarItem[];
     isReady: boolean;
+    updatePreferences: (preferences: Partial<Preferences>) => Promise<void>;
 }
 
 const CACHE_KEY = 'pa_init_data';
@@ -47,6 +54,7 @@ const InitDataContext = createContext<InitDataContextType>({
     data: null,
     sidebarItems: [],
     isReady: false,
+    updatePreferences: async () => {},
 });
 
 // Module-level state to persist across navigations
@@ -158,8 +166,42 @@ export function InitDataProvider({ children }: { children: React.ReactNode }) {
         icon: getIconByName(page.icon),
     }));
 
+    const updatePreferences = async (preferences: Partial<Preferences>) => {
+        if (!data?.email) return;
+
+        try {
+            const response = await fetch('/api/preferences', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: data.email,
+                    ...preferences,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update preferences');
+            }
+
+            // Update local state and cache
+            const updatedData: InitData = {
+                ...data,
+                preferences: {
+                    ...data.preferences,
+                    ...preferences,
+                },
+            };
+
+            moduleData = updatedData;
+            setData(updatedData);
+            saveToSessionStorage(updatedData);
+        } catch (e) {
+            console.error('Error updating preferences:', e);
+        }
+    };
+
     return (
-        <InitDataContext.Provider value={{ data, sidebarItems, isReady }}>
+        <InitDataContext.Provider value={{ data, sidebarItems, isReady, updatePreferences }}>
             {children}
         </InitDataContext.Provider>
     );

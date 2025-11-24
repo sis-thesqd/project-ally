@@ -26,7 +26,7 @@ export function ThemeToggle() {
             color="tertiary"
             icon={isDark ? Sun : Moon02}
             tooltip={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-            onPress={() => setTheme(isDark ? 'light' : 'dark')}
+            onClick={() => setTheme(isDark ? 'light' : 'dark')}
             aria-label="Toggle theme"
         />
     );
