@@ -22,24 +22,22 @@ export async function POST(request: NextRequest) {
         }
 
         const body: PreferencesBody = await request.json();
-        const { default_account, default_theme, mmq_split_active, default_mmq_view, mmq_auto_collapse_empty } = body;
+
+        // Only include fields that are explicitly provided (not undefined)
+        const updateData: Record<string, unknown> = {
+            email: user.email,
+            row_updated: new Date().toISOString(),
+        };
+
+        if (body.default_account !== undefined) updateData.default_account = body.default_account;
+        if (body.default_theme !== undefined) updateData.default_theme = body.default_theme;
+        if (body.mmq_split_active !== undefined) updateData.mmq_split_active = body.mmq_split_active;
+        if (body.default_mmq_view !== undefined) updateData.default_mmq_view = body.default_mmq_view;
+        if (body.mmq_auto_collapse_empty !== undefined) updateData.mmq_auto_collapse_empty = body.mmq_auto_collapse_empty;
 
         const { data, error } = await supabase
             .from('pa_user_preferences')
-            .upsert(
-                {
-                    email: user.email,
-                    default_account,
-                    default_theme,
-                    mmq_split_active,
-                    default_mmq_view,
-                    mmq_auto_collapse_empty,
-                    row_updated: new Date().toISOString(),
-                },
-                {
-                    onConflict: 'email',
-                }
-            )
+            .upsert(updateData, { onConflict: 'email' })
             .select()
             .single();
 
