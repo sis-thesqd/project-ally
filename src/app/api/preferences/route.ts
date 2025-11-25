@@ -6,6 +6,7 @@ interface PreferencesBody {
     default_theme?: 'light' | 'dark';
     mmq_split_active?: boolean;
     default_mmq_view?: 'board' | 'table';
+    mmq_auto_collapse_empty?: boolean;
 }
 
 export async function POST(request: NextRequest) {
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
         }
 
         const body: PreferencesBody = await request.json();
-        const { default_account, default_theme, mmq_split_active, default_mmq_view } = body;
+        const { default_account, default_theme, mmq_split_active, default_mmq_view, mmq_auto_collapse_empty } = body;
 
         const { data, error } = await supabase
             .from('pa_user_preferences')
@@ -32,6 +33,7 @@ export async function POST(request: NextRequest) {
                     default_theme,
                     mmq_split_active,
                     default_mmq_view,
+                    mmq_auto_collapse_empty,
                     row_updated: new Date().toISOString(),
                 },
                 {

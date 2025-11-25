@@ -21,9 +21,10 @@ const viewTabs = [
 interface ProjectsContentProps {
     accountNumber: number;
     splitOutActive: boolean;
+    autoCollapseEmpty: boolean;
 }
 
-function ProjectsContent({ accountNumber, splitOutActive }: ProjectsContentProps) {
+function ProjectsContent({ accountNumber, splitOutActive, autoCollapseEmpty }: ProjectsContentProps) {
     const apiUrl = process.env.NEXT_PUBLIC_MMQ_API_URL || '';
 
     const handleError = useCallback((error: any) => {
@@ -50,6 +51,7 @@ function ProjectsContent({ accountNumber, splitOutActive }: ProjectsContentProps
             showCountdownTimers={true}
             showTitle={false}
             splitOutActive={splitOutActive}
+            autoCollapseEmpty={autoCollapseEmpty}
             onError={handleError}
             onDataLoaded={handleDataLoaded}
             onChangesApplied={handleChangesApplied}
@@ -67,6 +69,7 @@ export default function ProjectsPage() {
     const [inputOverride, setInputOverride] = useState<number | null>(null);
     const [splitOutActive, setSplitOutActive] = useState(data?.preferences?.mmq_split_active ?? false);
     const [selectedView, setSelectedView] = useState<Key>(data?.preferences?.default_mmq_view ?? 'board');
+    const [autoCollapseEmpty, setAutoCollapseEmpty] = useState(data?.preferences?.mmq_auto_collapse_empty ?? true);
 
     // Sync splitOutActive with preferences when data loads
     useEffect(() => {
@@ -82,6 +85,13 @@ export default function ProjectsPage() {
         }
     }, [data?.preferences?.default_mmq_view]);
 
+    // Sync autoCollapseEmpty with preferences when data loads
+    useEffect(() => {
+        if (data?.preferences?.mmq_auto_collapse_empty !== undefined && data?.preferences?.mmq_auto_collapse_empty !== null) {
+            setAutoCollapseEmpty(data.preferences.mmq_auto_collapse_empty);
+        }
+    }, [data?.preferences?.mmq_auto_collapse_empty]);
+
     const handleSplitOutActiveChange = (value: boolean) => {
         setSplitOutActive(value);
         updatePreferences({ mmq_split_active: value });
@@ -92,6 +102,11 @@ export default function ProjectsPage() {
         if (value === 'board' || value === 'table') {
             updatePreferences({ default_mmq_view: value });
         }
+    };
+
+    const handleAutoCollapseEmptyChange = (value: boolean) => {
+        setAutoCollapseEmpty(value);
+        updatePreferences({ mmq_auto_collapse_empty: value });
     };
 
     // URL override takes precedence, then input override, then preferences
@@ -201,6 +216,13 @@ export default function ProjectsPage() {
                                                     isSelected={splitOutActive}
                                                     onChange={handleSplitOutActiveChange}
                                                 />
+                                                <Toggle
+                                                    size="md"
+                                                    label="Auto-Collapse Empty Lists"
+                                                    hint=""
+                                                    isSelected={autoCollapseEmpty}
+                                                    onChange={handleAutoCollapseEmptyChange}
+                                                />
                                             </div>
                                         </div>
                                     )}
@@ -214,9 +236,10 @@ export default function ProjectsPage() {
                 <Suspense fallback={<MMQSkeleton />}>
                     {accountNumber ? (
                         <ProjectsContent
-                            key={`${accountNumber}-${splitOutActive}`}
+                            key={`${accountNumber}-${splitOutActive}-${autoCollapseEmpty}`}
                             accountNumber={accountNumber}
                             splitOutActive={splitOutActive}
+                            autoCollapseEmpty={autoCollapseEmpty}
                         />
                     ) : (
                         <MMQSkeleton />

@@ -22,6 +22,7 @@ interface Preferences {
     default_theme: 'light' | 'dark' | null;
     mmq_split_active: boolean | null;
     default_mmq_view: 'board' | 'table' | null;
+    mmq_auto_collapse_empty: boolean | null;
 }
 
 interface SidebarItem {
