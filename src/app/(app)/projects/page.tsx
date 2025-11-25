@@ -3,15 +3,18 @@
 import React, { useState, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { MMQ, MMQSkeleton } from '@sis-thesqd/mmq-component';
+import { Settings01 } from '@untitledui/icons';
 import { Button } from '@/components/base/buttons/button';
-import { SearchLg } from '@untitledui/icons';
+import { Toggle } from '@/components/base/toggle/toggle';
+import { SlideoutMenu } from '@/components/application/slideout-menus/slideout-menu';
 import { useInitData } from '@/contexts/InitDataContext';
 
 interface ProjectsContentProps {
     accountNumber: number;
+    splitOutActive: boolean;
 }
 
-function ProjectsContent({ accountNumber }: ProjectsContentProps) {
+function ProjectsContent({ accountNumber, splitOutActive }: ProjectsContentProps) {
     const apiUrl = process.env.NEXT_PUBLIC_MMQ_API_URL || '';
 
     const handleError = useCallback((error: any) => {
@@ -37,6 +40,7 @@ function ProjectsContent({ accountNumber }: ProjectsContentProps) {
             showAccountOverride={false}
             showCountdownTimers={true}
             showTitle={false}
+            splitOutActive={splitOutActive}
             onError={handleError}
             onDataLoaded={handleDataLoaded}
             onChangesApplied={handleChangesApplied}
@@ -49,10 +53,10 @@ export default function ProjectsPage() {
     const { data } = useInitData();
     const urlAccountNumber = searchParams.get('accountNumber');
 
-    const [showAccountInput, setShowAccountInput] = useState(false);
+    const [isOptionsOpen, setIsOptionsOpen] = useState(false);
     const [accountInput, setAccountInput] = useState('');
-    // Local override only used for the "Override Account" input feature (not sidebar)
     const [inputOverride, setInputOverride] = useState<number | null>(null);
+    const [splitOutActive, setSplitOutActive] = useState(false);
 
     // URL override takes precedence, then input override, then preferences
     const urlOverride = urlAccountNumber ? parseInt(urlAccountNumber, 10) : null;
@@ -68,64 +72,100 @@ export default function ProjectsPage() {
         const num = parseInt(accountInput, 10);
         if (!isNaN(num) && num > 0) {
             setInputOverride(num);
-            setShowAccountInput(false);
             setAccountInput('');
         }
     };
 
+    const handleClearOverride = () => {
+        setInputOverride(null);
+        setAccountInput('');
+    };
+
     return (
         <main className="flex min-w-0 flex-1 flex-col gap-8 pt-8 pb-12 overflow-y-hidden lg:overflow-y-auto">
-                <div className="flex flex-row items-center justify-between gap-4 px-4 lg:px-8">
-                    <p className="text-xl font-semibold text-primary lg:text-display-xs">MyProjects</p>
-                    <div className="flex gap-3">
-                        <Button size="md" color="tertiary" iconLeading={SearchLg} className="hidden lg:inline-flex" />
-                        {showAccountInput ? (
-                            <div className="flex gap-2">
-                                <input
-                                    type="number"
-                                    value={accountInput}
-                                    onChange={(e) => setAccountInput(e.target.value)}
-                                    placeholder="Account #"
-                                    className="w-24 px-3 rounded border border-border bg-card text-foreground text-sm placeholder:text-placeholder text-center"
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') handleAccountOverride();
-                                        if (e.key === 'Escape') {
-                                            setShowAccountInput(false);
-                                            setAccountInput('');
-                                        }
-                                    }}
-                                    autoFocus
-                                />
-                                <Button size="md" color="secondary" onClick={handleAccountOverride}>
-                                    Apply
+            <div className="flex flex-row items-center justify-between gap-4 px-4 lg:px-8">
+                <p className="text-xl font-semibold text-primary lg:text-display-xs">MyProjects</p>
+                <div className="flex gap-3">
+                    <SlideoutMenu.Trigger isOpen={isOptionsOpen} onOpenChange={setIsOptionsOpen}>
+                        <Button size="md" color="secondary" iconLeading={Settings01}>
+                            Options
+                        </Button>
+                        <SlideoutMenu isDismissable>
+                            <SlideoutMenu.Header onClose={() => setIsOptionsOpen(false)} className="relative flex w-full flex-col gap-0.5 px-4 pt-6 md:px-6">
+                                <h1 className="text-md font-semibold text-primary md:text-lg">Options</h1>
+                                <p className="text-sm text-tertiary">Configure view settings.</p>
+                            </SlideoutMenu.Header>
+                            <SlideoutMenu.Content>
+                                <div className="flex flex-col gap-6">
+                                    {/* Override Account Section */}
+                                    <div className="flex flex-col gap-4">
+                                        <p className="text-sm font-semibold text-primary">Override Account</p>
+                                        <div className="flex flex-col gap-3">
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="number"
+                                                    value={accountInput}
+                                                    onChange={(e) => setAccountInput(e.target.value)}
+                                                    placeholder="Enter account number"
+                                                    className="flex-1 px-3 py-2 rounded-lg border border-border bg-primary text-primary text-sm placeholder:text-placeholder"
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') handleAccountOverride();
+                                                    }}
+                                                />
+                                                <Button size="md" color="secondary" onClick={handleAccountOverride}>
+                                                    Apply
+                                                </Button>
+                                            </div>
+                                            {inputOverride && (
+                                                <div className="flex items-center justify-between px-2 py-1.5 rounded bg-secondary">
+                                                    <span className="text-sm text-secondary">
+                                                        Currently viewing: <span className="font-medium text-primary">{inputOverride}</span>
+                                                    </span>
+                                                    <Button size="sm" color="link-color" onClick={handleClearOverride}>
+                                                        Clear
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Display Options Section */}
+                                    <div className="flex flex-col gap-4">
+                                        <p className="text-sm font-semibold text-primary">Display Options</p>
+                                        <div className="flex flex-col gap-3 pl-2">
+                                            <Toggle
+                                                size="md"
+                                                label="Split Active Column"
+                                                hint="Show 'With TheSquad' and 'Action Required' columns instead of Active"
+                                                isSelected={splitOutActive}
+                                                onChange={setSplitOutActive}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </SlideoutMenu.Content>
+                            <SlideoutMenu.Footer className="flex w-full items-center justify-end gap-3">
+                                <Button size="md" color="secondary" onClick={() => setIsOptionsOpen(false)}>
+                                    Close
                                 </Button>
-                                <Button
-                                    size="md"
-                                    color="tertiary"
-                                    onClick={() => {
-                                        setShowAccountInput(false);
-                                        setAccountInput('');
-                                    }}
-                                >
-                                    Cancel
-                                </Button>
-                            </div>
-                        ) : (
-                            <Button size="md" color="secondary" onClick={() => setShowAccountInput(true)}>
-                                Override Account
-                            </Button>
-                        )}
-                    </div>
+                            </SlideoutMenu.Footer>
+                        </SlideoutMenu>
+                    </SlideoutMenu.Trigger>
                 </div>
-                <div className="px-4 lg:px-8">
-                    <Suspense fallback={<MMQSkeleton />}>
-                        {accountNumber ? (
-                            <ProjectsContent key={accountNumber} accountNumber={accountNumber} />
-                        ) : (
-                            <MMQSkeleton />
-                        )}
-                    </Suspense>
-                </div>
-            </main>
+            </div>
+            <div className="px-4 lg:px-8">
+                <Suspense fallback={<MMQSkeleton />}>
+                    {accountNumber ? (
+                        <ProjectsContent
+                            key={`${accountNumber}-${splitOutActive}`}
+                            accountNumber={accountNumber}
+                            splitOutActive={splitOutActive}
+                        />
+                    ) : (
+                        <MMQSkeleton />
+                    )}
+                </Suspense>
+            </div>
+        </main>
     );
 }
