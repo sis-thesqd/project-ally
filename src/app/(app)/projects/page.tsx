@@ -7,6 +7,7 @@ import { Settings01 } from '@untitledui/icons';
 import { Button } from '@/components/base/buttons/button';
 import { Toggle } from '@/components/base/toggle/toggle';
 import { SlideoutMenu } from '@/components/application/slideout-menus/slideout-menu';
+import { PinInput } from '@/components/base/pin-input/pin-input';
 import { useInitData } from '@/contexts/InitDataContext';
 
 interface ProjectsContentProps {
@@ -68,11 +69,13 @@ export default function ProjectsPage() {
         ?? data?.accounts?.[0]?.account_number
         ?? null;
 
-    const handleAccountOverride = () => {
-        const num = parseInt(accountInput, 10);
-        if (!isNaN(num) && num > 0) {
-            setInputOverride(num);
-            setAccountInput('');
+    const handleAccountOverride = (value: string) => {
+        if (value.length >= 3) {
+            const num = parseInt(value, 10);
+            if (!isNaN(num) && num > 0) {
+                setInputOverride(num);
+                setAccountInput('');
+            }
         }
     };
 
@@ -99,34 +102,39 @@ export default function ProjectsPage() {
                                 <div className="flex flex-col gap-6">
                                     {/* Override Account Section */}
                                     <div className="flex flex-col gap-4">
-                                        <p className="text-sm font-semibold text-primary">Override Account</p>
-                                        <div className="flex flex-col gap-3">
-                                            <div className="flex gap-2">
-                                                <input
-                                                    type="number"
+                                        <PinInput size="xs">
+                                            <PinInput.Label>Override Account</PinInput.Label>
+                                            <div className="flex items-center gap-6">
+                                                <PinInput.Group
+                                                    maxLength={4}
                                                     value={accountInput}
-                                                    onChange={(e) => setAccountInput(e.target.value)}
-                                                    placeholder="Enter account number"
-                                                    className="flex-1 px-3 py-2 rounded-lg border border-border bg-primary text-primary text-sm placeholder:text-placeholder"
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') handleAccountOverride();
-                                                    }}
-                                                />
-                                                <Button size="md" color="secondary" onClick={handleAccountOverride}>
+                                                    onChange={setAccountInput}
+                                                >
+                                                    <PinInput.Slot index={0} />
+                                                    <PinInput.Slot index={1} />
+                                                    <PinInput.Slot index={2} />
+                                                    <PinInput.Slot index={3} />
+                                                </PinInput.Group>
+                                                <Button
+                                                    size="md"
+                                                    color="primary"
+                                                    isDisabled={accountInput.length < 3}
+                                                    onClick={() => handleAccountOverride(accountInput)}
+                                                >
                                                     Apply
                                                 </Button>
                                             </div>
-                                            {inputOverride && (
-                                                <div className="flex items-center justify-between px-2 py-1.5 rounded bg-secondary">
-                                                    <span className="text-sm text-secondary">
-                                                        Currently viewing: <span className="font-medium text-primary">{inputOverride}</span>
-                                                    </span>
-                                                    <Button size="sm" color="link-color" onClick={handleClearOverride}>
-                                                        Clear
-                                                    </Button>
-                                                </div>
-                                            )}
-                                        </div>
+                                        </PinInput>
+                                        {inputOverride && (
+                                            <div className="flex items-center justify-between px-2 py-1.5 rounded bg-secondary">
+                                                <span className="text-sm text-secondary">
+                                                    Currently viewing: <span className="font-medium text-primary">{inputOverride}</span>
+                                                </span>
+                                                <Button size="sm" color="link-color" onClick={handleClearOverride}>
+                                                    Clear
+                                                </Button>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Display Options Section */}
@@ -136,7 +144,7 @@ export default function ProjectsPage() {
                                             <Toggle
                                                 size="md"
                                                 label="Split Active Column"
-                                                hint="Show 'With TheSquad' and 'Action Required' columns instead of Active"
+                                                hint=""
                                                 isSelected={splitOutActive}
                                                 onChange={setSplitOutActive}
                                             />
@@ -144,11 +152,6 @@ export default function ProjectsPage() {
                                     </div>
                                 </div>
                             </SlideoutMenu.Content>
-                            <SlideoutMenu.Footer className="flex w-full items-center justify-end gap-3">
-                                <Button size="md" color="secondary" onClick={() => setIsOptionsOpen(false)}>
-                                    Close
-                                </Button>
-                            </SlideoutMenu.Footer>
                         </SlideoutMenu>
                     </SlideoutMenu.Trigger>
                 </div>

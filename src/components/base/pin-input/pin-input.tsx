@@ -6,7 +6,7 @@ import { OTPInput, OTPInputContext } from "input-otp";
 import { cx } from "@/utils/cx";
 
 type PinInputContextType = {
-    size: "sm" | "md" | "lg";
+    size: "xs" | "sm" | "md" | "lg";
     disabled: boolean;
     id: string;
 };
@@ -28,7 +28,7 @@ export const usePinInputContext = () => {
 };
 
 interface RootProps extends ComponentPropsWithRef<"div"> {
-    size?: "sm" | "md" | "lg";
+    size?: "xs" | "sm" | "md" | "lg";
     disabled?: boolean;
 }
 
@@ -52,6 +52,7 @@ const Group = ({ inputClassName, containerClassName, width, maxLength = 4, ...pr
     const { id, size, disabled } = usePinInputContext();
 
     const heights = {
+        xs: "h-10",
         sm: "h-16.5",
         md: "h-20.5",
         lg: "h-24.5",
@@ -67,7 +68,7 @@ const Group = ({ inputClassName, containerClassName, width, maxLength = 4, ...pr
             aria-label="Enter your pin"
             aria-labelledby={"pin-input-label-" + id}
             aria-describedby={"pin-input-description-" + id}
-            containerClassName={cx("flex flex-row gap-3", size === "sm" && "gap-2", heights[size], containerClassName)}
+            containerClassName={cx("flex flex-row gap-3", (size === "sm" || size === "xs") && "gap-1.5", heights[size], containerClassName)}
             className={cx("w-full! disabled:cursor-not-allowed", inputClassName)}
         />
     );
@@ -75,6 +76,7 @@ const Group = ({ inputClassName, containerClassName, width, maxLength = 4, ...pr
 Group.displayName = "Group";
 
 const sizes = {
+    xs: "size-10 px-1 py-1 text-lg font-semibold",
     sm: "size-16 px-2 py-0.5 text-display-lg font-medium",
     md: "size-20 px-2 py-2.5 text-display-lg font-medium",
     lg: "size-24 px-2 py-3 text-display-xl font-medium",
@@ -90,7 +92,8 @@ const Slot = ({ index, className, ...props }: ComponentPropsWithRef<"div"> & { i
             {...props}
             aria-label={"Enter digit " + (index + 1) + " of " + slots.length}
             className={cx(
-                "relative flex items-center justify-center rounded-xl bg-primary text-center text-placeholder_subtle shadow-xs ring-1 ring-primary transition-[box-shadow,background-color] duration-100 ease-linear ring-inset",
+                "relative flex items-center justify-center rounded-xl bg-primary text-center text-placeholder_subtle shadow-xs ring-1 ring-primary ring-inset",
+                size !== "xs" && "transition-[box-shadow,background-color] duration-100 ease-linear",
                 sizes[size],
                 isFocused && slot?.isActive && "ring-2 ring-brand outline-2 outline-offset-2 outline-brand",
                 slot?.char && "text-brand-tertiary_alt ring-2 ring-brand",
@@ -98,18 +101,18 @@ const Slot = ({ index, className, ...props }: ComponentPropsWithRef<"div"> & { i
                 className,
             )}
         >
-            {slot?.char ? slot.char : slot?.hasFakeCaret ? <FakeCaret size={size} /> : 0}
+            {slot?.char ? slot.char : slot?.hasFakeCaret ? <FakeCaret size={size} /> : null}
         </div>
     );
 };
 Slot.displayName = "Slot";
 
-const FakeCaret = ({ size = "md" }: { size?: "sm" | "md" | "lg" }) => {
+const FakeCaret = ({ size = "md" }: { size?: "xs" | "sm" | "md" | "lg" }) => {
     return (
         <div
             className={cx(
                 "pointer-events-none h-[1em] w-0.5 animate-caret-blink bg-fg-brand-primary",
-                size === "lg" ? "text-display-xl font-medium" : "text-display-lg font-medium",
+                size === "xs" ? "text-lg font-semibold" : size === "lg" ? "text-display-xl font-medium" : "text-display-lg font-medium",
             )}
         />
     );
