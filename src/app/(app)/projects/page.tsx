@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { MMQ, MMQSkeleton } from '@sis-thesqd/mmq-component';
 import { Button } from '@/components/base/buttons/button';
@@ -9,95 +9,22 @@ import { useInitData } from '@/contexts/InitDataContext';
 
 interface ProjectsContentProps {
     accountNumber: number;
-    onAccountChange: (account: number) => void;
 }
 
-function ProjectsContent({ accountNumber, onAccountChange }: ProjectsContentProps) {
-    const [isInitialLoad, setIsInitialLoad] = useState(true);
-    const [cachedData, setCachedData] = useState<any>(null);
-    const [shouldFetch, setShouldFetch] = useState(true);
-    const [cacheTimestamp, setCacheTimestamp] = useState<number | null>(null);
-
+function ProjectsContent({ accountNumber }: ProjectsContentProps) {
     const apiUrl = process.env.NEXT_PUBLIC_MMQ_API_URL || '';
-    const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes in milliseconds
-    const CACHE_KEY = `mmq_cache_${accountNumber}`;
-    const CACHE_TIMESTAMP_KEY = `mmq_cache_timestamp_${accountNumber}`;
 
-    useEffect(() => {
-        // Check for cached data on mount
-        const cached = sessionStorage.getItem(CACHE_KEY);
-        const cachedTimestamp = sessionStorage.getItem(CACHE_TIMESTAMP_KEY);
+    const handleError = useCallback((error: any) => {
+        console.error('MMQ Error:', error);
+    }, []);
 
-        if (cached && cachedTimestamp) {
-            try {
-                const data = JSON.parse(cached);
-                const timestamp = parseInt(cachedTimestamp, 10);
-                const now = Date.now();
+    const handleDataLoaded = useCallback((data: any) => {
+        console.log('Data loaded for account', accountNumber, 'Tasks:', data?.tasks?.length || 0);
+    }, [accountNumber]);
 
-                // Validate data structure has required properties
-                if (data && typeof data === 'object' && Array.isArray(data.tasks) && now - timestamp < CACHE_DURATION) {
-                    setCachedData(data);
-                    setCacheTimestamp(timestamp);
-                    setShouldFetch(false);
-                    console.log('Using cached data for account', accountNumber, 'Age:', Math.round((now - timestamp) / 1000), 'seconds', 'Tasks:', data.tasks.length);
-                } else {
-                    sessionStorage.removeItem(CACHE_KEY);
-                    sessionStorage.removeItem(CACHE_TIMESTAMP_KEY);
-                    setShouldFetch(true);
-                    console.log('Cache invalid or expired for account', accountNumber);
-                }
-            } catch (error) {
-                console.error('Error parsing cached data:', error);
-                sessionStorage.removeItem(CACHE_KEY);
-                sessionStorage.removeItem(CACHE_TIMESTAMP_KEY);
-                setShouldFetch(true);
-            }
-        } else {
-            setShouldFetch(true);
-        }
-        setIsInitialLoad(false);
-    }, [accountNumber, CACHE_KEY, CACHE_TIMESTAMP_KEY, CACHE_DURATION]);
-
-    const handleDataLoaded = (data: any) => {
-        const now = Date.now();
-        console.log('Fresh data loaded for account', accountNumber, 'Tasks:', data?.tasks?.length || 0);
-
-        // Only cache if data has valid structure
-        if (data && typeof data === 'object' && Array.isArray(data.tasks)) {
-            sessionStorage.setItem(CACHE_KEY, JSON.stringify(data));
-            sessionStorage.setItem(CACHE_TIMESTAMP_KEY, now.toString());
-            setCacheTimestamp(now);
-        } else {
-            console.warn('Invalid data structure, not caching');
-        }
-    };
-
-    if (isInitialLoad) {
-        return <MMQSkeleton />;
-    }
-
-    // If we have valid cached data, show it without fetching
-    if (!shouldFetch && cachedData) {
-        return (
-            <div>
-                <MMQ
-                    accountNumber={accountNumber}
-                    supabaseUrl=""
-                    supabaseKey=""
-                    dataEndpoint={`${apiUrl}/api/queue-data`}
-                    reorderEndpoint={`${apiUrl}/api/reorder`}
-                    playPauseEndpoint={`${apiUrl}/api/play-pause`}
-                    showAccountOverride={false}
-                    showCountdownTimers={true}
-                    showTitle={false}
-                    initialData={cachedData}
-                    onError={(error) => console.error('MMQ Error:', error)}
-                    onDataLoaded={handleDataLoaded}
-                    onChangesApplied={() => console.log('Changes applied')}
-                />
-            </div>
-        );
-    }
+    const handleChangesApplied = useCallback(() => {
+        console.log('Changes applied');
+    }, []);
 
     return (
         <MMQ
@@ -110,10 +37,9 @@ function ProjectsContent({ accountNumber, onAccountChange }: ProjectsContentProp
             showAccountOverride={false}
             showCountdownTimers={true}
             showTitle={false}
-            initialData={cachedData}
-            onError={(error) => console.error('MMQ Error:', error)}
+            onError={handleError}
             onDataLoaded={handleDataLoaded}
-            onChangesApplied={() => console.log('Changes applied')}
+            onChangesApplied={handleChangesApplied}
         />
     );
 }
@@ -123,30 +49,25 @@ export default function ProjectsPage() {
     const { data } = useInitData();
     const urlAccountNumber = searchParams.get('accountNumber');
 
-    // Priority: URL param > user preference > first account > fallback
-    const defaultAccount = urlAccountNumber
-        ? parseInt(urlAccountNumber, 10)
-        : data?.preferences?.default_account ?? data?.accounts?.[0]?.account_number ?? 306;
-
-    const [accountNumber, setAccountNumber] = useState<number | null>(null);
     const [showAccountInput, setShowAccountInput] = useState(false);
     const [accountInput, setAccountInput] = useState('');
+    // Local override only used for the "Override Account" input feature (not sidebar)
+    const [inputOverride, setInputOverride] = useState<number | null>(null);
 
-    // Update account number when data loads or URL changes
-    useEffect(() => {
-        if (urlAccountNumber) {
-            setAccountNumber(parseInt(urlAccountNumber, 10));
-        } else if (data?.preferences?.default_account) {
-            setAccountNumber(data.preferences.default_account);
-        } else if (data?.accounts?.[0]?.account_number) {
-            setAccountNumber(data.accounts[0].account_number);
-        }
-    }, [urlAccountNumber, data?.preferences?.default_account, data?.accounts]);
+    // URL override takes precedence, then input override, then preferences
+    const urlOverride = urlAccountNumber ? parseInt(urlAccountNumber, 10) : null;
+
+    // Account number priority: URL param > input override > user preference > first account
+    const accountNumber = urlOverride
+        ?? inputOverride
+        ?? data?.preferences?.default_account
+        ?? data?.accounts?.[0]?.account_number
+        ?? null;
 
     const handleAccountOverride = () => {
         const num = parseInt(accountInput, 10);
         if (!isNaN(num) && num > 0) {
-            setAccountNumber(num);
+            setInputOverride(num);
             setShowAccountInput(false);
             setAccountInput('');
         }
@@ -199,7 +120,7 @@ export default function ProjectsPage() {
                 <div className="px-4 lg:px-8">
                     <Suspense fallback={<MMQSkeleton />}>
                         {accountNumber ? (
-                            <ProjectsContent accountNumber={accountNumber} onAccountChange={setAccountNumber} />
+                            <ProjectsContent key={accountNumber} accountNumber={accountNumber} />
                         ) : (
                             <MMQSkeleton />
                         )}
