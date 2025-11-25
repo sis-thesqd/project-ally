@@ -66,7 +66,7 @@ export default function ProjectsPage() {
     const [accountInput, setAccountInput] = useState('');
     const [inputOverride, setInputOverride] = useState<number | null>(null);
     const [splitOutActive, setSplitOutActive] = useState(data?.preferences?.mmq_split_active ?? false);
-    const [selectedView, setSelectedView] = useState<Key>('board');
+    const [selectedView, setSelectedView] = useState<Key>(data?.preferences?.default_mmq_view ?? 'board');
 
     // Sync splitOutActive with preferences when data loads
     useEffect(() => {
@@ -75,9 +75,23 @@ export default function ProjectsPage() {
         }
     }, [data?.preferences?.mmq_split_active]);
 
+    // Sync selectedView with preferences when data loads
+    useEffect(() => {
+        if (data?.preferences?.default_mmq_view) {
+            setSelectedView(data.preferences.default_mmq_view);
+        }
+    }, [data?.preferences?.default_mmq_view]);
+
     const handleSplitOutActiveChange = (value: boolean) => {
         setSplitOutActive(value);
         updatePreferences({ mmq_split_active: value });
+    };
+
+    const handleViewChange = (value: Key) => {
+        setSelectedView(value);
+        if (value === 'board' || value === 'table') {
+            updatePreferences({ default_mmq_view: value });
+        }
     };
 
     // URL override takes precedence, then input override, then preferences
@@ -164,11 +178,11 @@ export default function ProjectsPage() {
                                         <NativeSelect
                                             aria-label="View"
                                             value={selectedView as string}
-                                            onChange={(event) => setSelectedView(event.target.value)}
+                                            onChange={(event) => handleViewChange(event.target.value)}
                                             options={viewTabs.map((tab) => ({ label: tab.label, value: tab.id }))}
                                             className="md:hidden"
                                         />
-                                        <Tabs selectedKey={selectedView} onSelectionChange={setSelectedView} className="w-fit max-md:hidden">
+                                        <Tabs selectedKey={selectedView} onSelectionChange={handleViewChange} className="w-fit max-md:hidden">
                                             <Tabs.List type="button-border" items={viewTabs}>
                                                 {(tab) => <Tabs.Item {...tab} />}
                                             </Tabs.List>

@@ -21,6 +21,7 @@ interface Preferences {
     default_account: number | null;
     default_theme: 'light' | 'dark' | null;
     mmq_split_active: boolean | null;
+    default_mmq_view: 'board' | 'table' | null;
 }
 
 interface SidebarItem {

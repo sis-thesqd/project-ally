@@ -5,6 +5,7 @@ interface PreferencesBody {
     default_account?: number;
     default_theme?: 'light' | 'dark';
     mmq_split_active?: boolean;
+    default_mmq_view?: 'board' | 'table';
 }
 
 export async function POST(request: NextRequest) {
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
         }
 
         const body: PreferencesBody = await request.json();
-        const { default_account, default_theme, mmq_split_active } = body;
+        const { default_account, default_theme, mmq_split_active, default_mmq_view } = body;
 
         const { data, error } = await supabase
             .from('pa_user_preferences')
@@ -30,6 +31,7 @@ export async function POST(request: NextRequest) {
                     default_account,
                     default_theme,
                     mmq_split_active,
+                    default_mmq_view,
                     row_updated: new Date().toISOString(),
                 },
                 {
