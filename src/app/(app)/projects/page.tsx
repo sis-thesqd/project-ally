@@ -22,9 +22,10 @@ interface ProjectsContentProps {
     accountNumber: number;
     splitOutActive: boolean;
     autoCollapseEmpty: boolean;
+    viewType: 'board' | 'table';
 }
 
-function ProjectsContent({ accountNumber, splitOutActive, autoCollapseEmpty }: ProjectsContentProps) {
+function ProjectsContent({ accountNumber, splitOutActive, autoCollapseEmpty, viewType }: ProjectsContentProps) {
     const apiUrl = process.env.NEXT_PUBLIC_MMQ_API_URL || '';
 
     const handleError = useCallback((error: any) => {
@@ -52,6 +53,7 @@ function ProjectsContent({ accountNumber, splitOutActive, autoCollapseEmpty }: P
             showTitle={false}
             splitOutActive={splitOutActive}
             autoCollapseEmpty={autoCollapseEmpty}
+            viewType={viewType}
             onError={handleError}
             onDataLoaded={handleDataLoaded}
             onChangesApplied={handleChangesApplied}
@@ -233,16 +235,17 @@ export default function ProjectsPage() {
                 </div>
             </div>
             <div className="px-4 lg:px-8">
-                <Suspense fallback={<MMQSkeleton />}>
+                <Suspense fallback={<MMQSkeleton splitOutActive={splitOutActive} viewType={selectedView as 'board' | 'table'} />}>
                     {accountNumber ? (
                         <ProjectsContent
-                            key={`${accountNumber}-${splitOutActive}-${autoCollapseEmpty}`}
+                            key={`${accountNumber}-${splitOutActive}-${autoCollapseEmpty}-${selectedView}`}
                             accountNumber={accountNumber}
                             splitOutActive={splitOutActive}
                             autoCollapseEmpty={autoCollapseEmpty}
+                            viewType={selectedView as 'board' | 'table'}
                         />
                     ) : (
-                        <MMQSkeleton />
+                        <MMQSkeleton splitOutActive={splitOutActive} viewType={selectedView as 'board' | 'table'} />
                     )}
                 </Suspense>
             </div>
