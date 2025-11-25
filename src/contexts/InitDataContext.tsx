@@ -20,6 +20,7 @@ interface AccountItem {
 interface Preferences {
     default_account: number | null;
     default_theme: 'light' | 'dark' | null;
+    mmq_split_active: boolean | null;
 }
 
 interface SidebarItem {

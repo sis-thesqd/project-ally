@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 interface PreferencesBody {
     default_account?: number;
     default_theme?: 'light' | 'dark';
+    mmq_split_active?: boolean;
 }
 
 export async function POST(request: NextRequest) {
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
         }
 
         const body: PreferencesBody = await request.json();
-        const { default_account, default_theme } = body;
+        const { default_account, default_theme, mmq_split_active } = body;
 
         const { data, error } = await supabase
             .from('pa_user_preferences')
@@ -28,6 +29,7 @@ export async function POST(request: NextRequest) {
                     email: user.email,
                     default_account,
                     default_theme,
+                    mmq_split_active,
                     row_updated: new Date().toISOString(),
                 },
                 {

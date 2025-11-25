@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, Suspense, useCallback } from 'react';
+import React, { useState, Suspense, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { MMQ, MMQSkeleton } from '@sis-thesqd/mmq-component';
 import { Settings01 } from '@untitledui/icons';
@@ -51,13 +51,25 @@ function ProjectsContent({ accountNumber, splitOutActive }: ProjectsContentProps
 
 export default function ProjectsPage() {
     const searchParams = useSearchParams();
-    const { data } = useInitData();
+    const { data, updatePreferences } = useInitData();
     const urlAccountNumber = searchParams.get('accountNumber');
 
     const [isOptionsOpen, setIsOptionsOpen] = useState(false);
     const [accountInput, setAccountInput] = useState('');
     const [inputOverride, setInputOverride] = useState<number | null>(null);
-    const [splitOutActive, setSplitOutActive] = useState(false);
+    const [splitOutActive, setSplitOutActive] = useState(data?.preferences?.mmq_split_active ?? false);
+
+    // Sync splitOutActive with preferences when data loads
+    useEffect(() => {
+        if (data?.preferences?.mmq_split_active !== undefined && data?.preferences?.mmq_split_active !== null) {
+            setSplitOutActive(data.preferences.mmq_split_active);
+        }
+    }, [data?.preferences?.mmq_split_active]);
+
+    const handleSplitOutActiveChange = (value: boolean) => {
+        setSplitOutActive(value);
+        updatePreferences({ mmq_split_active: value });
+    };
 
     // URL override takes precedence, then input override, then preferences
     const urlOverride = urlAccountNumber ? parseInt(urlAccountNumber, 10) : null;
@@ -146,7 +158,7 @@ export default function ProjectsPage() {
                                                 label="Split Active Column"
                                                 hint=""
                                                 isSelected={splitOutActive}
-                                                onChange={setSplitOutActive}
+                                                onChange={handleSplitOutActiveChange}
                                             />
                                         </div>
                                     </div>
