@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, Suspense, useCallback, useEffect } from 'react';
+import type { Key } from 'react-aria-components';
 import { useSearchParams } from 'next/navigation';
 import { MMQ, MMQSkeleton } from '@sis-thesqd/mmq-component';
 import { Settings01 } from '@untitledui/icons';
@@ -8,7 +9,14 @@ import { Button } from '@/components/base/buttons/button';
 import { Toggle } from '@/components/base/toggle/toggle';
 import { SlideoutMenu } from '@/components/application/slideout-menus/slideout-menu';
 import { PinInput } from '@/components/base/pin-input/pin-input';
+import { Tabs } from '@/components/application/tabs/tabs';
+import { NativeSelect } from '@/components/base/select/select-native';
 import { useInitData } from '@/contexts/InitDataContext';
+
+const viewTabs = [
+    { id: 'board', label: 'Board' },
+    { id: 'table', label: 'Table' },
+];
 
 interface ProjectsContentProps {
     accountNumber: number;
@@ -58,6 +66,7 @@ export default function ProjectsPage() {
     const [accountInput, setAccountInput] = useState('');
     const [inputOverride, setInputOverride] = useState<number | null>(null);
     const [splitOutActive, setSplitOutActive] = useState(data?.preferences?.mmq_split_active ?? false);
+    const [selectedView, setSelectedView] = useState<Key>('board');
 
     // Sync splitOutActive with preferences when data loads
     useEffect(() => {
@@ -149,19 +158,38 @@ export default function ProjectsPage() {
                                         )}
                                     </div>
 
-                                    {/* Display Options Section */}
+                                    {/* View Type Section */}
                                     <div className="flex flex-col gap-4">
-                                        <p className="text-sm font-semibold text-primary">Display Options</p>
-                                        <div className="flex flex-col gap-3 pl-2">
-                                            <Toggle
-                                                size="md"
-                                                label="Split Active Column"
-                                                hint=""
-                                                isSelected={splitOutActive}
-                                                onChange={handleSplitOutActiveChange}
-                                            />
-                                        </div>
+                                        <p className="text-sm font-medium text-secondary">View</p>
+                                        <NativeSelect
+                                            aria-label="View"
+                                            value={selectedView as string}
+                                            onChange={(event) => setSelectedView(event.target.value)}
+                                            options={viewTabs.map((tab) => ({ label: tab.label, value: tab.id }))}
+                                            className="md:hidden"
+                                        />
+                                        <Tabs selectedKey={selectedView} onSelectionChange={setSelectedView} className="w-fit max-md:hidden">
+                                            <Tabs.List type="button-border" items={viewTabs}>
+                                                {(tab) => <Tabs.Item {...tab} />}
+                                            </Tabs.List>
+                                        </Tabs>
                                     </div>
+
+                                    {/* Display Options Section - Only show for Board view */}
+                                    {selectedView === 'board' && (
+                                        <div className="flex flex-col gap-4">
+                                            <p className="text-sm font-medium text-secondary">Display Options</p>
+                                            <div className="flex flex-col gap-3 pl-2">
+                                                <Toggle
+                                                    size="md"
+                                                    label="Split Active Column"
+                                                    hint=""
+                                                    isSelected={splitOutActive}
+                                                    onChange={handleSplitOutActiveChange}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </SlideoutMenu.Content>
                         </SlideoutMenu>

@@ -130,7 +130,7 @@ export const NavAccountMenu = ({
                     {/* Menu items */}
                     <div className={cx("flex flex-col gap-0.5 py-1.5", accounts.length > 0 && "border-t border-secondary")}>
                         <NavAccountCardMenuItem
-                            label="Account settings"
+                            label="Settings"
                             icon={Settings01}
                             shortcut="⌘S"
                             onClick={onSettingsClick}
