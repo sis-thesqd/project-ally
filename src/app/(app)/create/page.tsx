@@ -79,20 +79,20 @@ export default function CreatePage() {
     // Show loading state while auth data is loading
     if (!isReady || !data) {
         return (
-            <main className="flex flex-1 flex-col p-8">
-                <div className="mb-8">
-                    <h1 className="text-2xl font-semibold text-primary">Create New Request</h1>
-                    <p className="text-secondary mt-1">Loading...</p>
+            <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
+                <div className="mb-6 sm:mb-8 max-w-7xl mx-auto w-full">
+                    <h1 className="text-xl sm:text-2xl font-semibold text-primary">New Project Request</h1>
+                    <p className="text-secondary mt-1 text-sm sm:text-base">Loading...</p>
                 </div>
             </main>
         );
     }
 
     return (
-        <main className="flex flex-1 flex-col p-8">
-            <div className="mb-8">
-                <h1 className="text-2xl font-semibold text-primary">Create New Request</h1>
-                <p className="text-secondary mt-1">Select the projects you need for your request.</p>
+        <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
+            <div className="mb-6 sm:mb-8 max-w-7xl mx-auto w-full">
+                <h1 className="text-xl sm:text-2xl font-semibold text-primary">New Project Request</h1>
+                <p className="text-secondary mt-1 text-sm sm:text-base">Select the deliverables you need for your project.</p>
             </div>
 
             <ProjectSelection
