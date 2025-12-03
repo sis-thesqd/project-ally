@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, Mail01 } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
 import { SocialButton } from "@/components/base/buttons/social-button";
@@ -10,7 +10,7 @@ import { PinInput } from "@/components/base/pin-input/pin-input";
 import { FeaturedIcon } from "@/components/foundations/featured-icon/featured-icon";
 import { BackgroundPattern } from "@/components/shared-assets/background-patterns";
 import { createClient } from "@/utils/supabase/client";
-import { authConfig, isSignInMethodEnabled } from "@/config";
+import { authConfig, isSignInMethodEnabled, devAuthConfig } from "@/config";
 
 type AuthStep = "email" | "otp";
 
@@ -21,8 +21,17 @@ export default function LoginPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
+    const [isDevLogin, setIsDevLogin] = useState(false);
 
     const supabase = createClient();
+
+    // Auto-login in development mode
+    useEffect(() => {
+        if (devAuthConfig.enabled) {
+            setIsDevLogin(true);
+            window.location.href = "/api/auth/dev-login";
+        }
+    }, []);
 
     const handleSendOtp = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -143,6 +152,18 @@ export default function LoginPage() {
 
     const isOtpEnabled = isSignInMethodEnabled("otp");
     const isGoogleEnabled = isSignInMethodEnabled("google");
+
+    // Show loading state during dev auto-login
+    if (isDevLogin) {
+        return (
+            <section className="relative flex min-h-screen items-center justify-center overflow-hidden bg-primary px-4 py-12">
+                <div className="flex flex-col items-center gap-4 text-center">
+                    <img src="/logos/Badge Slanted_Blue-01.svg" alt="Logo" className="h-12" />
+                    <p className="text-md text-tertiary">Signing in as {devAuthConfig.email}...</p>
+                </div>
+            </section>
+        );
+    }
 
     // Email entry step
     if (step === "email") {

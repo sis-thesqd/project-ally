@@ -8,6 +8,15 @@ export type SignInMethod = {
     enabled: boolean;
 };
 
+/**
+ * Development auto-login configuration
+ * Only active when NODE_ENV === 'development'
+ */
+export const devAuthConfig = {
+    enabled: process.env.NODE_ENV === "development",
+    email: "jacob@churchmediasquad.com",
+};
+
 export const authConfig = {
     /**
      * Available sign-in methods for the login page

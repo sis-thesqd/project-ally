@@ -206,18 +206,18 @@ export default function ProjectsPage() {
                                         </Tabs>
                                     </div>
 
-                                    {/* Display Options Section - Only show for Board view */}
-                                    {selectedView === 'board' && (
-                                        <div className="flex flex-col gap-4">
-                                            <p className="text-sm font-medium text-secondary">Display Options</p>
-                                            <div className="flex flex-col gap-3 pl-2">
-                                                <Toggle
-                                                    size="md"
-                                                    label="Split Active Column"
-                                                    hint=""
-                                                    isSelected={splitOutActive}
-                                                    onChange={handleSplitOutActiveChange}
-                                                />
+                                    {/* Display Options Section */}
+                                    <div className="flex flex-col gap-4">
+                                        <p className="text-sm font-medium text-secondary">Display Options</p>
+                                        <div className="flex flex-col gap-3 pl-2">
+                                            <Toggle
+                                                size="md"
+                                                label="Split Active Column"
+                                                hint=""
+                                                isSelected={splitOutActive}
+                                                onChange={handleSplitOutActiveChange}
+                                            />
+                                            {selectedView === 'board' && (
                                                 <Toggle
                                                     size="md"
                                                     label="Auto-Collapse Empty Lists"
@@ -225,9 +225,9 @@ export default function ProjectsPage() {
                                                     isSelected={autoCollapseEmpty}
                                                     onChange={handleAutoCollapseEmptyChange}
                                                 />
-                                            </div>
+                                            )}
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
                             </SlideoutMenu.Content>
                         </SlideoutMenu>
