@@ -3,6 +3,7 @@
 @import "./typography.css";
 
 @source "../../node_modules/@sis-thesqd/mmq-component/dist/**/*.{js,mjs}";
+@source "../../node_modules/@sis-thesqd/prf-project-selection/dist/**/*.{js,mjs}";
 
 @plugin "@tailwindcss/typography";
 @plugin "tailwindcss-react-aria-components";

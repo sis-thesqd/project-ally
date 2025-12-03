@@ -49,11 +49,21 @@ export default function CreatePage() {
             ? data.accounts.find((a) => a.account_number === defaultAccountNumber)
             : data.accounts[0];
 
-        return {
+        const result = {
             accountId: currentAccount?.prf_account_id ?? 0,
             memberId: currentAccount?.account_number ?? 0,
             userId: data.clickup_id?.toString() ?? "",
         };
+
+        // Debug logging
+        console.log("[Create] Auth data:", {
+            ...result,
+            currentAccount,
+            clickup_id: data.clickup_id,
+            accounts: data.accounts,
+        });
+
+        return result;
     }, [data]);
 
     const handleContinue = useCallback((selectedIds: number[]) => {
