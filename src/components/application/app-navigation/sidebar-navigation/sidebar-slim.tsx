@@ -3,7 +3,7 @@
 import React from "react";
 import type { FC } from "react";
 import { useEffect, useRef, useState } from "react";
-import { LogOut01, Moon01, Settings01 } from "@untitledui/icons";
+import { LogOut01, Moon01, Plus, Settings01 } from "@untitledui/icons";
 import { AnimatePresence, motion } from "motion/react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
@@ -131,6 +131,16 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                         alt="Logo"
                         className="h-8"
                     />
+                </div>
+
+                <div className="mt-4 flex justify-center px-3">
+                    <a
+                        href="/create"
+                        className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-800 transition-colors hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600"
+                        title="Create new"
+                    >
+                        <Plus className="h-5 w-5 text-gray-100" />
+                    </a>
                 </div>
 
                 <ul className="mt-4 flex flex-col gap-0.5 px-3">
@@ -266,6 +276,16 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                 <aside className="group flex h-full max-h-full w-full max-w-full flex-col justify-between overflow-y-auto bg-primary pt-4">
                     <div className="px-4">
                         <img src="/logos/Badge Slanted_Blue-01.svg" alt="Logo" className="h-10" />
+                    </div>
+
+                    <div className="mt-4 px-4">
+                        <a
+                            href="/create"
+                            className="flex items-center gap-3 rounded-lg bg-gray-800 px-3 py-2.5 transition-colors hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600"
+                        >
+                            <Plus className="h-5 w-5 text-gray-100" />
+                            <span className="text-sm font-medium text-gray-100">Create New</span>
+                        </a>
                     </div>
 
                     <NavList items={items} />

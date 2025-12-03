@@ -48,9 +48,9 @@ function ProjectsContent({ accountNumber, splitOutActive, autoCollapseEmpty, vie
             accountNumber={accountNumber}
             supabaseUrl=""
             supabaseKey=""
-            dataEndpoint={`${apiUrl}/api/queue-data`}
-            reorderEndpoint={`${apiUrl}/api/reorder`}
-            playPauseEndpoint={`${apiUrl}/api/play-pause`}
+            dataEndpoint={`${apiUrl}/api/mmq/queue-data`}
+            reorderEndpoint={`${apiUrl}/api/mmq/reorder`}
+            playPauseEndpoint={`${apiUrl}/api/mmq/play-pause`}
             showAccountOverride={false}
             showCountdownTimers={true}
             showTitle={false}

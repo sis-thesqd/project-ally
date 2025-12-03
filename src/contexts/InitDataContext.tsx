@@ -15,6 +15,7 @@ interface PageItem {
 interface AccountItem {
     account_number: number;
     church_name: string;
+    prf_account_id: number | null;
 }
 
 interface Preferences {
@@ -38,6 +39,7 @@ interface InitData {
     name: string | null;
     employee: boolean;
     profile_picture: string | null;
+    clickup_id: number | null;
     preferences: Preferences;
     accounts: AccountItem[];
     pages: PageItem[];
