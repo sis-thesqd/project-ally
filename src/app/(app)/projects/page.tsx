@@ -11,7 +11,7 @@ import { Toggle } from '@/components/base/toggle/toggle';
 import { SlideoutMenu } from '@/components/application/slideout-menus/slideout-menu';
 import { PinInput } from '@/components/base/pin-input/pin-input';
 import { Tabs } from '@/components/application/tabs/tabs';
-import { NativeSelect } from '@/components/base/select/select-native';
+import { Select } from '@/components/base/select/select';
 import { useInitData } from '@/contexts/InitDataContext';
 
 const viewTabs = [
@@ -114,7 +114,8 @@ export default function ProjectsPage() {
         updatePreferences({ mmq_split_active: value });
     };
 
-    const handleViewChange = (value: Key) => {
+    const handleViewChange = (value: Key | null) => {
+        if (!value) return;
         setSelectedView(value);
         if (value === 'board' || value === 'table') {
             updatePreferences({ default_mmq_view: value });
@@ -157,7 +158,7 @@ export default function ProjectsPage() {
     };
 
     return (
-        <main className="flex min-w-0 flex-1 flex-col gap-8 pt-8 pb-12 overflow-y-hidden lg:overflow-y-auto">
+        <main className="flex min-w-0 flex-1 flex-col gap-8 pt-8 pb-12 overflow-y-auto">
             <div className="flex flex-row items-center justify-between gap-4 px-4 lg:px-8">
                 <p className="text-xl font-semibold text-primary lg:text-display-xs">MyProjects</p>
                 <div className="flex gap-3">
@@ -212,13 +213,16 @@ export default function ProjectsPage() {
                                     {/* View Type Section */}
                                     <div className="flex flex-col gap-4">
                                         <p className="text-sm font-medium text-secondary">View</p>
-                                        <NativeSelect
+                                        <Select
                                             aria-label="View"
-                                            value={selectedView as string}
-                                            onChange={(event) => handleViewChange(event.target.value)}
-                                            options={viewTabs.map((tab) => ({ label: tab.label, value: tab.id }))}
+                                            selectedKey={selectedView as string}
+                                            onSelectionChange={handleViewChange}
+                                            items={viewTabs}
+                                            size="md"
                                             className="md:hidden"
-                                        />
+                                        >
+                                            {(item) => <Select.Item id={item.id}>{item.label}</Select.Item>}
+                                        </Select>
                                         <Tabs selectedKey={selectedView} onSelectionChange={handleViewChange} className="w-fit max-md:hidden">
                                             <Tabs.List type="button-border" items={viewTabs}>
                                                 {(tab) => <Tabs.Item {...tab} />}

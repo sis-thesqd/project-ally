@@ -7,6 +7,7 @@ interface PreferencesBody {
     mmq_split_active?: boolean;
     default_mmq_view?: 'board' | 'table';
     mmq_auto_collapse_empty?: boolean;
+    mmq_table_filter?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -34,6 +35,7 @@ export async function POST(request: NextRequest) {
         if (body.mmq_split_active !== undefined) updateData.mmq_split_active = body.mmq_split_active;
         if (body.default_mmq_view !== undefined) updateData.default_mmq_view = body.default_mmq_view;
         if (body.mmq_auto_collapse_empty !== undefined) updateData.mmq_auto_collapse_empty = body.mmq_auto_collapse_empty;
+        if (body.mmq_table_filter !== undefined) updateData.mmq_table_filter = body.mmq_table_filter;
 
         const { data, error } = await supabase
             .from('pa_user_preferences')
