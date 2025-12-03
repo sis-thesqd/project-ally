@@ -23,6 +23,7 @@ interface Preferences {
     mmq_split_active: boolean | null;
     default_mmq_view: 'board' | 'table' | null;
     mmq_auto_collapse_empty: boolean | null;
+    mmq_table_filter: string | null;
 }
 
 interface SidebarItem {

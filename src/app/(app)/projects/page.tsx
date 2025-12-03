@@ -4,6 +4,7 @@ import React, { useState, Suspense, useCallback, useEffect } from 'react';
 import type { Key } from 'react-aria-components';
 import { useSearchParams } from 'next/navigation';
 import { MMQ, MMQSkeleton } from '@sis-thesqd/mmq-component';
+import type { TableFilterType } from '@sis-thesqd/mmq-component';
 import { Settings01 } from '@untitledui/icons';
 import { Button } from '@/components/base/buttons/button';
 import { Toggle } from '@/components/base/toggle/toggle';
@@ -23,9 +24,11 @@ interface ProjectsContentProps {
     splitOutActive: boolean;
     autoCollapseEmpty: boolean;
     viewType: 'board' | 'table';
+    initialTableFilter?: TableFilterType;
+    onTableFilterChange?: (filter: TableFilterType) => void;
 }
 
-function ProjectsContent({ accountNumber, splitOutActive, autoCollapseEmpty, viewType }: ProjectsContentProps) {
+function ProjectsContent({ accountNumber, splitOutActive, autoCollapseEmpty, viewType, initialTableFilter, onTableFilterChange }: ProjectsContentProps) {
     const apiUrl = process.env.NEXT_PUBLIC_MMQ_API_URL || '';
 
     const handleError = useCallback((error: any) => {
@@ -54,6 +57,8 @@ function ProjectsContent({ accountNumber, splitOutActive, autoCollapseEmpty, vie
             splitOutActive={splitOutActive}
             autoCollapseEmpty={autoCollapseEmpty}
             viewType={viewType}
+            initialTableFilter={initialTableFilter}
+            onTableFilterChange={onTableFilterChange}
             onError={handleError}
             onDataLoaded={handleDataLoaded}
             onChangesApplied={handleChangesApplied}
@@ -72,6 +77,9 @@ export default function ProjectsPage() {
     const [splitOutActive, setSplitOutActive] = useState(data?.preferences?.mmq_split_active ?? false);
     const [selectedView, setSelectedView] = useState<Key>(data?.preferences?.default_mmq_view ?? 'board');
     const [autoCollapseEmpty, setAutoCollapseEmpty] = useState(data?.preferences?.mmq_auto_collapse_empty ?? true);
+    const [tableFilter, setTableFilter] = useState<TableFilterType | undefined>(
+        (data?.preferences?.mmq_table_filter as TableFilterType) || undefined
+    );
 
     // Sync splitOutActive with preferences when data loads
     useEffect(() => {
@@ -94,6 +102,13 @@ export default function ProjectsPage() {
         }
     }, [data?.preferences?.mmq_auto_collapse_empty]);
 
+    // Sync tableFilter with preferences when data loads
+    useEffect(() => {
+        if (data?.preferences?.mmq_table_filter) {
+            setTableFilter(data.preferences.mmq_table_filter as TableFilterType);
+        }
+    }, [data?.preferences?.mmq_table_filter]);
+
     const handleSplitOutActiveChange = (value: boolean) => {
         setSplitOutActive(value);
         updatePreferences({ mmq_split_active: value });
@@ -109,6 +124,11 @@ export default function ProjectsPage() {
     const handleAutoCollapseEmptyChange = (value: boolean) => {
         setAutoCollapseEmpty(value);
         updatePreferences({ mmq_auto_collapse_empty: value });
+    };
+
+    const handleTableFilterChange = (filter: TableFilterType) => {
+        setTableFilter(filter);
+        updatePreferences({ mmq_table_filter: filter });
     };
 
     // URL override takes precedence, then input override, then preferences
@@ -238,11 +258,13 @@ export default function ProjectsPage() {
                 <Suspense fallback={<MMQSkeleton splitOutActive={splitOutActive} viewType={selectedView as 'board' | 'table'} />}>
                     {accountNumber ? (
                         <ProjectsContent
-                            key={`${accountNumber}-${splitOutActive}-${autoCollapseEmpty}-${selectedView}`}
+                            key={`${accountNumber}-${splitOutActive}-${autoCollapseEmpty}-${selectedView}-${tableFilter}`}
                             accountNumber={accountNumber}
                             splitOutActive={splitOutActive}
                             autoCollapseEmpty={autoCollapseEmpty}
                             viewType={selectedView as 'board' | 'table'}
+                            initialTableFilter={tableFilter}
+                            onTableFilterChange={handleTableFilterChange}
                         />
                     ) : (
                         <MMQSkeleton splitOutActive={splitOutActive} viewType={selectedView as 'board' | 'table'} />
