@@ -72,7 +72,7 @@ export default function CreatePage() {
                     <div>
                         <h1 className="text-xl sm:text-2xl font-semibold text-primary">New Project Request</h1>
                         <p className="text-secondary mt-1 text-sm sm:text-base">
-                            {currentMode === "simple" ? "Describe your project and let AI suggest the right deliverables." : "Select the deliverables you need for your project."}
+                            {currentMode === "advanced" ? "Describe your project and let AI suggest the right deliverables." : null}
                         </p>
                     </div>
                     <ButtonGroup selectedKeys={mode} onSelectionChange={setMode}>
