@@ -7,6 +7,28 @@ import { ProgressBarHalfCircle } from "@/components/base/progress-indicators/pro
 import { cache } from "@/utils/cache";
 import { ProgressCircleSkeleton } from "./progress-circle-skeleton";
 
+// Returns a color that transitions from green -> yellow -> red based on percentage (0-100+)
+const getUsageColor = (percentage: number): string => {
+    // Clamp percentage for color calculation (allow over 100% to be full red)
+    const clamped = Math.min(Math.max(percentage, 0), 100);
+    
+    if (clamped <= 50) {
+        // Green to Yellow (0-50%)
+        const ratio = clamped / 50;
+        const r = Math.round(34 + (234 - 34) * ratio);  // 34 -> 234
+        const g = Math.round(197 + (179 - 197) * ratio); // 197 -> 179
+        const b = Math.round(94 + (8 - 94) * ratio);     // 94 -> 8
+        return `rgb(${r}, ${g}, ${b})`;
+    } else {
+        // Yellow to Red (50-100%)
+        const ratio = (clamped - 50) / 50;
+        const r = Math.round(234 + (239 - 234) * ratio); // 234 -> 239
+        const g = Math.round(179 - 179 * ratio);          // 179 -> 0
+        const b = Math.round(8 + (68 - 8) * ratio);       // 8 -> 68
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+};
+
 interface TaskStatsResponse {
     account: number;
     active_tasks: number;
@@ -87,6 +109,7 @@ export const ProjectCountCard = ({ selectedAccount }: ProjectCountCardProps) => 
                                 max={taskStats?.cap ?? 100}
                                 value={taskStats?.active_tasks ?? 0}
                                 valueFormatter={(value) => value}
+                                strokeColor={taskStats ? getUsageColor((taskStats.active_tasks / taskStats.cap) * 100) : undefined}
                             />
                         </div>
                         <div className="flex flex-col gap-1 text-center">

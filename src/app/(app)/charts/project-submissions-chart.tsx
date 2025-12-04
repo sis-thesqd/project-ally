@@ -195,7 +195,8 @@ export const ProjectSubmissionsChart = ({ selectedAccount }: ProjectSubmissionsC
                                 name="Projects"
                                 type="monotone"
                                 fill="currentColor"
-                                maxBarSize={isDesktop ? 32 : 16}
+                                maxBarSize={isDesktop ? 56 : 24}
+                                barSize={isDesktop ? 48 : 20}
                                 radius={[6, 6, 0, 0]}
                             />
                         </BarChart>

@@ -9,6 +9,7 @@ interface ProgressBarProps {
     size: "xxs" | "xs" | "sm" | "md" | "lg";
     label?: string;
     valueFormatter?: (value: number, valueInPercentage: number) => string | number;
+    strokeColor?: string;
 }
 
 const sizes = sortCx({
@@ -112,7 +113,7 @@ export const ProgressBarCircle = ({ value, min = 0, max = 100, size, label, valu
     );
 };
 
-export const ProgressBarHalfCircle = ({ value, min = 0, max = 100, size, label, valueFormatter }: ProgressBarProps) => {
+export const ProgressBarHalfCircle = ({ value, min = 0, max = 100, size, label, valueFormatter, strokeColor }: ProgressBarProps) => {
     const percentage = Math.round(((value - min) * 100) / (max - min));
 
     const sizeConfig = sizes[size];
@@ -147,11 +148,12 @@ export const ProgressBarHalfCircle = ({ value, min = 0, max = 100, size, label, 
 
                     {/* Foreground half-circle */}
                     <circle
-                        className="origin-center -scale-x-100 stroke-fg-brand-primary"
+                        className={clx("origin-center -scale-x-100", !strokeColor && "stroke-fg-brand-primary")}
                         cx={cx}
                         cy={cy}
                         r={radius}
                         fill="none"
+                        stroke={strokeColor}
                         strokeWidth={strokeWidth}
                         pathLength="100"
                         strokeDasharray="100"
