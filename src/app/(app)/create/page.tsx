@@ -1,41 +1,19 @@
 "use client";
 
-import { ProjectSelection, type ProjectSelectionProps } from "@sis-thesqd/prf-project-selection";
-import { useCallback, useMemo } from "react";
+import { ProjectSelection, type SelectionMode } from "@sis-thesqd/prf-project-selection";
+import { useCallback, useMemo, useState } from "react";
+import type { Key } from "react-aria";
 import { useInitData } from "@/contexts/InitDataContext";
+import { ButtonGroup, ButtonGroupItem } from "@/components/base/button-group/button-group";
+import { projectSelectionApiConfig, projectSelectionFilterConfig } from "@/config";
+import { BoxIcon, MagicWandIcon } from "@/components/icons";
 
-// API configuration - update these endpoints based on your deployment
-const API_CONFIG: ProjectSelectionProps["apiConfig"] = {
-    projectsEndpoint: process.env.NEXT_PUBLIC_SQUAD_API_URL
-        ? `${process.env.NEXT_PUBLIC_SQUAD_API_URL}/api/projects/selection-types`
-        : "/api/projects/selection-types",
-    permissionsEndpoint: process.env.NEXT_PUBLIC_SQUAD_API_URL
-        ? `${process.env.NEXT_PUBLIC_SQUAD_API_URL}/api/projects/permissions`
-        : "/api/projects/permissions",
-    mostUsedEndpoint: process.env.NEXT_PUBLIC_SQUAD_API_URL
-        ? `${process.env.NEXT_PUBLIC_SQUAD_API_URL}/api/projects/most-used`
-        : "/api/projects/most-used",
-    turnaroundEndpoint: process.env.NEXT_PUBLIC_SQUAD_API_URL
-        ? `${process.env.NEXT_PUBLIC_SQUAD_API_URL}/api/projects/turnaround-time`
-        : "/api/projects/turnaround-time",
-};
-
-// Filter configuration
-const FILTER_CONFIG: ProjectSelectionProps["filterConfig"] = {
-    showSquadkitsFilter: true,
-    showMyKitsFilter: true,
-    showMostUsedFilter: true,
-    showAllProjectsFilter: true,
-    showDesignFilter: true,
-    showVideoFilter: true,
-    showSocialFilter: true,
-    showWebFilter: true,
-    showBrandFilter: true,
-    hideUnavailableProjects: false,
-};
 
 export default function CreatePage() {
     const { data, isReady } = useInitData();
+    const [mode, setMode] = useState<Set<Key>>(new Set(["simple"]));
+
+    const currentMode = (Array.from(mode)[0] as SelectionMode) || "simple";
 
     // Get auth data from InitDataContext
     const { accountId, memberId, userId } = useMemo(() => {
@@ -45,9 +23,7 @@ export default function CreatePage() {
 
         // Get the current account (default or first available)
         const defaultAccountNumber = data.preferences?.default_account;
-        const currentAccount = defaultAccountNumber
-            ? data.accounts.find((a) => a.account_number === defaultAccountNumber)
-            : data.accounts[0];
+        const currentAccount = defaultAccountNumber ? data.accounts.find((a) => a.account_number === defaultAccountNumber) : data.accounts[0];
 
         const result = {
             accountId: currentAccount?.prf_account_id ?? 0,
@@ -90,17 +66,30 @@ export default function CreatePage() {
 
     return (
         <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
+            {/* Header with mode toggle */}
             <div className="mb-6 sm:mb-8 max-w-7xl mx-auto w-full">
-                <h1 className="text-xl sm:text-2xl font-semibold text-primary">New Project Request</h1>
-                <p className="text-secondary mt-1 text-sm sm:text-base">Select the deliverables you need for your project.</p>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-xl sm:text-2xl font-semibold text-primary">New Project Request</h1>
+                        <p className="text-secondary mt-1 text-sm sm:text-base">
+                            {currentMode === "simple" ? "Describe your project and let AI suggest the right deliverables." : "Select the deliverables you need for your project."}
+                        </p>
+                    </div>
+                    <ButtonGroup selectedKeys={mode} onSelectionChange={setMode}>
+                        <ButtonGroupItem id="simple" iconLeading={MagicWandIcon}>Simple</ButtonGroupItem>
+                        <ButtonGroupItem id="advanced" iconLeading={BoxIcon}>Advanced</ButtonGroupItem>
+                    </ButtonGroup>
+                </div>
             </div>
 
+            {/* Project Selection with mode prop */}
             <ProjectSelection
                 accountId={accountId}
                 memberId={memberId}
                 userId={userId}
-                apiConfig={API_CONFIG}
-                filterConfig={FILTER_CONFIG}
+                apiConfig={projectSelectionApiConfig}
+                filterConfig={projectSelectionFilterConfig}
+                mode={currentMode}
                 defaultFilter="squadkits"
                 onContinue={handleContinue}
                 trackEvent={handleTrackEvent}

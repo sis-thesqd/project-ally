@@ -61,3 +61,37 @@ export function isSignInMethodEnabled(methodId: string): boolean {
 export function getEnabledSignInMethods(): SignInMethod[] {
     return authConfig.signInMethods.filter((m) => m.enabled);
 }
+
+/**
+ * Project Selection API Configuration
+ */
+export const projectSelectionApiConfig = {
+    projectsEndpoint: process.env.NEXT_PUBLIC_SQUAD_API_URL
+        ? `${process.env.NEXT_PUBLIC_SQUAD_API_URL}/api/projects/selection-types`
+        : "/api/projects/selection-types",
+    permissionsEndpoint: process.env.NEXT_PUBLIC_SQUAD_API_URL
+        ? `${process.env.NEXT_PUBLIC_SQUAD_API_URL}/api/projects/permissions`
+        : "/api/projects/permissions",
+    mostUsedEndpoint: process.env.NEXT_PUBLIC_SQUAD_API_URL
+        ? `${process.env.NEXT_PUBLIC_SQUAD_API_URL}/api/projects/most-used`
+        : "/api/projects/most-used",
+    turnaroundEndpoint: process.env.NEXT_PUBLIC_SQUAD_API_URL
+        ? `${process.env.NEXT_PUBLIC_SQUAD_API_URL}/api/projects/turnaround-time`
+        : "/api/projects/turnaround-time",
+} as const;
+
+/**
+ * Project Selection Filter Configuration
+ */
+export const projectSelectionFilterConfig = {
+    showSquadkitsFilter: true,
+    showMyKitsFilter: true,
+    showMostUsedFilter: true,
+    showAllProjectsFilter: true,
+    showDesignFilter: true,
+    showVideoFilter: true,
+    showSocialFilter: true,
+    showWebFilter: true,
+    showBrandFilter: true,
+    hideUnavailableProjects: false,
+} as const;
