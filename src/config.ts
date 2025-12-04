@@ -95,3 +95,15 @@ export const projectSelectionFilterConfig = {
     showBrandFilter: true,
     hideUnavailableProjects: false,
 } as const;
+
+/**
+ * General Info API Configuration
+ */
+export const generalInfoApiConfig = {
+    ministriesEndpoint: process.env.NEXT_PUBLIC_SQUAD_API_URL
+        ? `${process.env.NEXT_PUBLIC_SQUAD_API_URL}/api/general-info/ministries`
+        : "/api/general-info/ministries",
+    brandGuidesEndpoint: process.env.NEXT_PUBLIC_SQUAD_API_URL
+        ? `${process.env.NEXT_PUBLIC_SQUAD_API_URL}/api/general-info/brand-guides`
+        : "/api/general-info/brand-guides",
+} as const;

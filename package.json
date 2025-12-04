@@ -9,6 +9,7 @@
     },
     "dependencies": {
         "@sis-thesqd/mmq-component": "^1.0.55",
+        "@sis-thesqd/prf-general-info": "^1.0.6",
         "@sis-thesqd/prf-project-selection": "^1.0.0",
         "@supabase/ssr": "^0.7.0",
         "@supabase/supabase-js": "^2.84.0",

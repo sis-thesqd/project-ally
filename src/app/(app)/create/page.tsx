@@ -1,17 +1,23 @@
 "use client";
 
 import { ProjectSelection, type SelectionMode } from "@sis-thesqd/prf-project-selection";
+import { GeneralInfo, type GeneralInfoState } from "@sis-thesqd/prf-general-info";
 import { useCallback, useMemo, useState } from "react";
 import type { Key } from "react-aria";
 import { useInitData } from "@/contexts/InitDataContext";
 import { ButtonGroup, ButtonGroupItem } from "@/components/base/button-group/button-group";
-import { projectSelectionApiConfig, projectSelectionFilterConfig } from "@/config";
+import { projectSelectionApiConfig, projectSelectionFilterConfig, generalInfoApiConfig } from "@/config";
 import { BoxIcon, MagicWandIcon } from "@/components/icons";
+
+type FormStep = "project-selection" | "general-info";
 
 
 export default function CreatePage() {
     const { data, isReady } = useInitData();
     const [mode, setMode] = useState<Set<Key>>(new Set(["simple"]));
+    const [currentStep, setCurrentStep] = useState<FormStep>("project-selection");
+    const [selectedProjectIds, setSelectedProjectIds] = useState<number[]>([]);
+    const [generalInfoState, setGeneralInfoState] = useState<GeneralInfoState | null>(null);
 
     const currentMode = (Array.from(mode)[0] as SelectionMode) || "simple";
 
@@ -42,9 +48,29 @@ export default function CreatePage() {
         return result;
     }, [data]);
 
-    const handleContinue = useCallback((selectedIds: number[]) => {
+    // Handle project selection continue - move to general info step
+    const handleProjectSelectionContinue = useCallback((selectedIds: number[]) => {
         console.log("Selected project IDs:", selectedIds);
-        // TODO: Navigate to next step or handle selection
+        setSelectedProjectIds(selectedIds);
+        setCurrentStep("general-info");
+    }, []);
+
+    // Handle general info back - return to project selection
+    const handleGeneralInfoBack = useCallback(() => {
+        setCurrentStep("project-selection");
+    }, []);
+
+    // Handle general info continue - submit the form
+    const handleGeneralInfoContinue = useCallback(async (state: GeneralInfoState) => {
+        console.log("General info submitted:", state);
+        console.log("With selected projects:", selectedProjectIds);
+        setGeneralInfoState(state);
+        // TODO: Submit the complete form data to your API
+    }, [selectedProjectIds]);
+
+    // Handle general info state changes
+    const handleGeneralInfoStateChange = useCallback((state: GeneralInfoState) => {
+        setGeneralInfoState(state);
     }, []);
 
     const handleTrackEvent = useCallback((eventName: string, properties: Record<string, unknown>) => {
@@ -64,20 +90,52 @@ export default function CreatePage() {
         );
     }
 
+    // Render General Info step
+    if (currentStep === "general-info") {
+        return (
+            <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
+                {/* Header matching project selection */}
+                <div className="pb-8 max-w-7xl mx-auto w-full">
+                    <div className="min-h-[3.5rem] sm:min-h-0">
+                        <h1 className="text-xl sm:text-2xl font-semibold text-primary">General Information</h1>
+                        <p className="text-secondary mt-1 text-sm sm:text-base h-5 sm:h-6">
+                        Help us understand your project better by providing some basic information.
+                        </p>
+                    </div>
+                </div>
+
+                <div className="max-w-7xl mx-auto w-full">
+                    <GeneralInfo
+                        apiConfig={{
+                            memberId: String(memberId),
+                            ...generalInfoApiConfig,
+                        }}
+                        selectedProjectIds={selectedProjectIds}
+                        initialState={generalInfoState || undefined}
+                        onStateChange={handleGeneralInfoStateChange}
+                        onBack={handleGeneralInfoBack}
+                        onContinue={handleGeneralInfoContinue}
+                    />
+                </div>
+            </main>
+        );
+    }
+
+    // Render Project Selection step (default)
     return (
         <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
             {/* Header with mode toggle */}
-            <div className="mb-6 sm:mb-8 max-w-7xl mx-auto w-full">
-                <div className="flex items-center justify-between">
-                    <div>
+            <div className="pb-8 max-w-7xl mx-auto w-full">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-h-[3.5rem] sm:min-h-0">
                         <h1 className="text-xl sm:text-2xl font-semibold text-primary">New Project Request</h1>
-                        <p className="text-secondary mt-1 text-sm sm:text-base">
-                            {currentMode === "advanced" ? "Describe your project and let AI suggest the right deliverables." : null}
+                        <p className="text-secondary mt-1 text-sm sm:text-base h-5 sm:h-6">
+                            {currentMode === "advanced" ? "Select the deliverables you need for your project." : "\u00A0"}
                         </p>
                     </div>
-                    <ButtonGroup selectedKeys={mode} onSelectionChange={setMode}>
-                        <ButtonGroupItem id="simple" iconLeading={MagicWandIcon}>Simple</ButtonGroupItem>
-                        <ButtonGroupItem id="advanced" iconLeading={BoxIcon}>Advanced</ButtonGroupItem>
+                    <ButtonGroup selectedKeys={mode} onSelectionChange={setMode} className="w-full sm:w-auto shrink-0">
+                        <ButtonGroupItem id="simple" iconLeading={MagicWandIcon} className="flex-1 justify-center sm:flex-initial sm:justify-start">Simple</ButtonGroupItem>
+                        <ButtonGroupItem id="advanced" iconLeading={BoxIcon} className="flex-1 justify-center sm:flex-initial sm:justify-start">Advanced</ButtonGroupItem>
                     </ButtonGroup>
                 </div>
             </div>
@@ -91,7 +149,7 @@ export default function CreatePage() {
                 filterConfig={projectSelectionFilterConfig}
                 mode={currentMode}
                 defaultFilter="squadkits"
-                onContinue={handleContinue}
+                onContinue={handleProjectSelectionContinue}
                 trackEvent={handleTrackEvent}
                 className="max-w-7xl"
             />
