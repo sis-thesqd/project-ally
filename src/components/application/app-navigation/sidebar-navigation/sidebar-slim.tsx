@@ -181,7 +181,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                                 cx("group relative inline-flex rounded-full", (isPressed || isFocused) && "outline-2 outline-offset-2 outline-focus-ring")
                             }
                         >
-                            <Avatar status="online" src={profilePicture} initials={userInitials} size="md" alt={userName} />
+                            <Avatar src={profilePicture} initials={userInitials} size="md" alt={userName} />
                         </AriaButton>
                         <AriaPopover
                             placement="right bottom"
