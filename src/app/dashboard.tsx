@@ -1,43 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-    ArrowDown,
-    ArrowUp,
-    DownloadCloud02,
-    Edit01,
-    FilterLines,
-    Plus,
-    SearchLg,
-    Settings03,
-    Trash01,
-    UploadCloud02,
     Zap,
     Eye,
 } from "@untitledui/icons";
-import type { SortDescriptor } from "react-aria-components";
 import { Bar, BarChart, CartesianGrid, Label, Tooltip as RechartsTooltip, ResponsiveContainer, XAxis, YAxis } from "recharts";
-import { MetricChangeIndicator } from "@/components/application/metrics/metrics";
-import { PaginationCardMinimal } from "@/components/application/pagination/pagination";
-import { Table, TableCard, TableRowActionsDropdown } from "@/components/application/table/table";
-import { Avatar } from "@/components/base/avatar/avatar";
-import { Badge, BadgeWithDot, BadgeWithIcon } from "@/components/base/badges/badges";
 import { ButtonGroup, ButtonGroupItem } from "@/components/base/button-group/button-group";
 import { Button } from "@/components/base/buttons/button";
-import { ButtonUtility } from "@/components/base/buttons/button-utility";
-import { Input } from "@/components/base/input/input";
 import { ProgressBarHalfCircle } from "@/components/base/progress-indicators/progress-circles";
-import { ProgressBar } from "@/components/base/progress-indicators/progress-indicators";
 import { useBreakpoint } from "@/hooks/use-breakpoint";
 import { useInitData } from "@/contexts/InitDataContext";
-
-// Helper functions for formatting
-const formatDate = (timestamp: number): string =>
-    new Date(timestamp).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-    });
 
 interface WeeklyCount {
     week_start: string;
@@ -67,100 +40,6 @@ interface TaskStatsResponse {
     aa_queued_count: number;
 }
 
-const movements = [
-    {
-        id: "vendor-01",
-        vendor: {
-            name: "Ephemeral",
-            website: "ephemeral.io",
-            logoUrl: "https://www.untitledui.com/logos/images/Ephemeral.jpg",
-        },
-        rating: 60,
-        change: "5%",
-        changeTrend: "positive",
-        lastAssessed: new Date(2025, 0, 22).getTime(),
-        categories: ["Active", "Customer data", "Admin", "+4"],
-    },
-    {
-        id: "vendor-02",
-        vendor: {
-            name: "Stack3d Lab",
-            website: "stack3dlab.com",
-            logoUrl: "https://www.untitledui.com/logos/images/Stack3d Lab.jpg",
-        },
-        rating: 72,
-        change: "4%",
-        changeTrend: "negative",
-        lastAssessed: new Date(2025, 0, 20).getTime(),
-        categories: ["Active", "Business data", "Admin", "+4"],
-    },
-    {
-        id: "vendor-03",
-        vendor: {
-            name: "WarpSpeed",
-            website: "getwarpspeed.com",
-            logoUrl: "https://www.untitledui.com/logos/images/Warpspeed.jpg",
-        },
-        rating: 78,
-        change: "6%",
-        changeTrend: "positive",
-        lastAssessed: new Date(2025, 0, 24).getTime(),
-        categories: ["Active", "Customer data", "Financials"],
-    },
-    {
-        id: "vendor-04",
-        vendor: {
-            name: "CloudWatch",
-            website: "cloudwatch.app",
-            logoUrl: "https://www.untitledui.com/logos/images/CloudWatch.jpg",
-        },
-        rating: 38,
-        change: "8%",
-        changeTrend: "positive",
-        lastAssessed: new Date(2025, 0, 26).getTime(),
-        categories: ["Active", "Database access", "Admin"],
-    },
-    {
-        id: "vendor-05",
-        vendor: {
-            name: "ContrastAI",
-            website: "contrastai.com",
-            logoUrl: "https://www.untitledui.com/logos/images/ContrastAI.jpg",
-        },
-        rating: 42,
-        change: "1%",
-        changeTrend: "negative",
-        lastAssessed: new Date(2025, 0, 18).getTime(),
-        categories: ["Active", "Salesforce", "Admin", "+4"],
-    },
-    {
-        id: "vendor-06",
-        vendor: {
-            name: "Convergence",
-            website: "convergence.io",
-            logoUrl: "https://www.untitledui.com/logos/images/Convergence.jpg",
-        },
-        rating: 66,
-        change: "6%",
-        changeTrend: "negative",
-        lastAssessed: new Date(2025, 0, 28).getTime(),
-        categories: ["Active", "Business data", "Admin", "+4"],
-    },
-    {
-        id: "vendor-07",
-        vendor: {
-            name: "Sisyphus",
-            website: "sisyphus.com",
-            logoUrl: "https://www.untitledui.com/logos/images/Sisyphus.jpg",
-        },
-        rating: 91,
-        change: "2%",
-        changeTrend: "positive",
-        lastAssessed: new Date(2025, 0, 16).getTime(),
-        categories: ["Inactive", "Customer data", "Financials"],
-    },
-];
-
 const colors: Record<string, string> = {
     count: "text-utility-brand-600",
 };
@@ -169,7 +48,6 @@ type ViewMode = "weekly" | "monthly";
 
 export const Dashboard = () => {
     const isDesktop = useBreakpoint("lg");
-    const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>();
     const [viewMode, setViewMode] = useState<ViewMode>("monthly");
     const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -244,36 +122,6 @@ export const Dashboard = () => {
         }
     }, [statsData, viewMode]);
 
-    const sortedItems = useMemo(() => {
-        if (!sortDescriptor) return movements;
-
-        return movements.toSorted((a, b) => {
-            let first = a[sortDescriptor.column as keyof typeof a];
-            let second = b[sortDescriptor.column as keyof typeof b];
-
-            // Extract name from objects if needed
-            if (typeof first === "object" && first && "name" in first) {
-                first = first.name;
-            }
-            if (typeof second === "object" && second && "name" in second) {
-                second = second.name;
-            }
-
-            // Handle numbers
-            if (typeof first === "number" && typeof second === "number") {
-                return sortDescriptor.direction === "ascending" ? first - second : second - first;
-            }
-
-            // Handle strings
-            if (typeof first === "string" && typeof second === "string") {
-                const result = first.localeCompare(second);
-                return sortDescriptor.direction === "ascending" ? result : -result;
-            }
-
-            return 0;
-        });
-    }, [sortDescriptor]);
-
     const formatXAxisTick = (value: string) => {
         const date = new Date(value);
         if (viewMode === "weekly") {
@@ -308,15 +156,6 @@ export const Dashboard = () => {
         <main className="flex min-w-0 flex-1 flex-col gap-8 pt-8 pb-12 overflow-y-hidden lg:overflow-y-auto">
                 <div className="flex flex-col justify-between gap-4 px-4 lg:flex-row lg:px-8">
                     <p className="text-xl font-semibold text-primary lg:text-display-xs">Welcome back, {data?.name?.split(' ')[0] ?? 'User'}</p>
-                    <div className="flex gap-3">
-                        <Button size="md" color="tertiary" iconLeading={SearchLg} className="hidden lg:inline-flex" />
-                        <Button size="md" color="secondary" iconLeading={Settings03}>
-                            Customize
-                        </Button>
-                        <Button size="md" color="secondary" iconLeading={DownloadCloud02}>
-                            Export
-                        </Button>
-                    </div>
                 </div>
 
                 <div className="flex flex-col gap-6 px-4 lg:flex-row lg:px-8">
@@ -447,133 +286,11 @@ export const Dashboard = () => {
                             </div>
                         </div>
                         <div className="mt-auto flex items-center justify-end border-t border-secondary px-4 py-3 lg:px-6 lg:py-4">
-                            <Button size="md" color="secondary" iconLeading={Zap}>
+                            <Button size="md" color="secondary" iconLeading={Zap} href="https://churchmediasquad.com/pricing" target="_blank" rel="noopener noreferrer">
                                 Upgrade plan
                             </Button>
                         </div>
                     </div>
-                </div>
-
-                <div className="flex flex-col px-4 lg:px-8">
-                    <TableCard.Root className="-mx-4 rounded-none ring-0 lg:mx-0 lg:rounded-xl lg:ring-1">
-                        <TableCard.Header
-                            title="Vendor movements"
-                            description="Keep track of vendor and their security ratings."
-                            contentTrailing={
-                                <div className="flex gap-3">
-                                    <Button size="md" color="secondary" iconLeading={UploadCloud02}>
-                                        Import
-                                    </Button>
-                                    <Button size="md" iconLeading={Plus}>
-                                        Add vendor
-                                    </Button>
-
-                                    <div className="absolute top-0 right-4 lg:hidden">
-                                        <TableRowActionsDropdown />
-                                    </div>
-                                </div>
-                            }
-                            badge={
-                                <Badge size="sm" type="modern" className="hidden lg:inline-flex">
-                                    240 vendors
-                                </Badge>
-                            }
-                            className="border-b-0 py-0 lg:border-b lg:py-5"
-                        />
-
-                        <div className="flex flex-col justify-between gap-4 border-b border-secondary px-4 py-6 lg:flex-row lg:px-6 lg:py-3">
-                            <ButtonGroup defaultSelectedKeys={["all"]}>
-                                <ButtonGroupItem id="all">View all</ButtonGroupItem>
-                                <ButtonGroupItem id="monitored">Monitored</ButtonGroupItem>
-                                <ButtonGroupItem id="unmonitored">Unmonitored</ButtonGroupItem>
-                            </ButtonGroup>
-                            <div className="order-first flex gap-3 lg:order-none">
-                                <Input icon={SearchLg} shortcut aria-label="Search" placeholder="Search" size="sm" className="lg:w-74" />
-                                <Button size="md" color="secondary" iconLeading={FilterLines} className="hidden lg:inline-flex">
-                                    Filters
-                                </Button>
-                                <Button size="md" color="secondary" iconLeading={FilterLines} className="inline-flex lg:hidden" />
-                            </div>
-                        </div>
-
-                        <Table
-                            aria-label="Trades"
-                            selectionMode="multiple"
-                            defaultSelectedKeys={["vendor-01", "vendor-02", "vendor-03", "vendor-06", "vendor-07"]}
-                            sortDescriptor={sortDescriptor}
-                            onSortChange={setSortDescriptor}
-                        >
-                            <Table.Header>
-                                <Table.Head id="vendor" isRowHeader allowsSorting label="Vendor" className="w-full" />
-                                <Table.Head id="rating" label="Rating" className="min-w-35 lg:min-w-[345px]" />
-                                <Table.Head id="change" />
-                                <Table.Head id="lastAssessed" label="Last assessed" />
-                                <Table.Head id="categories" label="Categories" />
-                                <Table.Head id="actions" />
-                            </Table.Header>
-                            <Table.Body items={sortedItems}>
-                                {(movement) => (
-                                    <Table.Row id={movement.id} highlightSelectedRow={false}>
-                                        <Table.Cell className="lg:px-0">
-                                            <div className="group flex items-center gap-3">
-                                                <Avatar src={movement.vendor.logoUrl} alt={movement.vendor.name} size="md" />
-                                                <div>
-                                                    <p className="text-sm font-medium text-primary">{movement.vendor.name}</p>
-                                                    <p className="text-sm text-tertiary">{movement.vendor.website}</p>
-                                                </div>
-                                            </div>
-                                        </Table.Cell>
-                                        <Table.Cell>
-                                            <div className="flex items-center gap-3">
-                                                <ProgressBar min={0} max={100} value={movement.rating} />
-                                                <span className="hidden text-sm font-medium text-secondary lg:inline">{movement.rating}</span>
-                                            </div>
-                                        </Table.Cell>
-                                        <Table.Cell>
-                                            <BadgeWithIcon
-                                                iconLeading={movement.changeTrend === "positive" ? ArrowUp : ArrowDown}
-                                                size="sm"
-                                                type="modern"
-                                                color={movement.changeTrend === "positive" ? "success" : "error"}
-                                            >
-                                                {movement.change}
-                                            </BadgeWithIcon>
-                                        </Table.Cell>
-                                        <Table.Cell className="text-nowrap">{formatDate(movement.lastAssessed)}</Table.Cell>
-                                        <Table.Cell>
-                                            <div className="flex gap-1">
-                                                {movement.categories.map((category) =>
-                                                    category === "Active" || category === "Inactive" ? (
-                                                        <BadgeWithDot
-                                                            key={category}
-                                                            size="sm"
-                                                            type="modern"
-                                                            color={category === "Active" ? "success" : "gray"}
-                                                            className="capitalize"
-                                                        >
-                                                            {category}
-                                                        </BadgeWithDot>
-                                                    ) : (
-                                                        <Badge key={category} size="sm" type="modern" color="gray">
-                                                            {category}
-                                                        </Badge>
-                                                    ),
-                                                )}
-                                            </div>
-                                        </Table.Cell>
-
-                                        <Table.Cell className="px-4">
-                                            <div className="flex justify-end gap-0.5">
-                                                <ButtonUtility size="xs" color="tertiary" tooltip="Delete" icon={Trash01} />
-                                                <ButtonUtility size="xs" color="tertiary" tooltip="Edit" icon={Edit01} />
-                                            </div>
-                                        </Table.Cell>
-                                    </Table.Row>
-                                )}
-                            </Table.Body>
-                        </Table>
-                        <PaginationCardMinimal page={1} total={10} align="right" />
-                    </TableCard.Root>
                 </div>
             </main>
     );
