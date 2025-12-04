@@ -1,6 +1,6 @@
 import { type EmailOtpType } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
+import { createServerSupabase } from "@/utils/supabase/server";
 import { authConfig } from "@/config";
 
 export async function GET(request: NextRequest) {
@@ -17,9 +17,10 @@ export async function GET(request: NextRequest) {
     redirectTo.searchParams.delete("code");
     redirectTo.searchParams.delete("next");
 
+    const supabase = await createServerSupabase();
+
     // Handle OAuth callback (code exchange)
     if (code) {
-        const supabase = await createClient();
         const { error } = await supabase.auth.exchangeCodeForSession(code);
 
         if (!error) {
@@ -29,7 +30,6 @@ export async function GET(request: NextRequest) {
 
     // Handle email OTP/magic link callback (token_hash)
     if (token_hash && type) {
-        const supabase = await createClient();
         const { error } = await supabase.auth.verifyOtp({
             type,
             token_hash,

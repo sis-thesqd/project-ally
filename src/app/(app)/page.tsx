@@ -1,3 +1,3 @@
-import { Dashboard09 } from "../dashboards-09";
+import { Dashboard } from "../dashboard";
 
-export default Dashboard09;
+export default Dashboard;

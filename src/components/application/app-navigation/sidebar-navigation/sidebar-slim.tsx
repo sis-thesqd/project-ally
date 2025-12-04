@@ -126,11 +126,13 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                 )}
             >
                 <div className="flex justify-center px-3">
-                    <img
-                        src="/logos/Badge Slanted_Blue-01.svg"
-                        alt="Logo"
-                        className="h-8"
-                    />
+                    <a href="/" className="transition-opacity hover:opacity-80">
+                        <img
+                            src="/logos/Badge Slanted_Blue-01.svg"
+                            alt="Logo"
+                            className="h-8"
+                        />
+                    </a>
                 </div>
 
                 <div className="mt-4 flex justify-center px-3">
@@ -275,7 +277,9 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
             <MobileNavigationHeader>
                 <aside className="group flex h-full max-h-full w-full max-w-full flex-col justify-between overflow-y-auto bg-primary pt-4">
                     <div className="px-4">
-                        <img src="/logos/Badge Slanted_Blue-01.svg" alt="Logo" className="h-10" />
+                        <a href="/" className="inline-block transition-opacity hover:opacity-80">
+                            <img src="/logos/Badge Slanted_Blue-01.svg" alt="Logo" className="h-10" />
+                        </a>
                     </div>
 
                     <div className="mt-4 px-4">

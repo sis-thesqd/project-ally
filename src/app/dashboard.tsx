@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
     ArrowDown,
     ArrowUp,
@@ -13,10 +13,10 @@ import {
     Trash01,
     UploadCloud02,
     Zap,
+    Eye,
 } from "@untitledui/icons";
 import type { SortDescriptor } from "react-aria-components";
 import { Bar, BarChart, CartesianGrid, Label, Tooltip as RechartsTooltip, ResponsiveContainer, XAxis, YAxis } from "recharts";
-import { ChartTooltipContent } from "@/components/application/charts/charts-base";
 import { MetricChangeIndicator } from "@/components/application/metrics/metrics";
 import { PaginationCardMinimal } from "@/components/application/pagination/pagination";
 import { Table, TableCard, TableRowActionsDropdown } from "@/components/application/table/table";
@@ -29,6 +29,7 @@ import { Input } from "@/components/base/input/input";
 import { ProgressBarHalfCircle } from "@/components/base/progress-indicators/progress-circles";
 import { ProgressBar } from "@/components/base/progress-indicators/progress-indicators";
 import { useBreakpoint } from "@/hooks/use-breakpoint";
+import { useInitData } from "@/contexts/InitDataContext";
 
 // Helper functions for formatting
 const formatDate = (timestamp: number): string =>
@@ -38,80 +39,33 @@ const formatDate = (timestamp: number): string =>
         year: "numeric",
     });
 
-const barData = [
-    {
-        date: "2025-01-01",
-        A: 30,
-        B: 20,
-        C: 35,
-    },
-    {
-        date: "2025-02-01",
-        A: 32,
-        B: 30,
-        C: 30,
-    },
-    {
-        date: "2025-03-01",
-        A: 30,
-        B: 20,
-        C: 24,
-    },
-    {
-        date: "2025-04-01",
-        A: 24,
-        B: 30,
-        C: 28,
-    },
-    {
-        date: "2025-05-01",
-        A: 32,
-        B: 28,
-        C: 10,
-    },
-    {
-        date: "2025-06-01",
-        A: 33,
-        B: 30,
-        C: 13,
-    },
-    {
-        date: "2025-07-01",
-        A: 30,
-        B: 20,
-        C: 10,
-    },
-    {
-        date: "2025-08-01",
-        A: 35,
-        B: 30,
-        C: 20,
-    },
-    {
-        date: "2025-09-01",
-        A: 30,
-        B: 20,
-        C: 10,
-    },
-    {
-        date: "2025-10-01",
-        A: 20,
-        B: 30,
-        C: 28,
-    },
-    {
-        date: "2025-11-01",
-        A: 24,
-        B: 30,
-        C: 30,
-    },
-    {
-        date: "2025-12-01",
-        A: 20,
-        B: 40,
-        C: 35,
-    },
-];
+interface WeeklyCount {
+    week_start: string;
+    count: number;
+}
+
+interface MonthlyCount {
+    month_start: string;
+    count: number;
+}
+
+interface AccountStatsResponse {
+    weekly_counts: WeeklyCount[];
+    monthly_counts: MonthlyCount[];
+}
+
+interface ChartDataPoint {
+    date: string;
+    count: number;
+}
+
+interface TaskStatsResponse {
+    account: number;
+    active_tasks: number;
+    cap: number;
+    room: number;
+    aa_queued_count: number;
+}
 
 const movements = [
     {
@@ -208,14 +162,87 @@ const movements = [
 ];
 
 const colors: Record<string, string> = {
-    A: "text-utility-brand-700",
-    B: "text-utility-brand-500",
-    C: "text-utility-gray-200",
+    count: "text-utility-brand-600",
 };
 
-export const Dashboard09 = () => {
+type ViewMode = "weekly" | "monthly";
+
+export const Dashboard = () => {
     const isDesktop = useBreakpoint("lg");
     const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>();
+    const [viewMode, setViewMode] = useState<ViewMode>("monthly");
+    const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const { data } = useInitData();
+
+    const selectedAccount = data?.preferences?.default_account;
+
+    const [statsData, setStatsData] = useState<AccountStatsResponse | null>(null);
+    const [taskStats, setTaskStats] = useState<TaskStatsResponse | null>(null);
+
+    // Fetch task stats when account changes
+    useEffect(() => {
+        if (!selectedAccount) return;
+
+        const fetchTaskStats = async () => {
+            try {
+                const response = await fetch(`/api/task-stats?account=${selectedAccount}`);
+                if (!response.ok) throw new Error('Failed to fetch');
+                const data: TaskStatsResponse[] = await response.json();
+                // Response is an array, get the first element
+                setTaskStats(data?.[0] ?? null);
+            } catch (error) {
+                console.error('Error fetching task stats:', error);
+                setTaskStats(null);
+            }
+        };
+
+        fetchTaskStats();
+    }, [selectedAccount]);
+
+    // Fetch chart data when account changes
+    useEffect(() => {
+        if (!selectedAccount) return;
+
+        const fetchChartData = async () => {
+            setIsLoading(true);
+            try {
+                const response = await fetch(`/api/account-stats?account=${selectedAccount}`);
+                if (!response.ok) throw new Error('Failed to fetch');
+                const rawData: AccountStatsResponse = await response.json();
+                setStatsData(rawData);
+            } catch (error) {
+                console.error('Error fetching chart data:', error);
+                setStatsData(null);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchChartData();
+    }, [selectedAccount]);
+
+    // Transform data based on view mode
+    useEffect(() => {
+        if (!statsData) {
+            setChartData([]);
+            return;
+        }
+
+        if (viewMode === 'weekly') {
+            const transformed = statsData.weekly_counts.map(item => ({
+                date: item.week_start,
+                count: item.count,
+            }));
+            setChartData(transformed);
+        } else {
+            const transformed = statsData.monthly_counts.map(item => ({
+                date: item.month_start,
+                count: item.count,
+            }));
+            setChartData(transformed);
+        }
+    }, [statsData, viewMode]);
 
     const sortedItems = useMemo(() => {
         if (!sortDescriptor) return movements;
@@ -247,10 +274,40 @@ export const Dashboard09 = () => {
         });
     }, [sortDescriptor]);
 
+    const formatXAxisTick = (value: string) => {
+        const date = new Date(value);
+        if (viewMode === "weekly") {
+            return date.toLocaleString(undefined, { month: "short", day: "numeric" });
+        }
+        return date.toLocaleString(undefined, { month: "short" });
+    };
+
+    const formatTooltipLabel = (value: string) => {
+        const date = new Date(value);
+        if (viewMode === "weekly") {
+            return `Week of ${date.toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric" })}`;
+        }
+        return date.toLocaleString(undefined, { month: "short", year: "numeric" });
+    };
+
+    // Custom tooltip to avoid labelFormatter being applied to values
+    const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number; name: string }>; label?: string }) => {
+        if (!active || !payload || payload.length === 0) return null;
+        
+        return (
+            <div className="flex flex-col gap-0.5 rounded-lg bg-primary-solid px-3 py-2 shadow-lg">
+                <p className="text-xs font-semibold text-white">{formatTooltipLabel(label || '')}</p>
+                <p className="text-xs text-tooltip-supporting-text">
+                    {payload[0].name}: {payload[0].value}
+                </p>
+            </div>
+        );
+    };
+
     return (
         <main className="flex min-w-0 flex-1 flex-col gap-8 pt-8 pb-12 overflow-y-hidden lg:overflow-y-auto">
                 <div className="flex flex-col justify-between gap-4 px-4 lg:flex-row lg:px-8">
-                    <p className="text-xl font-semibold text-primary lg:text-display-xs">Welcome back, Olivia</p>
+                    <p className="text-xl font-semibold text-primary lg:text-display-xs">Welcome back, {data?.name?.split(' ')[0] ?? 'User'}</p>
                     <div className="flex gap-3">
                         <Button size="md" color="tertiary" iconLeading={SearchLg} className="hidden lg:inline-flex" />
                         <Button size="md" color="secondary" iconLeading={Settings03}>
@@ -265,121 +322,131 @@ export const Dashboard09 = () => {
                 <div className="flex flex-col gap-6 px-4 lg:flex-row lg:px-8">
                     <div className="flex flex-1 flex-col rounded-xl shadow-xs ring-1 ring-secondary ring-inset">
                         <div className="flex justify-between gap-4 border-b border-secondary px-4 py-5 lg:px-6">
-                            <div className="flex gap-3">
-                                <Avatar src="https://www.untitledui.com/logos/images/Lightbox.jpg" alt="Lightbox" size="xl" className="max-lg:hidden" />
-                                <div className="flex flex-col gap-0.5 lg:gap-0">
-                                    <p className="text-lg font-semibold text-primary">Vendor breakdown</p>
-                                    <p className="text-sm text-tertiary">Keep track of vendors and their security ratings.</p>
-                                </div>
+                            <div className="flex flex-col gap-0.5 lg:gap-0">
+                                <p className="text-lg font-semibold text-primary">My project submissions</p>
+                                <p className="text-sm text-tertiary">See your submissions over time</p>
                             </div>
-                            <div>
-                                <TableRowActionsDropdown />
+                            <div className="flex items-center gap-3">
+                                <ButtonGroup 
+                                    selectedKeys={[viewMode]}
+                                    onSelectionChange={(keys) => {
+                                        const selected = Array.from(keys)[0];
+                                        if (selected === "weekly" || selected === "monthly") {
+                                            setViewMode(selected);
+                                        }
+                                    }}
+                                >
+                                    <ButtonGroupItem id="weekly">Weekly</ButtonGroupItem>
+                                    <ButtonGroupItem id="monthly">Monthly</ButtonGroupItem>
+                                </ButtonGroup>
                             </div>
                         </div>
                         <div className="h-70 px-4 py-5 lg:h-63 lg:p-6">
-                            <ResponsiveContainer>
-                                <BarChart
-                                    data={barData}
-                                    margin={{
-                                        left: 4,
-                                        bottom: isDesktop ? 16 : 0,
-                                    }}
-                                    className="text-tertiary [&_.recharts-text]:text-xs"
-                                >
-                                    <CartesianGrid vertical={false} stroke="currentColor" className="text-utility-gray-100" />
-
-                                    <XAxis
-                                        fill="currentColor"
-                                        axisLine={false}
-                                        tickLine={false}
-                                        tickMargin={12}
-                                        interval="preserveStartEnd"
-                                        dataKey="date"
-                                        tickFormatter={(value) => new Date(value).toLocaleString(undefined, { month: "short" })}
-                                    >
-                                        {isDesktop && <Label value="Month" fill="currentColor" className="!text-xs font-medium" position="bottom" />}
-                                    </XAxis>
-
-                                    <YAxis hide={!isDesktop} domain={[0, 100]} fill="currentColor" axisLine={false} tickLine={false}>
-                                        <Label
-                                            value="Security rating"
-                                            fill="currentColor"
-                                            className="!text-xs font-medium"
-                                            style={{ textAnchor: "middle" }}
-                                            angle={-90}
-                                            position="insideLeft"
-                                        />
-                                    </YAxis>
-
-                                    <RechartsTooltip
-                                        content={<ChartTooltipContent />}
-                                        labelFormatter={(value) => new Date(value).toLocaleString(undefined, { month: "short", year: "numeric" })}
-                                        cursor={{
-                                            className: "fill-utility-gray-300/30",
+                            {isLoading ? (
+                                <div className="flex h-full items-center justify-center">
+                                    <p className="text-sm text-tertiary">Loading chart data...</p>
+                                </div>
+                            ) : chartData.length === 0 ? (
+                                <div className="flex h-full items-center justify-center">
+                                    <p className="text-sm text-tertiary">No data available for this account.</p>
+                                </div>
+                            ) : (
+                                <ResponsiveContainer>
+                                    <BarChart
+                                        data={chartData}
+                                        margin={{
+                                            left: 4,
+                                            bottom: isDesktop ? 16 : 0,
                                         }}
-                                    />
+                                        className="text-tertiary [&_.recharts-text]:text-xs"
+                                    >
+                                        <CartesianGrid vertical={false} stroke="currentColor" className="text-utility-gray-100" />
 
-                                    <Bar
-                                        isAnimationActive={false}
-                                        className={colors["A"]}
-                                        dataKey="A"
-                                        name="EU"
-                                        type="monotone"
-                                        stackId="a"
-                                        fill="currentColor"
-                                        maxBarSize={isDesktop ? 32 : 16}
-                                    />
-                                    <Bar
-                                        isAnimationActive={false}
-                                        className={colors["B"]}
-                                        dataKey="B"
-                                        name="US"
-                                        type="monotone"
-                                        stackId="a"
-                                        fill="currentColor"
-                                        maxBarSize={isDesktop ? 32 : 16}
-                                    />
-                                    <Bar
-                                        isAnimationActive={false}
-                                        className={colors["C"]}
-                                        dataKey="C"
-                                        name="Asia"
-                                        type="monotone"
-                                        stackId="a"
-                                        fill="currentColor"
-                                        maxBarSize={isDesktop ? 32 : 16}
-                                        radius={[6, 6, 0, 0]}
-                                    />
-                                </BarChart>
-                            </ResponsiveContainer>
+                                        <XAxis
+                                            fill="currentColor"
+                                            axisLine={false}
+                                            tickLine={false}
+                                            tickMargin={12}
+                                            interval="preserveStartEnd"
+                                            dataKey="date"
+                                            tickFormatter={formatXAxisTick}
+                                        >
+                                            {isDesktop && <Label value={viewMode === "weekly" ? "Week" : "Month"} fill="currentColor" className="!text-xs font-medium" position="bottom" />}
+                                        </XAxis>
+
+                                        <YAxis hide={!isDesktop} fill="currentColor" axisLine={false} tickLine={false}>
+                                            <Label
+                                                value="Project count"
+                                                fill="currentColor"
+                                                className="!text-xs font-medium"
+                                                style={{ textAnchor: "middle" }}
+                                                angle={-90}
+                                                position="insideLeft"
+                                            />
+                                        </YAxis>
+
+                                        <RechartsTooltip
+                                            content={<CustomTooltip />}
+                                            cursor={{
+                                                className: "fill-utility-gray-300/30",
+                                            }}
+                                        />
+
+                                        <Bar
+                                            isAnimationActive={false}
+                                            className={colors["count"]}
+                                            dataKey="count"
+                                            name="Projects"
+                                            type="monotone"
+                                            fill="currentColor"
+                                            maxBarSize={isDesktop ? 32 : 16}
+                                            radius={[6, 6, 0, 0]}
+                                        />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            )}
                         </div>
-                        <div className="flex justify-end border-t border-secondary px-4 py-3 lg:px-6 lg:py-4">
-                            <Button size="md" color="secondary">
-                                View full report
+                        <div className="mt-auto flex items-center justify-end border-t border-secondary px-4 py-3 lg:px-6 lg:py-4">
+                            <Button size="md" color="secondary" href="/projects" iconLeading={Eye}>
+                                View my projects
                             </Button>
                         </div>
                     </div>
                     <div className="flex flex-col rounded-xl shadow-xs ring-1 ring-secondary ring-inset lg:w-90">
                         <div className="flex justify-between gap-4 border-b border-secondary px-4 py-5 lg:px-6">
-                            <div className="flex flex-col gap-0.5">
-                                <p className="text-lg font-semibold text-primary">Vendors monitored</p>
-                                <p className="text-sm text-tertiary">You're using 80% of available spots.</p>
-                            </div>
-                            <div>
-                                <TableRowActionsDropdown />
-                            </div>
-                        </div>
-                        <div className="flex flex-col gap-6 p-6 lg:gap-8">
-                            <div className="flex items-start justify-between">
-                                <ProgressBarHalfCircle size="sm" min={0} max={300} value={240} valueFormatter={(value) => value} />
-                                <MetricChangeIndicator type="trend" trend="positive" value="10%" />
-                            </div>
-                            <div className="flex flex-col gap-1">
-                                <p className="text-md font-medium text-primary">You've almost reached your limit</p>
-                                <p className="text-sm text-tertiary">You have used 80% of your available spots. Upgrade plan to monitor more vendors.</p>
+                            <div className="flex flex-col gap-0.5 lg:gap-0">
+                                <p className="text-lg font-semibold text-primary">Project count</p>
+                                <p className="text-sm text-tertiary">
+                                    {taskStats
+                                        ? `You're using ${Math.round((taskStats.active_tasks / taskStats.cap) * 100)}% of your active project cap.`
+                                        : "Loading..."}
+                                </p>
                             </div>
                         </div>
-                        <div className="flex justify-end border-t border-secondary px-4 py-3 lg:px-6 lg:py-4">
+                        <div className="flex flex-col items-center gap-6 p-6 lg:gap-8">
+                            <div className="flex justify-center">
+                                <ProgressBarHalfCircle
+                                    size="sm"
+                                    min={0}
+                                    max={taskStats?.cap ?? 100}
+                                    value={taskStats?.active_tasks ?? 0}
+                                    valueFormatter={(value) => value}
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1 text-center">
+                                <p className="text-md font-medium text-primary">
+                                    {taskStats && taskStats.active_tasks >= taskStats.cap * 0.8
+                                        ? "You've almost reached your limit"
+                                        : "Active projects"}
+                                </p>
+                                <p className="text-sm text-tertiary">
+                                    {taskStats
+                                        ? `You have ${taskStats.cap - taskStats.active_tasks} of ${taskStats.cap} available project slots.`
+                                        : "Loading project data..."}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="mt-auto flex items-center justify-end border-t border-secondary px-4 py-3 lg:px-6 lg:py-4">
                             <Button size="md" color="secondary" iconLeading={Zap}>
                                 Upgrade plan
                             </Button>
@@ -511,3 +578,4 @@ export const Dashboard09 = () => {
             </main>
     );
 };
+

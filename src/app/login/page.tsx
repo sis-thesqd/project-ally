@@ -9,7 +9,7 @@ import { Input } from "@/components/base/input/input";
 import { PinInput } from "@/components/base/pin-input/pin-input";
 import { FeaturedIcon } from "@/components/foundations/featured-icon/featured-icon";
 import { BackgroundPattern } from "@/components/shared-assets/background-patterns";
-import { createClient } from "@/utils/supabase/client";
+import { supabase } from "@/utils/supabase/client";
 import { authConfig, isSignInMethodEnabled, devAuthConfig } from "@/config";
 
 type AuthStep = "email" | "otp";
@@ -22,8 +22,6 @@ export default function LoginPage() {
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
     const [isDevLogin, setIsDevLogin] = useState(false);
-
-    const supabase = createClient();
 
     // Auto-login in development mode
     useEffect(() => {

@@ -5,6 +5,8 @@ import {
     PieChart03,
     Rows01,
     Users01,
+    Settings03,
+    Lightbulb02
 } from '@untitledui/icons';
 import type { FC } from 'react';
 
@@ -17,6 +19,8 @@ export const iconMap: Record<string, IconComponent> = {
     'CheckDone01': CheckDone01,
     'PieChart03': PieChart03,
     'Users01': Users01,
+    'Settings03': Settings03,
+    'Lightbulb02': Lightbulb02,
 };
 
 export function getIconByName(iconName: string): IconComponent {
