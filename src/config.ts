@@ -107,3 +107,12 @@ export const generalInfoApiConfig = {
         ? `${process.env.NEXT_PUBLIC_SQUAD_API_URL}/api/general-info/brand-guides`
         : "/api/general-info/brand-guides",
 } as const;
+
+/**
+ * Design Style API Configuration
+ */
+export const designStyleApiConfig = {
+    styleGuidesEndpoint: process.env.NEXT_PUBLIC_SQUAD_API_URL
+        ? `${process.env.NEXT_PUBLIC_SQUAD_API_URL}/api/design-style/style-guides`
+        : "/api/design-style/style-guides",
+} as const;

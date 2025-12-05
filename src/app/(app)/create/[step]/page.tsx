@@ -3,11 +3,12 @@
 import { useParams, useRouter } from "next/navigation";
 import { ProjectSelection, type SelectionMode } from "@sis-thesqd/prf-project-selection";
 import { GeneralInfo, type GeneralInfoState } from "@sis-thesqd/prf-general-info";
+import { DesignStyle, type DesignStyleState } from "@sis-thesqd/prf-design-style";
 import { useCallback, useMemo } from "react";
 import type { Key } from "react-aria";
 import { useInitData } from "@/contexts/InitDataContext";
 import { ButtonGroup, ButtonGroupItem } from "@/components/base/button-group/button-group";
-import { projectSelectionApiConfig, projectSelectionFilterConfig, generalInfoApiConfig } from "@/config";
+import { projectSelectionApiConfig, projectSelectionFilterConfig, generalInfoApiConfig, designStyleApiConfig } from "@/config";
 import { BoxIcon, MagicWandIcon } from "@/components/icons";
 import { useCreateContext } from "../CreateContext";
 import { notFound } from "next/navigation";
@@ -25,10 +26,12 @@ export default function CreateStepPage() {
         setSelectedProjectIds,
         generalInfoState,
         setGeneralInfoState,
+        designStyleState,
+        setDesignStyleState,
     } = useCreateContext();
 
     // Validate step
-    if (step !== "1" && step !== "2") {
+    if (step !== "1" && step !== "2" && step !== "3") {
         notFound();
     }
 
@@ -74,16 +77,14 @@ export default function CreateStepPage() {
         router.push("/create/1");
     }, [router]);
 
-    // Handle general info continue - submit the form
+    // Handle general info continue - move to step 3
     const handleGeneralInfoContinue = useCallback(
         async (state: GeneralInfoState) => {
             console.log("General info submitted:", state);
-            console.log("With selected projects:", selectedProjectIds);
             setGeneralInfoState(state);
-            // TODO: Submit the complete form data to your API
-            // After successful submission, redirect to success page or projects list
+            router.push("/create/3");
         },
-        [selectedProjectIds, setGeneralInfoState]
+        [setGeneralInfoState, router]
     );
 
     // Handle general info state changes
@@ -92,6 +93,32 @@ export default function CreateStepPage() {
             setGeneralInfoState(state);
         },
         [setGeneralInfoState]
+    );
+
+    // Handle design style back - return to step 2
+    const handleDesignStyleBack = useCallback(() => {
+        router.push("/create/2");
+    }, [router]);
+
+    // Handle design style continue - submit the form
+    const handleDesignStyleContinue = useCallback(
+        async (state: DesignStyleState) => {
+            console.log("Design style submitted:", state);
+            console.log("With general info:", generalInfoState);
+            console.log("With selected projects:", selectedProjectIds);
+            setDesignStyleState(state);
+            // TODO: Submit the complete form data to your API
+            // After successful submission, redirect to success page or projects list
+        },
+        [generalInfoState, selectedProjectIds, setDesignStyleState]
+    );
+
+    // Handle design style state changes
+    const handleDesignStyleStateChange = useCallback(
+        (state: DesignStyleState) => {
+            setDesignStyleState(state);
+        },
+        [setDesignStyleState]
     );
 
     const handleTrackEvent = useCallback((eventName: string, properties: Record<string, unknown>) => {
@@ -105,6 +132,36 @@ export default function CreateStepPage() {
                 <div className="mb-6 sm:mb-8 max-w-7xl mx-auto w-full">
                     <h1 className="text-xl sm:text-2xl font-semibold text-primary align-center">New Project Request</h1>
                     <p className="text-secondary mt-1 text-sm sm:text-base">Loading...</p>
+                </div>
+            </main>
+        );
+    }
+
+    // Step 3: Design Style
+    if (step === "3") {
+        return (
+            <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
+                <div className="pb-8 max-w-7xl mx-auto w-full">
+                    <div className="min-h-[3.5rem] sm:min-h-0">
+                        <h1 className="text-xl sm:text-2xl font-semibold text-primary">Design Style</h1>
+                        <p className="text-secondary mt-1 text-sm sm:text-base h-5 sm:h-6">
+                            Choose a design style that best matches your vision, or skip and we'll be creative.
+                        </p>
+                    </div>
+                </div>
+
+                <div className="max-w-7xl mx-auto w-full">
+                    <DesignStyle
+                        apiConfig={{
+                            memberId: String(memberId),
+                            ...designStyleApiConfig,
+                        }}
+                        initialState={designStyleState || undefined}
+                        onStateChange={handleDesignStyleStateChange}
+                        onBack={handleDesignStyleBack}
+                        onContinue={handleDesignStyleContinue}
+                        trackEvent={handleTrackEvent}
+                    />
                 </div>
             </main>
         );

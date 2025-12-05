@@ -4,6 +4,8 @@
 
 @source "../../node_modules/@sis-thesqd/mmq-component/dist/**/*.{js,mjs}";
 @source "../../node_modules/@sis-thesqd/prf-project-selection/dist/**/*.{js,mjs}";
+@source "../../node_modules/@sis-thesqd/prf-general-info/dist/**/*.{js,mjs}";
+@source "../../node_modules/@sis-thesqd/prf-design-style/dist/**/*.{js,mjs}";
 
 @plugin "@tailwindcss/typography";
 @plugin "tailwindcss-react-aria-components";

@@ -161,3 +161,4 @@ When modifying synced components, be aware that changes may be overwritten by fu
 
 **Supabase**:
 - Always use Supabase MCP when asked to create something or interact with anything in Supabase
+- always refer to COMPONENT_PACKAGES.md when asked to create another component as well as the existing components already implemented rather than making inferences. Worst case, ask me before inferring anything
