@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useCallback, type ReactNode } from
 import type { GeneralInfoState } from "@sis-thesqd/prf-general-info";
 import type { SelectionMode } from "@sis-thesqd/prf-project-selection";
 import type { DesignStyleState } from "@sis-thesqd/prf-design-style";
+import type { CreativeDirectionState } from "@sis-thesqd/prf-creative-direction";
 
 interface CreateContextType {
     // Step 1: Project Selection
@@ -19,6 +20,10 @@ interface CreateContextType {
     // Step 3: Design Style
     designStyleState: DesignStyleState | null;
     setDesignStyleState: (state: DesignStyleState | null) => void;
+
+    // Step 4: Creative Direction
+    creativeDirectionState: CreativeDirectionState | null;
+    setCreativeDirectionState: (state: CreativeDirectionState | null) => void;
 }
 
 const CreateContext = createContext<CreateContextType | null>(null);
@@ -28,6 +33,7 @@ export function CreateProvider({ children }: { children: ReactNode }) {
     const [selectedProjectIds, setSelectedProjectIds] = useState<number[]>([]);
     const [generalInfoState, setGeneralInfoState] = useState<GeneralInfoState | null>(null);
     const [designStyleState, setDesignStyleState] = useState<DesignStyleState | null>(null);
+    const [creativeDirectionState, setCreativeDirectionState] = useState<CreativeDirectionState | null>(null);
 
     return (
         <CreateContext.Provider
@@ -40,6 +46,8 @@ export function CreateProvider({ children }: { children: ReactNode }) {
                 setGeneralInfoState,
                 designStyleState,
                 setDesignStyleState,
+                creativeDirectionState,
+                setCreativeDirectionState,
             }}
         >
             {children}

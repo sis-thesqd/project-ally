@@ -116,3 +116,23 @@ export const designStyleApiConfig = {
         ? `${process.env.NEXT_PUBLIC_SQUAD_API_URL}/api/design-style/style-guides`
         : "/api/design-style/style-guides",
 } as const;
+
+/**
+ * Design Style UI Configuration
+ */
+export const designStyleUiConfig = {
+    /** Whether to show the Design Styles / Style Guides tabs toggle */
+    showStyleGuideTabs: false,
+} as const;
+
+/**
+ * Creative Direction API Configuration
+ */
+export const creativeDirectionApiConfig = {
+    creativeVisionEndpoint: process.env.NEXT_PUBLIC_SQUAD_API_URL
+        ? `${process.env.NEXT_PUBLIC_SQUAD_API_URL}/api/creative-direction/creative-vision`
+        : "/api/creative-direction/creative-vision",
+    uploadEndpoint: process.env.NEXT_PUBLIC_SQUAD_API_URL
+        ? `${process.env.NEXT_PUBLIC_SQUAD_API_URL}/api/creative-direction/upload`
+        : "/api/creative-direction/upload",
+} as const;

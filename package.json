@@ -1,6 +1,6 @@
 {
     "name": "untitledui-nextjs-starter-kit",
-    "version": "0.0.0",
+    "version": "0.0.1",
     "private": true,
     "scripts": {
         "dev": "next dev --turbopack",
@@ -9,6 +9,7 @@
     },
     "dependencies": {
         "@sis-thesqd/mmq-component": "^1.0.55",
+        "@sis-thesqd/prf-creative-direction": "^1.0.0",
         "@sis-thesqd/prf-design-style": "^1.0.0",
         "@sis-thesqd/prf-general-info": "^1.0.8",
         "@sis-thesqd/prf-project-selection": "^1.0.0",

@@ -4,11 +4,12 @@ import { useParams, useRouter } from "next/navigation";
 import { ProjectSelection, type SelectionMode } from "@sis-thesqd/prf-project-selection";
 import { GeneralInfo, type GeneralInfoState } from "@sis-thesqd/prf-general-info";
 import { DesignStyle, type DesignStyleState } from "@sis-thesqd/prf-design-style";
+import { CreativeDirection, type CreativeDirectionState } from "@sis-thesqd/prf-creative-direction";
 import { useCallback, useMemo } from "react";
 import type { Key } from "react-aria";
 import { useInitData } from "@/contexts/InitDataContext";
 import { ButtonGroup, ButtonGroupItem } from "@/components/base/button-group/button-group";
-import { projectSelectionApiConfig, projectSelectionFilterConfig, generalInfoApiConfig, designStyleApiConfig } from "@/config";
+import { projectSelectionApiConfig, projectSelectionFilterConfig, generalInfoApiConfig, designStyleApiConfig, designStyleUiConfig, creativeDirectionApiConfig } from "@/config";
 import { BoxIcon, MagicWandIcon } from "@/components/icons";
 import { useCreateContext } from "../CreateContext";
 import { notFound } from "next/navigation";
@@ -28,10 +29,12 @@ export default function CreateStepPage() {
         setGeneralInfoState,
         designStyleState,
         setDesignStyleState,
+        creativeDirectionState,
+        setCreativeDirectionState,
     } = useCreateContext();
 
     // Validate step
-    if (step !== "1" && step !== "2" && step !== "3") {
+    if (step !== "1" && step !== "2" && step !== "3" && step !== "4") {
         notFound();
     }
 
@@ -100,17 +103,14 @@ export default function CreateStepPage() {
         router.push("/create/2");
     }, [router]);
 
-    // Handle design style continue - submit the form
+    // Handle design style continue - move to step 4
     const handleDesignStyleContinue = useCallback(
         async (state: DesignStyleState) => {
             console.log("Design style submitted:", state);
-            console.log("With general info:", generalInfoState);
-            console.log("With selected projects:", selectedProjectIds);
             setDesignStyleState(state);
-            // TODO: Submit the complete form data to your API
-            // After successful submission, redirect to success page or projects list
+            router.push("/create/4");
         },
-        [generalInfoState, selectedProjectIds, setDesignStyleState]
+        [setDesignStyleState, router]
     );
 
     // Handle design style state changes
@@ -119,6 +119,33 @@ export default function CreateStepPage() {
             setDesignStyleState(state);
         },
         [setDesignStyleState]
+    );
+
+    // Handle creative direction back - return to step 3
+    const handleCreativeDirectionBack = useCallback(() => {
+        router.push("/create/3");
+    }, [router]);
+
+    // Handle creative direction continue - submit the form
+    const handleCreativeDirectionContinue = useCallback(
+        async (state: CreativeDirectionState) => {
+            console.log("Creative direction submitted:", state);
+            console.log("With design style:", designStyleState);
+            console.log("With general info:", generalInfoState);
+            console.log("With selected projects:", selectedProjectIds);
+            setCreativeDirectionState(state);
+            // TODO: Submit the complete form data to your API
+            // After successful submission, redirect to success page or projects list
+        },
+        [designStyleState, generalInfoState, selectedProjectIds, setCreativeDirectionState]
+    );
+
+    // Handle creative direction state changes
+    const handleCreativeDirectionStateChange = useCallback(
+        (state: CreativeDirectionState) => {
+            setCreativeDirectionState(state);
+        },
+        [setCreativeDirectionState]
     );
 
     const handleTrackEvent = useCallback((eventName: string, properties: Record<string, unknown>) => {
@@ -132,6 +159,35 @@ export default function CreateStepPage() {
                 <div className="mb-6 sm:mb-8 max-w-7xl mx-auto w-full">
                     <h1 className="text-xl sm:text-2xl font-semibold text-primary align-center">New Project Request</h1>
                     <p className="text-secondary mt-1 text-sm sm:text-base">Loading...</p>
+                </div>
+            </main>
+        );
+    }
+
+    // Step 4: Creative Direction
+    if (step === "4") {
+        return (
+            <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
+                <div className="pb-8 max-w-7xl mx-auto w-full">
+                    <div className="min-h-[3.5rem] sm:min-h-0">
+                        <h1 className="text-xl sm:text-2xl font-semibold text-primary">Creative Direction</h1>
+                        <p className="text-secondary mt-1 text-sm sm:text-base h-5 sm:h-6">
+                            Share your vision and inspiration for this project.
+                        </p>
+                    </div>
+                </div>
+
+                <div className="max-w-7xl mx-auto w-full">
+                    <CreativeDirection
+                        apiConfig={creativeDirectionApiConfig}
+                        initialState={creativeDirectionState || undefined}
+                        onStateChange={handleCreativeDirectionStateChange}
+                        onBack={handleCreativeDirectionBack}
+                        onContinue={handleCreativeDirectionContinue}
+                        trackEvent={handleTrackEvent}
+                        generalInfo={generalInfoState as unknown as Record<string, unknown> | undefined}
+                        designStyle={designStyleState as unknown as Record<string, unknown> | undefined}
+                    />
                 </div>
             </main>
         );
@@ -161,6 +217,7 @@ export default function CreateStepPage() {
                         onBack={handleDesignStyleBack}
                         onContinue={handleDesignStyleContinue}
                         trackEvent={handleTrackEvent}
+                        showStyleGuideTabs={designStyleUiConfig.showStyleGuideTabs}
                     />
                 </div>
             </main>
