@@ -151,7 +151,13 @@ export function CreateProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const setDeliverableDetailsState = useCallback((state: DeliverableDetailsState | null) => {
-        setDeliverableDetailsStateInternal(state);
+        // Only update if state actually changed to prevent re-render loops
+        setDeliverableDetailsStateInternal(prev => {
+            if (JSON.stringify(prev) === JSON.stringify(state)) {
+                return prev;
+            }
+            return state;
+        });
     }, []);
 
     const clearFormState = useCallback(() => {
