@@ -54,7 +54,7 @@ export function AppLayoutClient({ children }: { children: React.ReactNode }) {
     }
 
     return (
-        <div className="flex flex-col bg-primary lg:flex-row h-screen overflow-hidden lg:overflow-y-scroll lg:scrollbar-auto">
+        <div className="flex flex-col bg-primary lg:flex-row h-screen overflow-y-auto lg:overflow-y-scroll lg:scrollbar-auto">
             <SidebarNavigationSlim
                 activeUrl={pathname}
                 items={sidebarItems}

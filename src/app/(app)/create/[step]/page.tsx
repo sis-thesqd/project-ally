@@ -71,17 +71,18 @@ export default function CreateStepPage() {
     );
 
     // Handle projects data loaded from ProjectSelection
+    // Note: setAllProjects is stable from useState, so we don't need it in deps
     const handleProjectsDataLoaded = useCallback(
         (projects: ProjectSelectionProject[]) => {
             console.log("Projects data loaded:", projects.length, "projects");
             // Map to the Project type expected by DeliverableDetails
-            setAllProjects(projects.map(p => ({
+            const mappedProjects = projects.map(p => ({
                 id: p.id,
                 title: p.title,
                 description: p.description,
-                image_urls: p.image_urls.map(img => ({
-                    url: img.url,
-                    sizes: img.sizes ? {
+                image_urls: (p.image_urls || []).map(img => ({
+                    url: img?.url || "",
+                    sizes: img?.sizes ? {
                         thumbnail: img.sizes.thumbnail,
                         medium: img.sizes.preview,
                         large: img.sizes.full,
@@ -89,9 +90,11 @@ export default function CreateStepPage() {
                 })),
                 filter_categories: p.filter_categories || undefined,
                 related_projects: p.related_projects,
-            })));
+            }));
+            console.log("Setting allProjects with", mappedProjects.length, "items");
+            setAllProjects(mappedProjects);
         },
-        [setAllProjects]
+        [] // setAllProjects is stable from useState
     );
 
     // Handle project selection continue - move to step 2
@@ -219,6 +222,7 @@ export default function CreateStepPage() {
 
     // Step 5: Deliverable Details
     if (step === "5") {
+        console.log("Step 5 rendering - selectedProjectIds:", selectedProjectIds, "allProjects count:", allProjects.length);
         return (
             <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
                 <div className="pb-8 max-w-7xl mx-auto w-full">
