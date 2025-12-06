@@ -1,10 +1,11 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 import type { GeneralInfoState } from "@sis-thesqd/prf-general-info";
 import type { SelectionMode } from "@sis-thesqd/prf-project-selection";
 import type { DesignStyleState } from "@sis-thesqd/prf-design-style";
 import type { CreativeDirectionState } from "@sis-thesqd/prf-creative-direction";
+import type { DeliverableDetailsState, Project } from "@sis-thesqd/prf-deliverable-details";
 
 interface CreateContextType {
     // Step 1: Project Selection
@@ -12,6 +13,8 @@ interface CreateContextType {
     setMode: (mode: SelectionMode) => void;
     selectedProjectIds: number[];
     setSelectedProjectIds: (ids: number[]) => void;
+    allProjects: Project[];
+    setAllProjects: (projects: Project[]) => void;
 
     // Step 2: General Info
     generalInfoState: GeneralInfoState | null;
@@ -24,6 +27,10 @@ interface CreateContextType {
     // Step 4: Creative Direction
     creativeDirectionState: CreativeDirectionState | null;
     setCreativeDirectionState: (state: CreativeDirectionState | null) => void;
+
+    // Step 5: Deliverable Details
+    deliverableDetailsState: DeliverableDetailsState | null;
+    setDeliverableDetailsState: (state: DeliverableDetailsState | null) => void;
 }
 
 const CreateContext = createContext<CreateContextType | null>(null);
@@ -31,9 +38,11 @@ const CreateContext = createContext<CreateContextType | null>(null);
 export function CreateProvider({ children }: { children: ReactNode }) {
     const [mode, setMode] = useState<SelectionMode>("simple");
     const [selectedProjectIds, setSelectedProjectIds] = useState<number[]>([]);
+    const [allProjects, setAllProjects] = useState<Project[]>([]);
     const [generalInfoState, setGeneralInfoState] = useState<GeneralInfoState | null>(null);
     const [designStyleState, setDesignStyleState] = useState<DesignStyleState | null>(null);
     const [creativeDirectionState, setCreativeDirectionState] = useState<CreativeDirectionState | null>(null);
+    const [deliverableDetailsState, setDeliverableDetailsState] = useState<DeliverableDetailsState | null>(null);
 
     return (
         <CreateContext.Provider
@@ -42,12 +51,16 @@ export function CreateProvider({ children }: { children: ReactNode }) {
                 setMode,
                 selectedProjectIds,
                 setSelectedProjectIds,
+                allProjects,
+                setAllProjects,
                 generalInfoState,
                 setGeneralInfoState,
                 designStyleState,
                 setDesignStyleState,
                 creativeDirectionState,
                 setCreativeDirectionState,
+                deliverableDetailsState,
+                setDeliverableDetailsState,
             }}
         >
             {children}

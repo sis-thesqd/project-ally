@@ -136,3 +136,11 @@ export const creativeDirectionApiConfig = {
         ? `${process.env.NEXT_PUBLIC_SQUAD_API_URL}/api/creative-direction/upload`
         : "/api/creative-direction/upload",
 } as const;
+
+/**
+ * Deliverable Details API Configuration
+ */
+export const deliverableDetailsApiConfig = {
+    baseUrl: process.env.NEXT_PUBLIC_SQUAD_API_URL || "https://mmq-api-vercel.vercel.app",
+    formIdsEndpoint: "/api/projects/form-ids",
+} as const;

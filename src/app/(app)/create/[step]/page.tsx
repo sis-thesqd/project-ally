@@ -1,15 +1,16 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { ProjectSelection, type SelectionMode } from "@sis-thesqd/prf-project-selection";
+import { ProjectSelection, type SelectionMode, type Project as ProjectSelectionProject } from "@sis-thesqd/prf-project-selection";
 import { GeneralInfo, type GeneralInfoState } from "@sis-thesqd/prf-general-info";
 import { DesignStyle, type DesignStyleState } from "@sis-thesqd/prf-design-style";
 import { CreativeDirection, type CreativeDirectionState } from "@sis-thesqd/prf-creative-direction";
+import { DeliverableDetails, type DeliverableDetailsState } from "@sis-thesqd/prf-deliverable-details";
 import { useCallback, useMemo } from "react";
 import type { Key } from "react-aria";
 import { useInitData } from "@/contexts/InitDataContext";
 import { ButtonGroup, ButtonGroupItem } from "@/components/base/button-group/button-group";
-import { projectSelectionApiConfig, projectSelectionFilterConfig, generalInfoApiConfig, designStyleApiConfig, designStyleUiConfig, creativeDirectionApiConfig } from "@/config";
+import { projectSelectionApiConfig, projectSelectionFilterConfig, generalInfoApiConfig, designStyleApiConfig, designStyleUiConfig, creativeDirectionApiConfig, deliverableDetailsApiConfig } from "@/config";
 import { BoxIcon, MagicWandIcon } from "@/components/icons";
 import { useCreateContext } from "../CreateContext";
 import { notFound } from "next/navigation";
@@ -25,16 +26,20 @@ export default function CreateStepPage() {
         setMode,
         selectedProjectIds,
         setSelectedProjectIds,
+        allProjects,
+        setAllProjects,
         generalInfoState,
         setGeneralInfoState,
         designStyleState,
         setDesignStyleState,
         creativeDirectionState,
         setCreativeDirectionState,
+        deliverableDetailsState,
+        setDeliverableDetailsState,
     } = useCreateContext();
 
     // Validate step
-    if (step !== "1" && step !== "2" && step !== "3" && step !== "4") {
+    if (step !== "1" && step !== "2" && step !== "3" && step !== "4" && step !== "5") {
         notFound();
     }
 
@@ -63,6 +68,30 @@ export default function CreateStepPage() {
             setMode(newMode);
         },
         [setMode]
+    );
+
+    // Handle projects data loaded from ProjectSelection
+    const handleProjectsDataLoaded = useCallback(
+        (projects: ProjectSelectionProject[]) => {
+            console.log("Projects data loaded:", projects.length, "projects");
+            // Map to the Project type expected by DeliverableDetails
+            setAllProjects(projects.map(p => ({
+                id: p.id,
+                title: p.title,
+                description: p.description,
+                image_urls: p.image_urls.map(img => ({
+                    url: img.url,
+                    sizes: img.sizes ? {
+                        thumbnail: img.sizes.thumbnail,
+                        medium: img.sizes.preview,
+                        large: img.sizes.full,
+                    } : undefined,
+                })),
+                filter_categories: p.filter_categories || undefined,
+                related_projects: p.related_projects,
+            })));
+        },
+        [setAllProjects]
     );
 
     // Handle project selection continue - move to step 2
@@ -126,18 +155,14 @@ export default function CreateStepPage() {
         router.push("/create/3");
     }, [router]);
 
-    // Handle creative direction continue - submit the form
+    // Handle creative direction continue - move to step 5
     const handleCreativeDirectionContinue = useCallback(
         async (state: CreativeDirectionState) => {
             console.log("Creative direction submitted:", state);
-            console.log("With design style:", designStyleState);
-            console.log("With general info:", generalInfoState);
-            console.log("With selected projects:", selectedProjectIds);
             setCreativeDirectionState(state);
-            // TODO: Submit the complete form data to your API
-            // After successful submission, redirect to success page or projects list
+            router.push("/create/5");
         },
-        [designStyleState, generalInfoState, selectedProjectIds, setCreativeDirectionState]
+        [setCreativeDirectionState, router]
     );
 
     // Handle creative direction state changes
@@ -146,6 +171,34 @@ export default function CreateStepPage() {
             setCreativeDirectionState(state);
         },
         [setCreativeDirectionState]
+    );
+
+    // Handle deliverable details back - return to step 4
+    const handleDeliverableDetailsBack = useCallback(() => {
+        router.push("/create/4");
+    }, [router]);
+
+    // Handle deliverable details continue - submit the form
+    const handleDeliverableDetailsContinue = useCallback(
+        async (state: DeliverableDetailsState) => {
+            console.log("Deliverable details submitted:", state);
+            console.log("With creative direction:", creativeDirectionState);
+            console.log("With design style:", designStyleState);
+            console.log("With general info:", generalInfoState);
+            console.log("With selected projects:", selectedProjectIds);
+            setDeliverableDetailsState(state);
+            // TODO: Submit the complete form data to your API
+            // After successful submission, redirect to success page or projects list
+        },
+        [creativeDirectionState, designStyleState, generalInfoState, selectedProjectIds, setDeliverableDetailsState]
+    );
+
+    // Handle deliverable details state changes
+    const handleDeliverableDetailsStateChange = useCallback(
+        (state: DeliverableDetailsState) => {
+            setDeliverableDetailsState(state);
+        },
+        [setDeliverableDetailsState]
     );
 
     const handleTrackEvent = useCallback((eventName: string, properties: Record<string, unknown>) => {
@@ -159,6 +212,40 @@ export default function CreateStepPage() {
                 <div className="mb-6 sm:mb-8 max-w-7xl mx-auto w-full">
                     <h1 className="text-xl sm:text-2xl font-semibold text-primary align-center">New Project Request</h1>
                     <p className="text-secondary mt-1 text-sm sm:text-base">Loading...</p>
+                </div>
+            </main>
+        );
+    }
+
+    // Step 5: Deliverable Details
+    if (step === "5") {
+        return (
+            <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
+                <div className="pb-8 max-w-7xl mx-auto w-full">
+                    <div className="min-h-[3.5rem] sm:min-h-0">
+                        <h1 className="text-xl sm:text-2xl font-semibold text-primary">Deliverable Details</h1>
+                        <p className="text-secondary mt-1 text-sm sm:text-base h-5 sm:h-6">
+                            Add specific details for each project type you selected.
+                        </p>
+                    </div>
+                </div>
+
+                <div className="max-w-7xl mx-auto w-full">
+                    <DeliverableDetails
+                        giid="" // TODO: Generate giid during form submission
+                        accountId={accountId}
+                        memberId={memberId}
+                        userId={userId}
+                        email={data?.email || ""}
+                        selectedProjectIds={selectedProjectIds}
+                        allProjects={allProjects}
+                        apiConfig={deliverableDetailsApiConfig}
+                        initialState={deliverableDetailsState || undefined}
+                        onStateChange={handleDeliverableDetailsStateChange}
+                        onBack={handleDeliverableDetailsBack}
+                        onContinue={handleDeliverableDetailsContinue}
+                        trackEvent={handleTrackEvent}
+                    />
                 </div>
             </main>
         );
@@ -285,6 +372,7 @@ export default function CreateStepPage() {
                 mode={mode}
                 defaultFilter="squadkits"
                 onContinue={handleProjectSelectionContinue}
+                onDataLoaded={handleProjectsDataLoaded}
                 trackEvent={handleTrackEvent}
                 className="max-w-7xl"
             />
