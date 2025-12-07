@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { ProjectSelection, type SelectionMode, type Project as ProjectSelectionProject } from "@sis-thesqd/prf-project-selection";
+import { ProjectSelection, type SelectionMode, type Project as ProjectSelectionProject, useProjectStore } from "@sis-thesqd/prf-project-selection";
 import { GeneralInfo, type GeneralInfoState } from "@sis-thesqd/prf-general-info";
 import { DesignStyle, type DesignStyleState } from "@sis-thesqd/prf-design-style";
 import { CreativeDirection, type CreativeDirectionState } from "@sis-thesqd/prf-creative-direction";
@@ -181,13 +181,19 @@ export default function CreateStepPage() {
         router.push("/create/4");
     }, [router]);
 
+    // Get the removeProject action from the project store
+    const removeProjectFromStore = useProjectStore(state => state.removeProject);
+
     // Handle project removal from deliverable details
     const handleProjectRemoved = useCallback(
         (projectId: number) => {
             console.log("Project removed:", projectId);
+            // Update the CreateContext state
             setSelectedProjectIds(prev => prev.filter(id => id !== projectId));
+            // Also update the project selection store (used by page 1)
+            removeProjectFromStore(projectId);
         },
-        [setSelectedProjectIds]
+        [setSelectedProjectIds, removeProjectFromStore]
     );
 
     // Handle deliverable details continue - submit the form
