@@ -14,7 +14,7 @@ interface CreateContextType {
     mode: SelectionMode;
     setMode: (mode: SelectionMode) => void;
     selectedProjectIds: number[];
-    setSelectedProjectIds: (ids: number[]) => void;
+    setSelectedProjectIds: (ids: number[] | ((prev: number[]) => number[])) => void;
     allProjects: Project[];
     setAllProjects: (projects: Project[]) => void;
 
@@ -130,8 +130,12 @@ export function CreateProvider({ children }: { children: ReactNode }) {
         setModeInternal(newMode);
     }, []);
 
-    const setSelectedProjectIds = useCallback((ids: number[]) => {
-        setSelectedProjectIdsInternal(ids);
+    const setSelectedProjectIds = useCallback((ids: number[] | ((prev: number[]) => number[])) => {
+        if (typeof ids === "function") {
+            setSelectedProjectIdsInternal(ids);
+        } else {
+            setSelectedProjectIdsInternal(ids);
+        }
     }, []);
 
     const setAllProjects = useCallback((projects: Project[]) => {

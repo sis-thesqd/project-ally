@@ -181,6 +181,15 @@ export default function CreateStepPage() {
         router.push("/create/4");
     }, [router]);
 
+    // Handle project removal from deliverable details
+    const handleProjectRemoved = useCallback(
+        (projectId: number) => {
+            console.log("Project removed:", projectId);
+            setSelectedProjectIds(prev => prev.filter(id => id !== projectId));
+        },
+        [setSelectedProjectIds]
+    );
+
     // Handle deliverable details continue - submit the form
     const handleDeliverableDetailsContinue = useCallback(
         async (state: DeliverableDetailsState) => {
@@ -248,6 +257,7 @@ export default function CreateStepPage() {
                         onStateChange={handleDeliverableDetailsStateChange}
                         onBack={handleDeliverableDetailsBack}
                         onContinue={handleDeliverableDetailsContinue}
+                        onProjectRemoved={handleProjectRemoved}
                         trackEvent={handleTrackEvent}
                     />
                 </div>
