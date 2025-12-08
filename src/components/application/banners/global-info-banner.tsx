@@ -13,15 +13,16 @@ export const GlobalInfoBanner = () => {
 
     const config = getConfig(CONFIG_IDS.GLOBAL_INFO_BANNER);
     const message = config?.content ?? "";
-    const metadata = config?.metadata as { link?: string; link_label?: string } | null;
+    const metadata = config?.metadata as { link?: string; link_label?: string; can_be_hidden?: boolean } | null;
     const link = metadata?.link ?? "#";
     const linkLabel = metadata?.link_label ?? "Learn more";
+    const canBeHidden = metadata?.can_be_hidden ?? true;
 
     // Get user's default account
     const defaultAccount = data?.preferences?.default_account;
 
-    // Check if banner is hidden for this account
-    const isHidden = config?.id && defaultAccount ? isBannerHidden(config.id, defaultAccount) : false;
+    // Check if banner is hidden for this account (only applies if banner can be hidden)
+    const isHidden = canBeHidden && config?.id && defaultAccount ? isBannerHidden(config.id, defaultAccount) : false;
 
     // Update CSS variable with banner height
     const updateBannerHeight = useCallback(() => {
@@ -67,7 +68,7 @@ export const GlobalInfoBanner = () => {
     }
 
     return (
-        <div ref={bannerRef} className="relative z-[60] shrink-0 border-b border-brand_alt bg-brand-section_subtle md:border-brand">
+        <div ref={bannerRef} className="relative z-40 shrink-0 border-b border-brand_alt bg-brand-section_subtle md:border-brand">
             <div className="p-4 md:py-3.5">
                 <div className="flex flex-col gap-0.5 md:flex-row md:justify-center md:gap-1.5 md:text-center">
                     <p className="pr-8 text-md font-semibold text-primary_on-brand md:truncate md:pr-0">{message}</p>
@@ -81,9 +82,11 @@ export const GlobalInfoBanner = () => {
                     </p>
                 </div>
             </div>
-            <div className="absolute top-2 right-2 md:top-1.5 md:right-2">
-                <CloseButton size="md" theme="dark" label="Dismiss" onPress={handleDismiss} />
-            </div>
+            {canBeHidden && (
+                <div className="absolute top-2 right-2 md:top-1.5 md:right-2">
+                    <CloseButton size="md" theme="dark" label="Dismiss" onPress={handleDismiss} />
+                </div>
+            )}
         </div>
     );
 };
