@@ -2,7 +2,7 @@
 
 import { useState, useEffect, type ReactNode } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { createSubmission, getInProgressSubmissions, type Submission } from "@/services/submissions";
+import { createSubmission, getInProgressSubmissions, hasFormProgress, detectDeviceType, type Submission } from "@/services/submissions";
 import { useInitData } from "@/contexts/InitDataContext";
 import { LoadingOverlay } from "@/components/application/loading-overlay/loading-overlay";
 import { ContinueSubmissionModal } from "@/components/application/modals/continue-submission-modal";
@@ -21,7 +21,7 @@ export function CreateNewButton({ children, className, onCreating, onCreated, on
     const router = useRouter();
     const pathname = usePathname();
     const { data } = useInitData();
-    const { clearFormState, loadSubmission, setSubmissionId, setSubmitter } = useCreateContext();
+    const { clearFormState, loadSubmission, setSubmissionId, setSubmitter, setSelectedAccount } = useCreateContext();
     const clearProjectStore = useProjectStore(state => state.clearProjects);
     const [isChecking, setIsChecking] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
@@ -51,22 +51,33 @@ export function CreateNewButton({ children, className, onCreating, onCreated, on
             const inProgressSubmissions = await getInProgressSubmissions();
 
             if (inProgressSubmissions.length > 0) {
-                // User has an in-progress submission
                 const existingSub = inProgressSubmissions[0]; // Get the most recent one
-                setExistingSubmission(existingSub);
 
-                // Navigate to the form page first, then show modal
-                // This way the modal appears over the form page, not the dashboard
-                const formUrl = `/create/${existingSub.submission_id}/1`;
-                router.push(formUrl);
+                // Only show modal if the submission has meaningful progress
+                if (hasFormProgress(existingSub.form_data)) {
+                    // User has real progress, show the continue/start fresh modal
+                    setExistingSubmission(existingSub);
 
-                // Show modal after a brief delay to let navigation start
-                // The modal will overlay the form page
-                setTimeout(() => {
-                    setShowOverlay(false);
-                    setIsChecking(false);
-                    setShowModal(true);
-                }, 100);
+                    // Navigate to the form page first, then show modal
+                    const formUrl = `/create/${existingSub.submission_id}/1`;
+                    router.push(formUrl);
+
+                    // Show modal after a brief delay to let navigation start
+                    setTimeout(() => {
+                        setShowOverlay(false);
+                        setIsChecking(false);
+                        setShowModal(true);
+                    }, 100);
+                } else {
+                    // Submission exists but is empty - just continue with it (no modal)
+                    await loadSubmission(existingSub.submission_id);
+                    setSubmissionId(existingSub.submission_id);
+                    setSubmitter(existingSub.submitter);
+
+                    const formUrl = `/create/${existingSub.submission_id}/1`;
+                    setTargetUrl(formUrl);
+                    router.push(formUrl);
+                }
             } else {
                 // No in-progress submissions, create a new one
                 await createNewSubmission();
@@ -88,23 +99,26 @@ export function CreateNewButton({ children, className, onCreating, onCreated, on
             clearFormState();
             clearProjectStore();
 
-            // Get submitter from user data
+            // Get submitter and selected account from user data
             const submitter = data?.email || data?.clickup_id?.toString() || "unknown";
+            const accountNumber = data?.preferences?.default_account ?? null;
 
             // Create new submission with empty form data (status: started)
             const submission = await createSubmission({
                 submitter,
                 status: "started",
                 form_data: {
+                    selectedAccount: accountNumber,
                     mode: "simple",
                     selectedProjectIds: [],
-                    allProjects: [],
                 },
+                device_last_viewed_on: detectDeviceType(),
             });
 
-            // Set submission ID and submitter in context so page doesn't reload from Supabase
+            // Set submission ID, submitter, and selected account in context so page doesn't reload from Supabase
             setSubmissionId(submission.submission_id);
             setSubmitter(submitter);
+            setSelectedAccount(accountNumber);
 
             onCreated?.(submission.submission_id);
 

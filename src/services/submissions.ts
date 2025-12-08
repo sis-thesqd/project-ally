@@ -15,14 +15,49 @@
 // Types
 // ============================================================================
 
+/**
+ * Form data payload stored in Supabase.
+ * Only essential user-input data - no derived/fetched data like allProjects.
+ * Keys are ordered by page/step in the form wizard.
+ */
+export type DeviceType = "desktop" | "mobile" | "other";
+
 export interface SubmissionFormData {
+    // Account context (set when form is created)
+    selectedAccount?: number | null;
+
+    // Step 1: Project Selection
     mode?: string;
     selectedProjectIds?: number[];
-    allProjects?: unknown[];
+
+    // Step 2: General Info
     generalInfo?: unknown;
+
+    // Step 3: Design Style
     designStyle?: unknown;
+
+    // Step 4: Creative Direction
     creativeDirection?: unknown;
+
+    // Step 5: Deliverable Details
     deliverableDetails?: unknown;
+}
+
+/**
+ * Detect the current device type based on user agent and screen width.
+ */
+export function detectDeviceType(): DeviceType {
+    if (typeof window === "undefined") return "other";
+
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+    const isSmallScreen = window.innerWidth < 768;
+
+    if (isMobileUA || isSmallScreen) {
+        return "mobile";
+    }
+
+    return "desktop";
 }
 
 export interface Submission {
@@ -30,6 +65,7 @@ export interface Submission {
     submitter: string;
     status: "started" | "in_progress" | "submitted" | string;
     form_data: SubmissionFormData;
+    device_last_viewed_on: DeviceType | null;
     updated_at: string;
     created_at: string;
 }
@@ -38,12 +74,14 @@ export interface CreateSubmissionParams {
     submitter: string;
     status?: "started" | "in_progress";
     form_data: SubmissionFormData;
+    device_last_viewed_on?: DeviceType;
 }
 
 export interface UpdateSubmissionParams {
     submission_id: string;
     status?: "started" | "in_progress" | "submitted";
     form_data: SubmissionFormData;
+    device_last_viewed_on?: DeviceType;
 }
 
 export interface UpsertSubmissionParams {
@@ -51,6 +89,7 @@ export interface UpsertSubmissionParams {
     submitter: string;
     status?: "started" | "in_progress" | "submitted";
     form_data: SubmissionFormData;
+    device_last_viewed_on?: DeviceType;
 }
 
 // ============================================================================
@@ -73,12 +112,12 @@ async function safeParseJson<T>(response: Response): Promise<T | null> {
  * Initial status is "started" by default.
  */
 export async function createSubmission(params: CreateSubmissionParams): Promise<Submission> {
-    const { submitter, status = "started", form_data } = params;
+    const { submitter, status = "started", form_data, device_last_viewed_on } = params;
 
     const response = await fetch("/api/submissions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ submitter, status, form_data }),
+        body: JSON.stringify({ submitter, status, form_data, device_last_viewed_on }),
     });
 
     if (!response.ok) {
@@ -95,12 +134,12 @@ export async function createSubmission(params: CreateSubmissionParams): Promise<
  * Use this when syncing form changes - always set status to "in_progress".
  */
 export async function updateSubmission(params: UpdateSubmissionParams): Promise<Submission> {
-    const { submission_id, status = "in_progress", form_data } = params;
+    const { submission_id, status = "in_progress", form_data, device_last_viewed_on } = params;
 
     const response = await fetch("/api/submissions", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ submission_id, status, form_data }),
+        body: JSON.stringify({ submission_id, status, form_data, device_last_viewed_on }),
     });
 
     if (!response.ok) {
@@ -120,19 +159,21 @@ export async function updateSubmission(params: UpdateSubmissionParams): Promise<
  * @deprecated Prefer using createSubmission() or updateSubmission() for clarity
  */
 export async function upsertSubmission(params: UpsertSubmissionParams): Promise<Submission> {
-    const { submission_id, submitter, status, form_data } = params;
+    const { submission_id, submitter, status, form_data, device_last_viewed_on } = params;
 
     if (submission_id) {
         return updateSubmission({
             submission_id,
             status: status || "in_progress",
             form_data,
+            device_last_viewed_on,
         });
     } else {
         return createSubmission({
             submitter,
             status: (status as "started" | "in_progress") || "started",
             form_data,
+            device_last_viewed_on,
         });
     }
 }
@@ -198,11 +239,11 @@ export async function getExistingDraft(): Promise<Submission | null> {
 /**
  * Create initial empty form data for a new submission.
  */
-export function createEmptyFormData(): SubmissionFormData {
+export function createEmptyFormData(selectedAccount?: number): SubmissionFormData {
     return {
+        selectedAccount: selectedAccount ?? null,
         mode: "simple",
         selectedProjectIds: [],
-        allProjects: [],
         generalInfo: null,
         designStyle: null,
         creativeDirection: null,

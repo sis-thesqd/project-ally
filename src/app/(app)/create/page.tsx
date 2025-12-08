@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createSubmission } from "@/services/submissions";
+import { createSubmission, detectDeviceType } from "@/services/submissions";
 import { useInitData } from "@/contexts/InitDataContext";
 import { LoadingOverlay } from "@/components/application/loading-overlay/loading-overlay";
 import { useCreateContext } from "./CreateContext";
@@ -11,7 +11,7 @@ import { useProjectStore } from "@sis-thesqd/prf-project-selection";
 export default function CreatePage() {
     const router = useRouter();
     const { data, isReady } = useInitData();
-    const { clearFormState, setSubmissionId, setSubmitter } = useCreateContext();
+    const { clearFormState, setSubmissionId, setSubmitter, setSelectedAccount } = useCreateContext();
     const clearProjectStore = useProjectStore(state => state.clearProjects);
     const [showOverlay, setShowOverlay] = useState(true);
 
@@ -23,8 +23,9 @@ export default function CreatePage() {
             clearFormState();
             clearProjectStore();
 
-            // Get submitter from user data
+            // Get submitter and selected account from user data
             const submitter = data?.email || data?.clickup_id?.toString() || "unknown";
+            const accountNumber = data?.preferences?.default_account ?? null;
 
             try {
                 // Create new submission with empty form data
@@ -32,15 +33,17 @@ export default function CreatePage() {
                     submitter,
                     status: "started",
                     form_data: {
+                        selectedAccount: accountNumber,
                         mode: "simple",
                         selectedProjectIds: [],
-                        allProjects: [],
                     },
+                    device_last_viewed_on: detectDeviceType(),
                 });
 
-                // Set submission ID and submitter in context so page doesn't reload from Supabase
+                // Set submission ID, submitter, and selected account in context so page doesn't reload from Supabase
                 setSubmissionId(submission.submission_id);
                 setSubmitter(submitter);
+                setSelectedAccount(accountNumber);
 
                 // Navigate to the new submission's first step immediately
                 router.replace(`/create/${submission.submission_id}/1`);
@@ -53,7 +56,7 @@ export default function CreatePage() {
         };
 
         createAndRedirect();
-    }, [isReady, data, router, clearFormState, clearProjectStore, setSubmissionId, setSubmitter]);
+    }, [isReady, data, router, clearFormState, clearProjectStore, setSubmissionId, setSubmitter, setSelectedAccount]);
 
     return (
         <>

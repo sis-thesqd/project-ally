@@ -2,25 +2,40 @@ import { createServerSupabase } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 interface SubmissionFormData {
+    // Account context (set when form is created)
+    selectedAccount?: number | null;
+
+    // Step 1: Project Selection
     mode?: string;
     selectedProjectIds?: number[];
-    allProjects?: unknown[];
+
+    // Step 2: General Info
     generalInfo?: unknown;
+
+    // Step 3: Design Style
     designStyle?: unknown;
+
+    // Step 4: Creative Direction
     creativeDirection?: unknown;
+
+    // Step 5: Deliverable Details
     deliverableDetails?: unknown;
 }
+
+type DeviceType = "desktop" | "mobile" | "other";
 
 interface CreateSubmissionBody {
     submitter: string;
     status?: string;
     form_data: SubmissionFormData;
+    device_last_viewed_on?: DeviceType;
 }
 
 interface UpdateSubmissionBody {
     submission_id: string;
     status?: string;
     form_data: SubmissionFormData;
+    device_last_viewed_on?: DeviceType;
 }
 
 // POST - Create new submission
@@ -55,6 +70,7 @@ export async function POST(request: NextRequest) {
                 submitter: body.submitter || user.email,
                 status: body.status || "started",
                 form_data: body.form_data,
+                device_last_viewed_on: body.device_last_viewed_on || null,
                 updated_at: now,
             })
             .select()
@@ -101,6 +117,7 @@ export async function PUT(request: NextRequest) {
             .update({
                 form_data: body.form_data,
                 status: body.status || "started",
+                device_last_viewed_on: body.device_last_viewed_on || null,
                 updated_at: now,
             })
             .eq("submission_id", body.submission_id)

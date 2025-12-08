@@ -6,7 +6,7 @@ import { GeneralInfo, type GeneralInfoState } from "@sis-thesqd/prf-general-info
 import { DesignStyle, type DesignStyleState } from "@sis-thesqd/prf-design-style";
 import { CreativeDirection, type CreativeDirectionState } from "@sis-thesqd/prf-creative-direction";
 import { DeliverableDetails, type DeliverableDetailsState } from "@sis-thesqd/prf-deliverable-details";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Key } from "react-aria";
 import { useInitData } from "@/contexts/InitDataContext";
 import { ButtonGroup, ButtonGroupItem } from "@/components/base/button-group/button-group";
@@ -14,6 +14,7 @@ import { projectSelectionApiConfig, projectSelectionFilterConfig, generalInfoApi
 import { BoxIcon, MagicWandIcon } from "@/components/icons";
 import { useCreateContext } from "../../CreateContext";
 import { notFound } from "next/navigation";
+import { LoadingOverlay } from "@/components/application/loading-overlay/loading-overlay";
 
 export default function CreateStepPage() {
     const params = useParams();
@@ -48,6 +49,17 @@ export default function CreateStepPage() {
     // Determine if we need to load - only if context doesn't have this submission yet
     const needsLoad = contextSubmissionId !== submissionId;
     const [isLoading, setIsLoading] = useState(needsLoad);
+    const [minLoadingComplete, setMinLoadingComplete] = useState(false);
+    const loadStartTimeRef = useRef<number>(Date.now());
+
+    // Minimum 1 second loading overlay
+    useEffect(() => {
+        loadStartTimeRef.current = Date.now();
+        const timer = setTimeout(() => {
+            setMinLoadingComplete(true);
+        }, 1000);
+        return () => clearTimeout(timer);
+    }, []);
 
     // Validate step
     if (step !== "1" && step !== "2" && step !== "3" && step !== "4" && step !== "5") {
@@ -137,6 +149,15 @@ export default function CreateStepPage() {
             setAllProjects(mappedProjects);
         },
         [] // setAllProjects is stable from useState
+    );
+
+    // Handle project selection changes (real-time sync to Supabase)
+    const handleProjectSelectionChange = useCallback(
+        (selectedIds: number[]) => {
+            console.log("Project selection changed:", selectedIds);
+            setSelectedProjectIds(selectedIds);
+        },
+        [setSelectedProjectIds]
     );
 
     // Handle project selection continue - move to step 2
@@ -269,16 +290,13 @@ export default function CreateStepPage() {
         console.log("Analytics event:", eventName, properties);
     }, []);
 
-    // Show loading state while loading submission or auth data
-    if (isLoading || !isReady || !data) {
-        return (
-            <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
-                <div className="mb-6 sm:mb-8 max-w-7xl mx-auto w-full">
-                    <h1 className="text-xl sm:text-2xl font-semibold text-primary align-center">New Project Request</h1>
-                    <p className="text-secondary mt-1 text-sm sm:text-base">Loading...</p>
-                </div>
-            </main>
-        );
+    // Determine if we should show the loading overlay
+    // Show until both: data is ready AND minimum 1 second has passed
+    const showLoadingOverlay = isLoading || !isReady || !data || !minLoadingComplete;
+
+    // Show loading overlay while loading submission, auth data, or minimum time hasn't elapsed
+    if (showLoadingOverlay) {
+        return <LoadingOverlay isVisible={true} label="Loading..." />;
     }
 
     // Step 5: Deliverable Details
@@ -437,6 +455,7 @@ export default function CreateStepPage() {
                 filterConfig={projectSelectionFilterConfig}
                 mode={mode}
                 defaultFilter="squadkits"
+                onSelectionChange={handleProjectSelectionChange}
                 onContinue={handleProjectSelectionContinue}
                 onDataLoaded={handleProjectsDataLoaded}
                 trackEvent={handleTrackEvent}
