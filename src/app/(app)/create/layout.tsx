@@ -1,7 +1,5 @@
-"use client";
-
-import { CreateProvider } from "./CreateContext";
-
 export default function CreateLayout({ children }: { children: React.ReactNode }) {
-    return <CreateProvider>{children}</CreateProvider>;
+    // CreateProvider is now in the parent app layout (layout-client.tsx)
+    // so it's available both in the sidebar and in the create pages
+    return <>{children}</>;
 }

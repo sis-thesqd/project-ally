@@ -6,22 +6,27 @@ import { GeneralInfo, type GeneralInfoState } from "@sis-thesqd/prf-general-info
 import { DesignStyle, type DesignStyleState } from "@sis-thesqd/prf-design-style";
 import { CreativeDirection, type CreativeDirectionState } from "@sis-thesqd/prf-creative-direction";
 import { DeliverableDetails, type DeliverableDetailsState } from "@sis-thesqd/prf-deliverable-details";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Key } from "react-aria";
 import { useInitData } from "@/contexts/InitDataContext";
 import { ButtonGroup, ButtonGroupItem } from "@/components/base/button-group/button-group";
 import { projectSelectionApiConfig, projectSelectionFilterConfig, generalInfoApiConfig, designStyleApiConfig, designStyleUiConfig, creativeDirectionApiConfig, deliverableDetailsApiConfig } from "@/config";
 import { BoxIcon, MagicWandIcon } from "@/components/icons";
-import { useCreateContext } from "../CreateContext";
+import { useCreateContext } from "../../CreateContext";
 import { notFound } from "next/navigation";
 
 export default function CreateStepPage() {
     const params = useParams();
     const router = useRouter();
+    const submissionId = params.submission_id as string;
     const step = params.step as string;
 
     const { data, isReady } = useInitData();
     const {
+        submissionId: contextSubmissionId,
+        setSubmissionId,
+        submitter,
+        setSubmitter,
         mode,
         setMode,
         selectedProjectIds,
@@ -36,12 +41,49 @@ export default function CreateStepPage() {
         setCreativeDirectionState,
         deliverableDetailsState,
         setDeliverableDetailsState,
+        loadSubmission,
+        isSyncing,
     } = useCreateContext();
+
+    // Determine if we need to load - only if context doesn't have this submission yet
+    const needsLoad = contextSubmissionId !== submissionId;
+    const [isLoading, setIsLoading] = useState(needsLoad);
 
     // Validate step
     if (step !== "1" && step !== "2" && step !== "3" && step !== "4" && step !== "5") {
         notFound();
     }
+
+    // Load submission from Supabase if not already loaded in context
+    useEffect(() => {
+        const initSubmission = async () => {
+            // If context already has this submission, we're good
+            if (contextSubmissionId === submissionId) {
+                setIsLoading(false);
+                return;
+            }
+
+            // Try to load from Supabase
+            const loaded = await loadSubmission(submissionId);
+            if (!loaded) {
+                // Submission not found, redirect to home
+                router.push("/");
+                return;
+            }
+
+            setIsLoading(false);
+        };
+
+        initSubmission();
+    }, [submissionId, contextSubmissionId, loadSubmission, router]);
+
+    // Set submitter from user data when available
+    useEffect(() => {
+        if (data && !submitter) {
+            const newSubmitter = data.email || data.clickup_id?.toString() || "unknown";
+            setSubmitter(newSubmitter);
+        }
+    }, [data, submitter, setSubmitter]);
 
     // Get auth data from InitDataContext
     const { accountId, memberId, userId } = useMemo(() => {
@@ -102,24 +144,24 @@ export default function CreateStepPage() {
         (selectedIds: number[]) => {
             console.log("Selected project IDs:", selectedIds);
             setSelectedProjectIds(selectedIds);
-            router.push("/create/2");
+            router.push(`/create/${submissionId}/2`);
         },
-        [setSelectedProjectIds, router]
+        [setSelectedProjectIds, router, submissionId]
     );
 
     // Handle general info back - return to step 1
     const handleGeneralInfoBack = useCallback(() => {
-        router.push("/create/1");
-    }, [router]);
+        router.push(`/create/${submissionId}/1`);
+    }, [router, submissionId]);
 
     // Handle general info continue - move to step 3
     const handleGeneralInfoContinue = useCallback(
         async (state: GeneralInfoState) => {
             console.log("General info submitted:", state);
             setGeneralInfoState(state);
-            router.push("/create/3");
+            router.push(`/create/${submissionId}/3`);
         },
-        [setGeneralInfoState, router]
+        [setGeneralInfoState, router, submissionId]
     );
 
     // Handle general info state changes
@@ -132,17 +174,17 @@ export default function CreateStepPage() {
 
     // Handle design style back - return to step 2
     const handleDesignStyleBack = useCallback(() => {
-        router.push("/create/2");
-    }, [router]);
+        router.push(`/create/${submissionId}/2`);
+    }, [router, submissionId]);
 
     // Handle design style continue - move to step 4
     const handleDesignStyleContinue = useCallback(
         async (state: DesignStyleState) => {
             console.log("Design style submitted:", state);
             setDesignStyleState(state);
-            router.push("/create/4");
+            router.push(`/create/${submissionId}/4`);
         },
-        [setDesignStyleState, router]
+        [setDesignStyleState, router, submissionId]
     );
 
     // Handle design style state changes
@@ -155,17 +197,17 @@ export default function CreateStepPage() {
 
     // Handle creative direction back - return to step 3
     const handleCreativeDirectionBack = useCallback(() => {
-        router.push("/create/3");
-    }, [router]);
+        router.push(`/create/${submissionId}/3`);
+    }, [router, submissionId]);
 
     // Handle creative direction continue - move to step 5
     const handleCreativeDirectionContinue = useCallback(
         async (state: CreativeDirectionState) => {
             console.log("Creative direction submitted:", state);
             setCreativeDirectionState(state);
-            router.push("/create/5");
+            router.push(`/create/${submissionId}/5`);
         },
-        [setCreativeDirectionState, router]
+        [setCreativeDirectionState, router, submissionId]
     );
 
     // Handle creative direction state changes
@@ -178,8 +220,8 @@ export default function CreateStepPage() {
 
     // Handle deliverable details back - return to step 4
     const handleDeliverableDetailsBack = useCallback(() => {
-        router.push("/create/4");
-    }, [router]);
+        router.push(`/create/${submissionId}/4`);
+    }, [router, submissionId]);
 
     // Get the removeProject action from the project store
     const removeProjectFromStore = useProjectStore(state => state.removeProject);
@@ -214,6 +256,10 @@ export default function CreateStepPage() {
     // Handle deliverable details state changes
     const handleDeliverableDetailsStateChange = useCallback(
         (state: DeliverableDetailsState) => {
+            console.log('[project-ally] Received state change:', {
+                primaryProjectId: state.primaryProjectId,
+                selectedProjectIds: state.selectedProjectIds,
+            });
             setDeliverableDetailsState(state);
         },
         [setDeliverableDetailsState]
@@ -223,8 +269,8 @@ export default function CreateStepPage() {
         console.log("Analytics event:", eventName, properties);
     }, []);
 
-    // Show loading state while auth data is loading
-    if (!isReady || !data) {
+    // Show loading state while loading submission or auth data
+    if (isLoading || !isReady || !data) {
         return (
             <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
                 <div className="mb-6 sm:mb-8 max-w-7xl mx-auto w-full">

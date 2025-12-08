@@ -1,15 +1,22 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 import type { GeneralInfoState } from "@sis-thesqd/prf-general-info";
 import type { SelectionMode } from "@sis-thesqd/prf-project-selection";
 import type { DesignStyleState } from "@sis-thesqd/prf-design-style";
 import type { CreativeDirectionState } from "@sis-thesqd/prf-creative-direction";
 import type { DeliverableDetailsState, Project } from "@sis-thesqd/prf-deliverable-details";
+import { upsertSubmission, getSubmission, type SubmissionFormData } from "@/services/submissions";
 
 const STORAGE_KEY = "create-form-state";
 
 interface CreateContextType {
+    // Submission ID
+    submissionId: string | null;
+    setSubmissionId: (id: string | null) => void;
+    submitter: string | null;
+    setSubmitter: (submitter: string | null) => void;
+
     // Step 1: Project Selection
     mode: SelectionMode;
     setMode: (mode: SelectionMode) => void;
@@ -36,9 +43,17 @@ interface CreateContextType {
 
     // Clear all state
     clearFormState: () => void;
+
+    // Sync status
+    isSyncing: boolean;
+    lastSyncError: string | null;
+
+    // Load submission from Supabase
+    loadSubmission: (submissionId: string) => Promise<boolean>;
 }
 
 interface StoredState {
+    submissionId: string | null;
     mode: SelectionMode;
     selectedProjectIds: number[];
     allProjects: Project[];
@@ -86,6 +101,8 @@ function clearStoredState(): void {
 
 export function CreateProvider({ children }: { children: ReactNode }) {
     const [isHydrated, setIsHydrated] = useState(false);
+    const [submissionId, setSubmissionIdInternal] = useState<string | null>(null);
+    const [submitter, setSubmitterInternal] = useState<string | null>(null);
     const [mode, setModeInternal] = useState<SelectionMode>("simple");
     const [selectedProjectIds, setSelectedProjectIdsInternal] = useState<number[]>([]);
     const [allProjects, setAllProjectsInternal] = useState<Project[]>([]);
@@ -93,12 +110,19 @@ export function CreateProvider({ children }: { children: ReactNode }) {
     const [designStyleState, setDesignStyleStateInternal] = useState<DesignStyleState | null>(null);
     const [creativeDirectionState, setCreativeDirectionStateInternal] = useState<CreativeDirectionState | null>(null);
     const [deliverableDetailsState, setDeliverableDetailsStateInternal] = useState<DeliverableDetailsState | null>(null);
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [lastSyncError, setLastSyncError] = useState<string | null>(null);
+
+    // Track if we should sync to Supabase (debounced)
+    const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const isLoadingRef = useRef(false);
 
     // Load state from sessionStorage on mount
     useEffect(() => {
         const stored = getStoredState();
         if (stored) {
             console.log("Restoring form state from sessionStorage");
+            setSubmissionIdInternal(stored.submissionId);
             setModeInternal(stored.mode);
             setSelectedProjectIdsInternal(stored.selectedProjectIds);
             setAllProjectsInternal(stored.allProjects);
@@ -114,6 +138,7 @@ export function CreateProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         if (!isHydrated) return;
         const state: StoredState = {
+            submissionId,
             mode,
             selectedProjectIds,
             allProjects,
@@ -123,9 +148,66 @@ export function CreateProvider({ children }: { children: ReactNode }) {
             deliverableDetailsState,
         };
         setStoredState(state);
-    }, [isHydrated, mode, selectedProjectIds, allProjects, generalInfoState, designStyleState, creativeDirectionState, deliverableDetailsState]);
+    }, [isHydrated, submissionId, mode, selectedProjectIds, allProjects, generalInfoState, designStyleState, creativeDirectionState, deliverableDetailsState]);
+
+    // Sync to Supabase when form data changes (debounced)
+    // Always set status to "in_progress" when user makes changes
+    useEffect(() => {
+        if (!isHydrated || !submissionId || !submitter || isLoadingRef.current) return;
+
+        // Clear existing timeout
+        if (syncTimeoutRef.current) {
+            clearTimeout(syncTimeoutRef.current);
+        }
+
+        // Debounce the sync
+        syncTimeoutRef.current = setTimeout(async () => {
+            setIsSyncing(true);
+            setLastSyncError(null);
+
+            const formData: SubmissionFormData = {
+                mode,
+                selectedProjectIds,
+                allProjects,
+                generalInfo: generalInfoState,
+                designStyle: designStyleState,
+                creativeDirection: creativeDirectionState,
+                deliverableDetails: deliverableDetailsState,
+            };
+
+            try {
+                // Always set status to "in_progress" when syncing user changes
+                await upsertSubmission({
+                    submission_id: submissionId,
+                    submitter,
+                    status: "in_progress",
+                    form_data: formData,
+                });
+                console.log("Synced submission to Supabase with status: in_progress");
+            } catch (error) {
+                console.error("Failed to sync submission:", error);
+                setLastSyncError(error instanceof Error ? error.message : "Unknown error");
+            } finally {
+                setIsSyncing(false);
+            }
+        }, 1000); // 1 second debounce
+
+        return () => {
+            if (syncTimeoutRef.current) {
+                clearTimeout(syncTimeoutRef.current);
+            }
+        };
+    }, [isHydrated, submissionId, submitter, mode, selectedProjectIds, allProjects, generalInfoState, designStyleState, creativeDirectionState, deliverableDetailsState]);
 
     // Wrapped setters that update state
+    const setSubmissionId = useCallback((id: string | null) => {
+        setSubmissionIdInternal(id);
+    }, []);
+
+    const setSubmitter = useCallback((value: string | null) => {
+        setSubmitterInternal(value);
+    }, []);
+
     const setMode = useCallback((newMode: SelectionMode) => {
         setModeInternal(newMode);
     }, []);
@@ -165,6 +247,8 @@ export function CreateProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const clearFormState = useCallback(() => {
+        setSubmissionIdInternal(null);
+        setSubmitterInternal(null);
         setModeInternal("simple");
         setSelectedProjectIdsInternal([]);
         setAllProjectsInternal([]);
@@ -175,9 +259,57 @@ export function CreateProvider({ children }: { children: ReactNode }) {
         clearStoredState();
     }, []);
 
+    // Load submission from Supabase
+    const loadSubmission = useCallback(async (id: string): Promise<boolean> => {
+        isLoadingRef.current = true;
+        try {
+            const submission = await getSubmission(id);
+            if (!submission) {
+                isLoadingRef.current = false;
+                return false;
+            }
+
+            const formData = submission.form_data;
+            setSubmissionIdInternal(submission.submission_id);
+            setSubmitterInternal(submission.submitter);
+            setModeInternal((formData.mode as SelectionMode) || "simple");
+            setSelectedProjectIdsInternal(formData.selectedProjectIds || []);
+            setAllProjectsInternal((formData.allProjects as Project[]) || []);
+            setGeneralInfoStateInternal((formData.generalInfo as GeneralInfoState) || null);
+            setDesignStyleStateInternal((formData.designStyle as DesignStyleState) || null);
+            setCreativeDirectionStateInternal((formData.creativeDirection as CreativeDirectionState) || null);
+            setDeliverableDetailsStateInternal((formData.deliverableDetails as DeliverableDetailsState) || null);
+
+            // Update sessionStorage with loaded data
+            const state: StoredState = {
+                submissionId: submission.submission_id,
+                mode: (formData.mode as SelectionMode) || "simple",
+                selectedProjectIds: formData.selectedProjectIds || [],
+                allProjects: (formData.allProjects as Project[]) || [],
+                generalInfoState: (formData.generalInfo as GeneralInfoState) || null,
+                designStyleState: (formData.designStyle as DesignStyleState) || null,
+                creativeDirectionState: (formData.creativeDirection as CreativeDirectionState) || null,
+                deliverableDetailsState: (formData.deliverableDetails as DeliverableDetailsState) || null,
+            };
+            setStoredState(state);
+
+            console.log("Loaded submission from Supabase:", id);
+            isLoadingRef.current = false;
+            return true;
+        } catch (error) {
+            console.error("Failed to load submission:", error);
+            isLoadingRef.current = false;
+            return false;
+        }
+    }, []);
+
     return (
         <CreateContext.Provider
             value={{
+                submissionId,
+                setSubmissionId,
+                submitter,
+                setSubmitter,
                 mode,
                 setMode,
                 selectedProjectIds,
@@ -193,6 +325,9 @@ export function CreateProvider({ children }: { children: ReactNode }) {
                 deliverableDetailsState,
                 setDeliverableDetailsState,
                 clearFormState,
+                isSyncing,
+                lastSyncError,
+                loadSubmission,
             }}
         >
             {children}

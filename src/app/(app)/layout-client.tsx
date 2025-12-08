@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { SidebarNavigationSlim } from '@/components/application/app-navigation/sidebar-navigation/sidebar-slim';
 import { useInitData } from '@/contexts/InitDataContext';
+import { CreateProvider } from './create/CreateContext';
 
 export function AppLayoutClient({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -54,12 +55,14 @@ export function AppLayoutClient({ children }: { children: React.ReactNode }) {
     }
 
     return (
-        <div className="flex flex-col bg-primary lg:flex-row h-screen overflow-y-auto lg:overflow-y-scroll lg:scrollbar-auto">
-            <SidebarNavigationSlim
-                activeUrl={pathname}
-                items={sidebarItems}
-            />
-            {children}
-        </div>
+        <CreateProvider>
+            <div className="flex flex-col bg-primary lg:flex-row h-screen overflow-y-auto lg:overflow-y-scroll lg:scrollbar-auto">
+                <SidebarNavigationSlim
+                    activeUrl={pathname}
+                    items={sidebarItems}
+                />
+                {children}
+            </div>
+        </CreateProvider>
     );
 }

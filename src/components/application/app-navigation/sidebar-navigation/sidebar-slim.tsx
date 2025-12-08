@@ -20,6 +20,7 @@ import { NavAccountMenu, type AccountItem } from "../base-components/nav-account
 import { NavItemBase } from "../base-components/nav-item";
 import { NavItemButton } from "../base-components/nav-item-button";
 import { NavList } from "../base-components/nav-list";
+import { CreateNewButton } from "../base-components/create-new-button";
 import type { NavItemType } from "../config";
 import { useInitData } from "@/contexts/InitDataContext";
 
@@ -136,13 +137,11 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                 </div>
 
                 <div className="mt-4 flex justify-center px-3">
-                    <a
-                        href="/create"
-                        className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-800 transition-colors hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600"
-                        title="Create new"
+                    <CreateNewButton
+                        className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-800 transition-colors hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <Plus className="h-5 w-5 text-gray-100" />
-                    </a>
+                    </CreateNewButton>
                 </div>
 
                 <ul className="mt-4 flex flex-col gap-0.5 px-3">
@@ -283,13 +282,12 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                     </div>
 
                     <div className="mt-4 px-4">
-                        <a
-                            href="/create"
-                            className="flex items-center gap-3 rounded-lg bg-gray-800 px-3 py-2.5 transition-colors hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600"
+                        <CreateNewButton
+                            className="flex w-full items-center gap-3 rounded-lg bg-gray-800 px-3 py-2.5 transition-colors hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <Plus className="h-5 w-5 text-gray-100" />
                             <span className="text-sm font-medium text-gray-100">Create New</span>
-                        </a>
+                        </CreateNewButton>
                     </div>
 
                     <NavList items={items} />
