@@ -108,7 +108,7 @@ export const NavItemBase = ({ current, type, badge, href, icon: Icon, children, 
         return (
             <button
                 type="button"
-                className={cx("px-3 py-2", styles.root, current && styles.rootSelected)}
+                className={cx("px-3 py-2 text-left", styles.root, current && styles.rootSelected)}
                 onClick={handleClick}
             >
                 {iconElement}
