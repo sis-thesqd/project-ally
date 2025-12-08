@@ -138,7 +138,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
 
                 <div className="mt-4 flex justify-center px-3">
                     <CreateNewButton
-                        className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-800 transition-colors hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-800 transition-colors hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                         <Plus className="h-5 w-5 text-gray-100" />
                     </CreateNewButton>
@@ -283,7 +283,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
 
                     <div className="mt-4 px-4">
                         <CreateNewButton
-                            className="flex w-full items-center gap-3 rounded-lg bg-gray-800 px-3 py-2.5 transition-colors hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex w-full items-center gap-3 rounded-lg bg-gray-800 px-3 py-2.5 transition-colors hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                         >
                             <Plus className="h-5 w-5 text-gray-100" />
                             <span className="text-sm font-medium text-gray-100">Create New</span>

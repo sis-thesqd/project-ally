@@ -2,9 +2,6 @@ import { createServerSupabase } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 interface SubmissionFormData {
-    // Account context (set when form is created)
-    selectedAccount?: number | null;
-
     // Step 1: Project Selection
     mode?: string;
     selectedProjectIds?: number[];
@@ -29,6 +26,7 @@ interface CreateSubmissionBody {
     status?: string;
     form_data: SubmissionFormData;
     device_last_viewed_on?: DeviceType;
+    selected_account: number;
 }
 
 interface UpdateSubmissionBody {
@@ -70,7 +68,8 @@ export async function POST(request: NextRequest) {
                 submitter: body.submitter || user.email,
                 status: body.status || "started",
                 form_data: body.form_data,
-                device_last_viewed_on: body.device_last_viewed_on || null,
+                selected_account: body.selected_account,
+                device_last_viewed_on: body.device_last_viewed_on || "other",
                 updated_at: now,
             })
             .select()
@@ -117,7 +116,7 @@ export async function PUT(request: NextRequest) {
             .update({
                 form_data: body.form_data,
                 status: body.status || "started",
-                device_last_viewed_on: body.device_last_viewed_on || null,
+                device_last_viewed_on: body.device_last_viewed_on || "other",
                 updated_at: now,
             })
             .eq("submission_id", body.submission_id)

@@ -76,6 +76,10 @@ export function CreateProvider({ children }: { children: ReactNode }) {
     // Track if we should sync to Supabase (debounced)
     const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const isLoadingRef = useRef(false);
+    // Track if this is the initial setup - skip the first sync after setting initial values
+    const isInitialSetupRef = useRef(true);
+    // Track the last synced form data to detect actual changes
+    const lastSyncedDataRef = useRef<string | null>(null);
 
     // Mark as hydrated on mount (no sessionStorage restore)
     useEffect(() => {
@@ -84,8 +88,33 @@ export function CreateProvider({ children }: { children: ReactNode }) {
 
     // Sync to Supabase when form data changes (debounced)
     // Only syncs essential user-input data - NOT allProjects (which is fetched from API)
+    // Only syncs when there's an actual change from the last synced state
     useEffect(() => {
         if (!isHydrated || !submissionId || !submitter || isLoadingRef.current) return;
+
+        // Build the current form data for comparison
+        // Note: selectedAccount is NOT in form_data - it's a separate column
+        const formData: SubmissionFormData = {
+            mode,
+            selectedProjectIds,
+            generalInfo: generalInfoState,
+            designStyle: designStyleState,
+            creativeDirection: creativeDirectionState,
+            deliverableDetails: deliverableDetailsState,
+        };
+        const currentDataString = JSON.stringify(formData);
+
+        // Skip the first sync after initial setup (when submission is created with "started" status)
+        if (isInitialSetupRef.current) {
+            isInitialSetupRef.current = false;
+            lastSyncedDataRef.current = currentDataString;
+            return;
+        }
+
+        // Skip if data hasn't actually changed
+        if (lastSyncedDataRef.current === currentDataString) {
+            return;
+        }
 
         // Clear existing timeout
         if (syncTimeoutRef.current) {
@@ -97,19 +126,6 @@ export function CreateProvider({ children }: { children: ReactNode }) {
             setIsSyncing(true);
             setLastSyncError(null);
 
-            // Simplified payload - only essential user input data
-            // allProjects is NOT included - it's fetched fresh from API
-            // Keys ordered by page/step in form wizard
-            const formData: SubmissionFormData = {
-                selectedAccount,
-                mode,
-                selectedProjectIds,
-                generalInfo: generalInfoState,
-                designStyle: designStyleState,
-                creativeDirection: creativeDirectionState,
-                deliverableDetails: deliverableDetailsState,
-            };
-
             try {
                 await upsertSubmission({
                     submission_id: submissionId,
@@ -118,6 +134,7 @@ export function CreateProvider({ children }: { children: ReactNode }) {
                     form_data: formData,
                     device_last_viewed_on: detectDeviceType(),
                 });
+                lastSyncedDataRef.current = currentDataString;
                 console.log("Synced submission to Supabase");
             } catch (error) {
                 console.error("Failed to sync submission:", error);
@@ -132,7 +149,7 @@ export function CreateProvider({ children }: { children: ReactNode }) {
                 clearTimeout(syncTimeoutRef.current);
             }
         };
-    }, [isHydrated, submissionId, submitter, selectedAccount, mode, selectedProjectIds, generalInfoState, designStyleState, creativeDirectionState, deliverableDetailsState]);
+    }, [isHydrated, submissionId, submitter, mode, selectedProjectIds, generalInfoState, designStyleState, creativeDirectionState, deliverableDetailsState]);
 
     // Wrapped setters that update state
     const setSubmissionId = useCallback((id: string | null) => {
@@ -196,6 +213,9 @@ export function CreateProvider({ children }: { children: ReactNode }) {
         setDesignStyleStateInternal(null);
         setCreativeDirectionStateInternal(null);
         setDeliverableDetailsStateInternal(null);
+        // Reset initial setup flag so new submission won't trigger immediate sync
+        isInitialSetupRef.current = true;
+        lastSyncedDataRef.current = null;
     }, []);
 
     // Load submission from Supabase
@@ -212,7 +232,7 @@ export function CreateProvider({ children }: { children: ReactNode }) {
             const formData = submission.form_data;
             setSubmissionIdInternal(submission.submission_id);
             setSubmitterInternal(submission.submitter);
-            setSelectedAccountInternal(formData.selectedAccount ?? null);
+            setSelectedAccountInternal(submission.selected_account ?? null);
             setModeInternal((formData.mode as SelectionMode) || "simple");
             setSelectedProjectIdsInternal(formData.selectedProjectIds || []);
             // allProjects is NOT restored - it will be fetched from API on the form page

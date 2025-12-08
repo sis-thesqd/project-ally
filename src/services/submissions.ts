@@ -5,10 +5,11 @@
  * This service communicates with the /api/submissions endpoint which manages
  * the pa_prf_submissions table in Supabase.
  *
- * Submission Status Flow:
+ * Submission Status Flow (prf_submission_status enum):
  * - "started": Initial status when submission is first created
  * - "in_progress": Status set when user makes any changes to the form
  * - "submitted": Status set when user completes and submits the form
+ * - "error": Status set when an error occurs during submission processing
  */
 
 // ============================================================================
@@ -19,13 +20,11 @@
  * Form data payload stored in Supabase.
  * Only essential user-input data - no derived/fetched data like allProjects.
  * Keys are ordered by page/step in the form wizard.
+ * Note: selectedAccount is stored as a separate column, NOT in form_data.
  */
 export type DeviceType = "desktop" | "mobile" | "other";
 
 export interface SubmissionFormData {
-    // Account context (set when form is created)
-    selectedAccount?: number | null;
-
     // Step 1: Project Selection
     mode?: string;
     selectedProjectIds?: number[];
@@ -60,11 +59,21 @@ export function detectDeviceType(): DeviceType {
     return "desktop";
 }
 
+/**
+ * Submission status enum matching Supabase prf_submission_status type.
+ * - "started": Initial status when submission is first created
+ * - "in_progress": Status set when user makes any changes to the form
+ * - "submitted": Status set when user completes and submits the form
+ * - "error": Status set when an error occurs during submission
+ */
+export type SubmissionStatus = "started" | "in_progress" | "submitted" | "error";
+
 export interface Submission {
     submission_id: string;
     submitter: string;
-    status: "started" | "in_progress" | "submitted" | string;
+    status: SubmissionStatus;
     form_data: SubmissionFormData;
+    selected_account: number;
     device_last_viewed_on: DeviceType | null;
     updated_at: string;
     created_at: string;
@@ -75,11 +84,12 @@ export interface CreateSubmissionParams {
     status?: "started" | "in_progress";
     form_data: SubmissionFormData;
     device_last_viewed_on?: DeviceType;
+    selected_account: number;
 }
 
 export interface UpdateSubmissionParams {
     submission_id: string;
-    status?: "started" | "in_progress" | "submitted";
+    status?: SubmissionStatus;
     form_data: SubmissionFormData;
     device_last_viewed_on?: DeviceType;
 }
@@ -87,9 +97,10 @@ export interface UpdateSubmissionParams {
 export interface UpsertSubmissionParams {
     submission_id?: string;
     submitter: string;
-    status?: "started" | "in_progress" | "submitted";
+    status?: SubmissionStatus;
     form_data: SubmissionFormData;
     device_last_viewed_on?: DeviceType;
+    selected_account?: number;
 }
 
 // ============================================================================
@@ -112,12 +123,12 @@ async function safeParseJson<T>(response: Response): Promise<T | null> {
  * Initial status is "started" by default.
  */
 export async function createSubmission(params: CreateSubmissionParams): Promise<Submission> {
-    const { submitter, status = "started", form_data, device_last_viewed_on } = params;
+    const { submitter, status = "started", form_data, device_last_viewed_on, selected_account } = params;
 
     const response = await fetch("/api/submissions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ submitter, status, form_data, device_last_viewed_on }),
+        body: JSON.stringify({ submitter, status, form_data, device_last_viewed_on, selected_account }),
     });
 
     if (!response.ok) {
@@ -159,7 +170,7 @@ export async function updateSubmission(params: UpdateSubmissionParams): Promise<
  * @deprecated Prefer using createSubmission() or updateSubmission() for clarity
  */
 export async function upsertSubmission(params: UpsertSubmissionParams): Promise<Submission> {
-    const { submission_id, submitter, status, form_data, device_last_viewed_on } = params;
+    const { submission_id, submitter, status, form_data, device_last_viewed_on, selected_account } = params;
 
     if (submission_id) {
         return updateSubmission({
@@ -169,11 +180,15 @@ export async function upsertSubmission(params: UpsertSubmissionParams): Promise<
             device_last_viewed_on,
         });
     } else {
+        if (selected_account === undefined) {
+            throw new Error("selected_account is required when creating a new submission");
+        }
         return createSubmission({
             submitter,
             status: (status as "started" | "in_progress") || "started",
             form_data,
             device_last_viewed_on,
+            selected_account,
         });
     }
 }
@@ -239,9 +254,8 @@ export async function getExistingDraft(): Promise<Submission | null> {
 /**
  * Create initial empty form data for a new submission.
  */
-export function createEmptyFormData(selectedAccount?: number): SubmissionFormData {
+export function createEmptyFormData(): SubmissionFormData {
     return {
-        selectedAccount: selectedAccount ?? null,
         mode: "simple",
         selectedProjectIds: [],
         generalInfo: null,

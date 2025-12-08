@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createSubmission, detectDeviceType } from "@/services/submissions";
+import { handleError } from "@/services/error-reporting";
 import { useInitData } from "@/contexts/InitDataContext";
 import { LoadingOverlay } from "@/components/application/loading-overlay/loading-overlay";
 import { useCreateContext } from "./CreateContext";
@@ -25,7 +26,19 @@ export default function CreatePage() {
 
             // Get submitter and selected account from user data
             const submitter = data?.email || data?.clickup_id?.toString() || "unknown";
-            const accountNumber = data?.preferences?.default_account ?? null;
+            const accountNumber = data?.preferences?.default_account;
+
+            // Validate that user has a default account set
+            if (accountNumber === undefined || accountNumber === null) {
+                const error = new Error("No default account configured for user");
+                await handleError(error, "Unable to create request", "Please set a default account in your profile settings.", {
+                    submitter,
+                    action: "createAndRedirect",
+                });
+                setShowOverlay(false);
+                router.replace("/");
+                return;
+            }
 
             try {
                 // Create new submission with empty form data
@@ -33,11 +46,11 @@ export default function CreatePage() {
                     submitter,
                     status: "started",
                     form_data: {
-                        selectedAccount: accountNumber,
                         mode: "simple",
                         selectedProjectIds: [],
                     },
                     device_last_viewed_on: detectDeviceType(),
+                    selected_account: accountNumber,
                 });
 
                 // Set submission ID, submitter, and selected account in context so page doesn't reload from Supabase
@@ -49,6 +62,11 @@ export default function CreatePage() {
                 router.replace(`/create/${submission.submission_id}/1`);
             } catch (error) {
                 console.error("Failed to create submission:", error);
+                const err = error instanceof Error ? error : new Error("Failed to create submission");
+                await handleError(err, "Failed to create request", "Please try again. If the problem persists, contact support.", {
+                    submitter,
+                    action: "createAndRedirect",
+                });
                 setShowOverlay(false);
                 // Redirect to home on error
                 router.replace("/");
