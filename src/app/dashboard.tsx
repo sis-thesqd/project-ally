@@ -6,29 +6,37 @@ import { LoadingOverlay } from "@/components/application/loading-overlay/loading
 import { ProjectSubmissionsChart } from "./(app)/charts/project-submissions-chart";
 import { ProjectCountCard } from "./(app)/charts/project-count-card";
 
-const MIN_LOADING_TIME = 2000; // 2 seconds minimum
+const MIN_LOADING_TIME = 2000; // 2 seconds minimum when fetching
 
 export const Dashboard = () => {
-    const { data, isReady } = useInitData();
+    const { data, isReady, isFetching } = useInitData();
     const selectedAccount = data?.preferences?.default_account;
-    const [showLoading, setShowLoading] = useState(true);
+    const [showLoading, setShowLoading] = useState(false);
     const [minTimeElapsed, setMinTimeElapsed] = useState(false);
+    const [startedFetching, setStartedFetching] = useState(false);
 
-    // Track minimum loading time
+    // Show loading only when actually fetching (not using cache)
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setMinTimeElapsed(true);
-        }, MIN_LOADING_TIME);
+        if (isFetching && !startedFetching) {
+            setStartedFetching(true);
+            setShowLoading(true);
+            setMinTimeElapsed(false);
 
-        return () => clearTimeout(timer);
-    }, []);
+            // Start minimum time timer
+            const timer = setTimeout(() => {
+                setMinTimeElapsed(true);
+            }, MIN_LOADING_TIME);
 
-    // Hide loading when both data is ready and minimum time has passed
+            return () => clearTimeout(timer);
+        }
+    }, [isFetching, startedFetching]);
+
+    // Hide loading when both data is ready and minimum time has passed (only if we were fetching)
     useEffect(() => {
-        if (isReady && minTimeElapsed) {
+        if (startedFetching && isReady && minTimeElapsed) {
             setShowLoading(false);
         }
-    }, [isReady, minTimeElapsed]);
+    }, [startedFetching, isReady, minTimeElapsed]);
 
     return (
         <>

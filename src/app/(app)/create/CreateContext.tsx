@@ -7,6 +7,7 @@ import type { DesignStyleState } from "@sis-thesqd/prf-design-style";
 import type { CreativeDirectionState } from "@sis-thesqd/prf-creative-direction";
 import type { DeliverableDetailsState, Project } from "@sis-thesqd/prf-deliverable-details";
 import { upsertSubmission, getSubmission, detectDeviceType, type SubmissionFormData } from "@/services/submissions";
+import { showMobileQRNotification, resetMobileQRNotification } from "@/services/mobile-qr-notification";
 
 interface CreateContextType {
     // Submission ID
@@ -116,6 +117,10 @@ export function CreateProvider({ children }: { children: ReactNode }) {
             return;
         }
 
+        // Show mobile QR notification only after actual user change (not initial setup)
+        // This runs after the initial setup check, so we know the user made a real change
+        showMobileQRNotification(submissionId);
+
         // Clear existing timeout
         if (syncTimeoutRef.current) {
             clearTimeout(syncTimeoutRef.current);
@@ -203,6 +208,10 @@ export function CreateProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const clearFormState = useCallback(() => {
+        // Reset mobile QR notification for the current submission before clearing
+        if (submissionId) {
+            resetMobileQRNotification(submissionId);
+        }
         setSubmissionIdInternal(null);
         setSubmitterInternal(null);
         setSelectedAccountInternal(null);
@@ -216,7 +225,7 @@ export function CreateProvider({ children }: { children: ReactNode }) {
         // Reset initial setup flag so new submission won't trigger immediate sync
         isInitialSetupRef.current = true;
         lastSyncedDataRef.current = null;
-    }, []);
+    }, [submissionId]);
 
     // Load submission from Supabase
     // Note: allProjects is NOT loaded from Supabase - it's fetched fresh from API

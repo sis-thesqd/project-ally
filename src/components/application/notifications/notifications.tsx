@@ -208,3 +208,66 @@ export const ImageNotification = ({
         </div>
     );
 };
+
+interface QRCodeNotificationProps {
+    title: string;
+    description: string;
+    qrValue: string;
+    dontShowAgainLabel?: string;
+    onClose?: () => void;
+    onDontShowAgain?: () => void;
+}
+
+export const QRCodeNotification = ({
+    title,
+    description,
+    qrValue,
+    dontShowAgainLabel = "Don't show again",
+    onClose,
+    onDontShowAgain,
+}: QRCodeNotificationProps) => {
+    // Dynamic import to avoid SSR issues with QRCode
+    const QRCodeComponent = require("@/components/shared-assets/qr-code").QRCode;
+
+    return (
+        <div
+            style={
+                {
+                    "--width": "400px",
+                } as React.CSSProperties
+            }
+            className="relative z-[var(--z-index)] flex max-w-full flex-col gap-3 rounded-xl bg-primary_alt p-4 shadow-lg ring-1 ring-secondary_alt xs:w-[var(--width)] xs:flex-row xs:gap-4"
+        >
+            <div className="flex shrink-0 items-center justify-center">
+                <QRCodeComponent
+                    size="md"
+                    value={qrValue}
+                    options={{
+                        image: "/logos/Badge Slanted_Blue-01.svg",
+                        imageOptions: { imageSize: 0.5, margin: 2 },
+                        dotsOptions: { color: "#1e3a5f" },
+                        cornersSquareOptions: { color: "#1e3a5f" },
+                        cornersDotOptions: { color: "#1e3a5f" },
+                    }}
+                />
+            </div>
+
+            <div className="flex flex-1 flex-col gap-3 pr-8">
+                <div className="flex flex-col gap-1">
+                    <p className="text-sm font-semibold text-fg-primary">{title}</p>
+                    <p className="text-sm text-fg-secondary">{description}</p>
+                </div>
+
+                <div className="flex gap-3">
+                    <Button onClick={onDontShowAgain} size="sm" color="link-gray">
+                        {dontShowAgainLabel}
+                    </Button>
+                </div>
+            </div>
+
+            <div className="absolute top-2 right-2 flex items-center justify-center">
+                <CloseButton onClick={onClose} size="sm" label="Dismiss" />
+            </div>
+        </div>
+    );
+};

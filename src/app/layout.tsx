@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { RouteProvider } from "@/providers/router-provider";
 import { Theme } from "@/providers/theme";
 import { InitDataProvider } from "@/contexts/InitDataContext";
+import { Toaster } from "@/components/application/notifications/toaster";
 import "@/styles/globals.css";
 import { cx } from "@/utils/cx";
 
@@ -61,6 +62,7 @@ export default function RootLayout({
                     <Theme>
                         <InitDataProvider>
                             {children}
+                            <Toaster />
                         </InitDataProvider>
                     </Theme>
                 </RouteProvider>

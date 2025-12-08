@@ -49,6 +49,7 @@ interface InitDataContextType {
     data: InitData | null;
     sidebarItems: SidebarItem[];
     isReady: boolean;
+    isFetching: boolean;
     updatePreferences: (preferences: Partial<Preferences>) => Promise<void>;
 }
 
@@ -60,6 +61,7 @@ const InitDataContext = createContext<InitDataContextType>({
     data: null,
     sidebarItems: [],
     isReady: false,
+    isFetching: false,
     updatePreferences: async () => {},
 });
 
@@ -132,6 +134,7 @@ async function fetchInitData(): Promise<InitData | null> {
 export function InitDataProvider({ children }: { children: React.ReactNode }) {
     const [data, setData] = useState<InitData | null>(moduleData);
     const [isReady, setIsReady] = useState(moduleIsReady);
+    const [isFetching, setIsFetching] = useState(false);
     const initialized = useRef(false);
 
     useEffect(() => {
@@ -158,16 +161,19 @@ export function InitDataProvider({ children }: { children: React.ReactNode }) {
 
         // If already fetching, wait for that promise
         if (fetchPromise) {
+            setIsFetching(true);
             fetchPromise.then(() => {
                 if (moduleData) {
                     setData(moduleData);
                     setIsReady(true);
                 }
+                setIsFetching(false);
             });
             return;
         }
 
         // Fetch fresh data
+        setIsFetching(true);
         fetchPromise = fetchInitData().then((result) => {
             if (result) {
                 moduleData = result;
@@ -177,6 +183,7 @@ export function InitDataProvider({ children }: { children: React.ReactNode }) {
                 console.log('Fetched and cached fresh init data');
             }
             setIsReady(true);
+            setIsFetching(false);
             fetchPromise = null;
         });
     }, []);
@@ -219,7 +226,7 @@ export function InitDataProvider({ children }: { children: React.ReactNode }) {
     };
 
     return (
-        <InitDataContext.Provider value={{ data, sidebarItems, isReady, updatePreferences }}>
+        <InitDataContext.Provider value={{ data, sidebarItems, isReady, isFetching, updatePreferences }}>
             {children}
         </InitDataContext.Provider>
     );
