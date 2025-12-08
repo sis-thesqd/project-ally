@@ -45,19 +45,33 @@ interface ShowMobileQRNotificationOptions {
 export function showMobileQRNotification(options: ShowMobileQRNotificationOptions): void {
     const { submissionId, dontShowAgain, onDontShowAgain } = options;
 
+    console.log("[QR Notification] showMobileQRNotification called:", {
+        submissionId,
+        dontShowAgain,
+        alreadyShown: shownForSubmissions.has(submissionId),
+        isDesktop: typeof window !== "undefined" ? isDesktop() : "N/A",
+        windowWidth: typeof window !== "undefined" ? window.innerWidth : "N/A",
+    });
+
     if (dontShowAgain) {
+        console.log("[QR Notification] Skipping - dontShowAgain is true");
         return;
     }
 
     if (shownForSubmissions.has(submissionId)) {
+        console.log("[QR Notification] Skipping - already shown for this submission");
         return;
     }
     if (typeof window === "undefined") {
+        console.log("[QR Notification] Skipping - no window");
         return;
     }
     if (!isDesktop()) {
+        console.log("[QR Notification] Skipping - not desktop (width < 1024)");
         return;
     }
+
+    console.log("[QR Notification] All checks passed - scheduling notification");
 
     // Mark as shown for this submission
     shownForSubmissions.add(submissionId);

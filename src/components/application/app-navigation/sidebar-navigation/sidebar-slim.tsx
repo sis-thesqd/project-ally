@@ -15,12 +15,14 @@ import { ButtonUtility } from "@/components/base/buttons/button-utility";
 import { Toggle } from "@/components/base/toggle/toggle";
 import { UntitledLogo } from "@/components/foundations/logo/untitledui-logo";
 import { cx } from "@/utils/cx";
+import { cache } from "@/utils/cache";
 import { MobileNavigationHeader } from "../base-components/mobile-header";
 import { NavAccountMenu, type AccountItem } from "../base-components/nav-account-card";
 import { NavItemBase } from "../base-components/nav-item";
 import { NavItemButton } from "../base-components/nav-item-button";
 import { NavList } from "../base-components/nav-list";
 import { CreateNewButton } from "../base-components/create-new-button";
+import { LoadingOverlay } from "@/components/application/loading-overlay/loading-overlay";
 import type { NavItemType } from "../config";
 import { useInitData } from "@/contexts/InitDataContext";
 
@@ -47,7 +49,7 @@ function getInitials(name: string | null | undefined): string {
 }
 
 export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hideBorder, hideRightBorder }: SidebarNavigationSlimProps) => {
-    const { data, updatePreferences } = useInitData();
+    const { data, updatePreferences, refreshData } = useInitData();
     const { theme, setTheme } = useTheme();
     const router = useRouter();
     const isDarkMode = theme === 'dark';
@@ -66,6 +68,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
     const [isHovering, setIsHovering] = useState(false);
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
     const [selectedAccountNumber, setSelectedAccountNumber] = useState<number | undefined>(undefined);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const accountInitialized = useRef(false);
 
     // Set default account from preferences when data loads
@@ -103,6 +106,30 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
         form.action = "/auth/signout";
         document.body.appendChild(form);
         form.submit();
+    };
+
+    const handleRefresh = async () => {
+        setIsPopoverOpen(false);
+        setIsRefreshing(true);
+
+        try {
+            // Clear localStorage cache for task-stats and account-stats
+            // These are keyed by account number, so clear all potential keys
+            for (const account of accounts) {
+                cache.remove(`task-stats-${account.account_number}`);
+                cache.remove(`account-stats-${account.account_number}`);
+            }
+
+            // Refresh the init data (pa_init RPC)
+            await refreshData();
+
+            // Force a page reload to refresh the charts
+            window.location.reload();
+        } catch (error) {
+            console.error('Error refreshing data:', error);
+        } finally {
+            setIsRefreshing(false);
+        }
     };
 
     const isSecondarySidebarVisible = isHovering && Boolean(currentItem?.items?.length);
@@ -203,6 +230,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                                 selectedAccountNumber={selectedAccountNumber}
                                 onAccountSelect={handleAccountSelect}
                                 onSettingsClick={handleSettingsClick}
+                                onRefresh={handleRefresh}
                                 onLogout={handleLogout}
                                 onThemeChange={handleThemeChange}
                             />
@@ -254,6 +282,8 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
 
     return (
         <>
+            <LoadingOverlay isVisible={isRefreshing} label="Refreshing..." />
+
             {/* Desktop sidebar navigation */}
             <div
                 className="z-50 hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex"

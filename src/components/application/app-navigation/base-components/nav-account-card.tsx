@@ -4,7 +4,7 @@ import React from "react";
 import type { FC, HTMLAttributes } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Placement } from "@react-types/overlays";
-import { ChevronSelectorVertical, LogOut01, Moon01, Settings01, User01 } from "@untitledui/icons";
+import { ChevronSelectorVertical, LogOut01, Moon01, RefreshCcw01, Settings01, User01 } from "@untitledui/icons";
 import { useFocusManager } from "react-aria";
 import type { DialogProps as AriaDialogProps } from "react-aria-components";
 import { Button as AriaButton, Dialog as AriaDialog, DialogTrigger as AriaDialogTrigger, Popover as AriaPopover } from "react-aria-components";
@@ -45,6 +45,7 @@ export const NavAccountMenu = ({
     selectedAccountNumber,
     onAccountSelect,
     onSettingsClick,
+    onRefresh,
     onLogout,
     onThemeChange,
     ...dialogProps
@@ -54,6 +55,7 @@ export const NavAccountMenu = ({
     selectedAccountNumber?: number;
     onAccountSelect?: (accountNumber: number) => void;
     onSettingsClick?: () => void;
+    onRefresh?: () => void;
     onLogout?: () => void;
     onThemeChange?: (isDark: boolean) => void;
 }) => {
@@ -147,6 +149,11 @@ export const NavAccountMenu = ({
                                 />
                             </div>
                         </div>
+                        <NavAccountCardMenuItem
+                            label="Refresh data"
+                            icon={RefreshCcw01}
+                            onClick={onRefresh}
+                        />
                     </div>
                 </div>
 

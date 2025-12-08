@@ -59,6 +59,7 @@ interface InitDataContextType {
     updatePreferences: (preferences: Partial<Preferences>) => Promise<void>;
     updateAccountPreferences: (accountNumber: number, preferences: Partial<AccountPreferences>) => Promise<void>;
     getAccountPreferences: (accountNumber: number) => AccountPreferences | null;
+    refreshData: () => Promise<void>;
 }
 
 const CACHE_KEY = 'pa_init_data';
@@ -73,6 +74,7 @@ const InitDataContext = createContext<InitDataContextType>({
     updatePreferences: async () => {},
     updateAccountPreferences: async () => {},
     getAccountPreferences: () => null,
+    refreshData: async () => {},
 });
 
 // Module-level state to persist across navigations
@@ -282,8 +284,37 @@ export function InitDataProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const refreshData = async () => {
+        setIsFetching(true);
+
+        // Clear sessionStorage cache for init data
+        if (typeof window !== 'undefined') {
+            sessionStorage.removeItem(CACHE_KEY);
+            sessionStorage.removeItem(CACHE_TIMESTAMP_KEY);
+        }
+
+        // Clear module-level cache
+        moduleData = null;
+        moduleIsReady = false;
+
+        try {
+            const result = await fetchInitData();
+            if (result) {
+                moduleData = result;
+                moduleIsReady = true;
+                saveToSessionStorage(result);
+                setData(result);
+                console.log('Refreshed init data');
+            }
+        } catch (e) {
+            console.error('Error refreshing init data:', e);
+        } finally {
+            setIsFetching(false);
+        }
+    };
+
     return (
-        <InitDataContext.Provider value={{ data, sidebarItems, isReady, isFetching, updatePreferences, updateAccountPreferences, getAccountPreferences }}>
+        <InitDataContext.Provider value={{ data, sidebarItems, isReady, isFetching, updatePreferences, updateAccountPreferences, getAccountPreferences, refreshData }}>
             {children}
         </InitDataContext.Provider>
     );
