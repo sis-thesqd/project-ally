@@ -76,15 +76,21 @@ export const GlobalInfoBanner = () => {
             ref={bannerRef}
             className={cx(
                 "relative z-40 shrink-0 border-b",
-                isWarning ? "border-warning bg-secondary_subtle" : "border-brand_alt bg-brand-section_subtle md:border-brand"
+                isWarning ? "border-warning bg-warning-secondary" : "border-brand_alt bg-brand-section_subtle md:border-brand"
             )}
         >
             <div className="p-4 md:py-3.5">
                 <div className="flex flex-col gap-0.5 md:flex-row md:justify-center md:gap-1.5 md:text-center">
-                    <p className={cx("pr-8 text-md font-semibold md:truncate md:pr-0", isWarning ? "text-secondary" : "text-primary_on-brand")}>
+                    <p
+                        className={cx("pr-8 text-md font-semibold md:truncate md:pr-0", !isWarning && "text-primary_on-brand")}
+                        style={isWarning ? { color: "#b45309" } : undefined}
+                    >
                         {message}
                     </p>
-                    <p className={cx("text-md md:truncate", isWarning ? "text-tertiary" : "text-tertiary_on-brand")}>
+                    <p
+                        className={cx("text-md md:truncate", !isWarning && "text-tertiary_on-brand")}
+                        style={isWarning ? { color: "#b45309" } : undefined}
+                    >
                         <a
                             href={link}
                             className="rounded-xs underline underline-offset-3 outline-focus-ring focus-visible:outline-2 focus-visible:outline-offset-2"
