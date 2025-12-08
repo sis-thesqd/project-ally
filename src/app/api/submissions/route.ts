@@ -135,7 +135,7 @@ export async function PUT(request: NextRequest) {
     }
 }
 
-// GET - Fetch submission by ID or fetch in_progress submissions for current user
+// GET - Fetch submission by ID, fetch latest submission, or fetch submissions by status
 export async function GET(request: NextRequest) {
     try {
         const supabase = await createServerSupabase();
@@ -154,6 +154,29 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
         const submissionId = searchParams.get("id");
         const status = searchParams.get("status");
+        const latest = searchParams.get("latest");
+
+        // If latest=true, fetch the single most recent submission (regardless of status)
+        if (latest === "true") {
+            const { data, error } = await supabase
+                .from("pa_prf_submissions")
+                .select()
+                .eq("submitter", user.email)
+                .order("updated_at", { ascending: false })
+                .limit(1)
+                .single();
+
+            if (error) {
+                // No submissions found is not an error - return null
+                if (error.code === "PGRST116") {
+                    return NextResponse.json(null);
+                }
+                console.error("Supabase error:", error);
+                return NextResponse.json({ error: error.message }, { status: 500 });
+            }
+
+            return NextResponse.json(data);
+        }
 
         // If status is provided, fetch submissions with that status for the current user
         if (status) {
@@ -187,7 +210,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json(data);
         }
 
-        return NextResponse.json({ error: "id or status query parameter is required" }, { status: 400 });
+        return NextResponse.json({ error: "id, status, or latest query parameter is required" }, { status: 400 });
     } catch (error) {
         console.error("API error:", error);
         return NextResponse.json({ error: "Failed to fetch submission" }, { status: 500 });

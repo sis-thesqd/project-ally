@@ -216,10 +216,31 @@ export async function getSubmission(submission_id: string): Promise<Submission |
 }
 
 /**
+ * Get the latest submission for the current user (regardless of status).
+ * Returns null if no submissions exist.
+ *
+ * Use this to check if user has an active submission that should be continued.
+ * Modal should show only when status === 'in_progress'.
+ */
+export async function getLatestSubmission(): Promise<Submission | null> {
+    const response = await fetch("/api/submissions?latest=true", {
+        method: "GET",
+    });
+
+    if (!response.ok) {
+        const error = await safeParseJson<{ error?: string }>(response);
+        console.error("Error fetching latest submission:", error || response.statusText);
+        throw new Error(`Failed to fetch latest submission: ${error?.error || response.statusText}`);
+    }
+
+    return response.json();
+}
+
+/**
  * Get all in-progress submissions for the current user.
  * Returns submissions ordered by updated_at (most recent first).
  *
- * Use this to check if a user has an existing draft before creating a new one.
+ * @deprecated Use getLatestSubmission() instead - it's more efficient (single row)
  */
 export async function getInProgressSubmissions(): Promise<Submission[]> {
     const response = await fetch("/api/submissions?status=in_progress", {
@@ -239,8 +260,8 @@ export async function getInProgressSubmissions(): Promise<Submission[]> {
  * Check if the current user has an existing in-progress submission.
  * Returns the most recent in-progress submission or null if none exists.
  *
- * This is a convenience wrapper around getInProgressSubmissions() for
- * the common case of checking for a single draft.
+ * @deprecated Use getLatestSubmission() instead - it's more efficient and returns
+ * the latest submission regardless of status. Check status === 'in_progress' manually.
  */
 export async function getExistingDraft(): Promise<Submission | null> {
     const submissions = await getInProgressSubmissions();
@@ -267,6 +288,10 @@ export function createEmptyFormData(): SubmissionFormData {
 
 /**
  * Check if form data has any meaningful content (user has made progress).
+ *
+ * @deprecated Modal decision should be based on submission.status === 'in_progress',
+ * not on whether form_data has content. The status is automatically set to 'in_progress'
+ * when the user makes any changes.
  */
 export function hasFormProgress(formData: SubmissionFormData): boolean {
     return (

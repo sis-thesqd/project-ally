@@ -18,6 +18,7 @@ const shownForSubmissions = new Set<string>();
 let currentToastId: string | number | null = null;
 let pendingTimeoutId: NodeJS.Timeout | null = null;
 let currentSubmissionId: string | null = null;
+let pendingOnDontShowAgain: (() => void) | null = null;
 
 /**
  * Check if user is on desktop (screen width >= 1024px)
@@ -27,33 +28,41 @@ function isDesktop(): boolean {
     return window.innerWidth >= DESKTOP_BREAKPOINT;
 }
 
+interface ShowMobileQRNotificationOptions {
+    submissionId: string;
+    dontShowAgain?: boolean;
+    onDontShowAgain?: () => void;
+}
+
 /**
  * Schedule the mobile QR notification to show after a delay.
  * Only shows once per submission, and only on desktop.
+ *
+ * @param options.submissionId - The current submission ID
+ * @param options.dontShowAgain - If true, the notification will not be shown (user preference)
+ * @param options.onDontShowAgain - Callback when user clicks "Don't show again"
  */
-export function showMobileQRNotification(submissionId: string): void {
-    console.log("[MobileQR] showMobileQRNotification called with submissionId:", submissionId);
-    console.log("[MobileQR] Already shown for this submission:", shownForSubmissions.has(submissionId));
-    console.log("[MobileQR] Is desktop:", isDesktop());
-    console.log("[MobileQR] Window width:", typeof window !== "undefined" ? window.innerWidth : "SSR");
+export function showMobileQRNotification(options: ShowMobileQRNotificationOptions): void {
+    const { submissionId, dontShowAgain, onDontShowAgain } = options;
+
+    if (dontShowAgain) {
+        return;
+    }
 
     if (shownForSubmissions.has(submissionId)) {
-        console.log("[MobileQR] Skipping - already shown for this submission");
         return;
     }
     if (typeof window === "undefined") {
-        console.log("[MobileQR] Skipping - SSR environment");
         return;
     }
     if (!isDesktop()) {
-        console.log("[MobileQR] Skipping - not desktop");
         return;
     }
 
-    console.log("[MobileQR] All checks passed, scheduling notification");
     // Mark as shown for this submission
     shownForSubmissions.add(submissionId);
     currentSubmissionId = submissionId;
+    pendingOnDontShowAgain = onDontShowAgain || null;
 
     // Clear any existing pending timeout
     if (pendingTimeoutId) {
@@ -62,9 +71,7 @@ export function showMobileQRNotification(submissionId: string): void {
 
     // Show after delay
     pendingTimeoutId = setTimeout(() => {
-        console.log("[MobileQR] Timeout fired, showing toast now");
         const currentUrl = window.location.href;
-        console.log("[MobileQR] Current URL for QR:", currentUrl);
 
         currentToastId = toast.custom(
             (t) =>
@@ -80,8 +87,9 @@ export function showMobileQRNotification(submissionId: string): void {
                     onDontShowAgain: () => {
                         toast.dismiss(t);
                         currentToastId = null;
-                        // This will be wired up later to persist the preference
-                        console.log("User requested to not show mobile QR notification again");
+                        if (pendingOnDontShowAgain) {
+                            pendingOnDontShowAgain();
+                        }
                     },
                 }),
             {

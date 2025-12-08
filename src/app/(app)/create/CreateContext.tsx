@@ -8,6 +8,7 @@ import type { CreativeDirectionState } from "@sis-thesqd/prf-creative-direction"
 import type { DeliverableDetailsState, Project } from "@sis-thesqd/prf-deliverable-details";
 import { upsertSubmission, getSubmission, detectDeviceType, type SubmissionFormData } from "@/services/submissions";
 import { showMobileQRNotification, resetMobileQRNotification } from "@/services/mobile-qr-notification";
+import { useInitData } from "@/contexts/InitDataContext";
 
 interface CreateContextType {
     // Submission ID
@@ -19,6 +20,16 @@ interface CreateContextType {
     // Account context (set when form is created)
     selectedAccount: number | null;
     setSelectedAccount: (account: number | null) => void;
+
+    // Track if this is an existing submission (for QR notification timing)
+    // - New submission: QR shows 3s after first form change
+    // - Existing submission: QR shows 3s after form renders
+    isExistingSubmission: boolean;
+    setIsExistingSubmission: (value: boolean) => void;
+
+    // Track if form is ready (for existing submission QR trigger)
+    isFormReady: boolean;
+    setIsFormReady: (value: boolean) => void;
 
     // Step 1: Project Selection
     mode: SelectionMode;
@@ -59,10 +70,13 @@ interface CreateContextType {
 const CreateContext = createContext<CreateContextType | null>(null);
 
 export function CreateProvider({ children }: { children: ReactNode }) {
+    const { getAccountPreferences, updateAccountPreferences } = useInitData();
     const [isHydrated, setIsHydrated] = useState(false);
     const [submissionId, setSubmissionIdInternal] = useState<string | null>(null);
     const [submitter, setSubmitterInternal] = useState<string | null>(null);
     const [selectedAccount, setSelectedAccountInternal] = useState<number | null>(null);
+    const [isExistingSubmission, setIsExistingSubmissionInternal] = useState(false);
+    const [isFormReady, setIsFormReadyInternal] = useState(false);
     const [mode, setModeInternal] = useState<SelectionMode>("simple");
     const [selectedProjectIds, setSelectedProjectIdsInternal] = useState<number[]>([]);
     // allProjects is local state only - fetched fresh from API, NOT persisted to Supabase
@@ -81,11 +95,43 @@ export function CreateProvider({ children }: { children: ReactNode }) {
     const isInitialSetupRef = useRef(true);
     // Track the last synced form data to detect actual changes
     const lastSyncedDataRef = useRef<string | null>(null);
+    // Track if QR notification has been shown for existing submission
+    const existingQRShownRef = useRef(false);
 
     // Mark as hydrated on mount (no sessionStorage restore)
     useEffect(() => {
         setIsHydrated(true);
     }, []);
+
+    // QR notification for EXISTING submissions - shows 3s after form is ready
+    // This is separate from the sync effect which handles NEW submissions
+    useEffect(() => {
+        if (!isExistingSubmission || !isFormReady || !submissionId || existingQRShownRef.current) {
+            return;
+        }
+
+        const accountPrefs = selectedAccount ? getAccountPreferences(selectedAccount) : null;
+
+        // Show QR notification 3 seconds after form is ready (for existing submissions)
+        const qrTimeout = setTimeout(() => {
+            if (!existingQRShownRef.current) {
+                existingQRShownRef.current = true;
+                showMobileQRNotification({
+                    submissionId,
+                    dontShowAgain: accountPrefs?.dont_show_mobile_qr_code_again ?? false,
+                    onDontShowAgain: () => {
+                        if (selectedAccount) {
+                            updateAccountPreferences(selectedAccount, { dont_show_mobile_qr_code_again: true });
+                        }
+                    },
+                });
+            }
+        }, 3000);
+
+        return () => {
+            clearTimeout(qrTimeout);
+        };
+    }, [isExistingSubmission, isFormReady, submissionId, selectedAccount, getAccountPreferences, updateAccountPreferences]);
 
     // Sync to Supabase when form data changes (debounced)
     // Only syncs essential user-input data - NOT allProjects (which is fetched from API)
@@ -117,9 +163,21 @@ export function CreateProvider({ children }: { children: ReactNode }) {
             return;
         }
 
-        // Show mobile QR notification only after actual user change (not initial setup)
+        // Show mobile QR notification only for NEW submissions (not existing ones)
+        // Existing submissions have their own QR trigger in a separate useEffect
         // This runs after the initial setup check, so we know the user made a real change
-        showMobileQRNotification(submissionId);
+        if (!isExistingSubmission) {
+            const accountPrefs = selectedAccount ? getAccountPreferences(selectedAccount) : null;
+            showMobileQRNotification({
+                submissionId,
+                dontShowAgain: accountPrefs?.dont_show_mobile_qr_code_again ?? false,
+                onDontShowAgain: () => {
+                    if (selectedAccount) {
+                        updateAccountPreferences(selectedAccount, { dont_show_mobile_qr_code_again: true });
+                    }
+                },
+            });
+        }
 
         // Clear existing timeout
         if (syncTimeoutRef.current) {
@@ -154,7 +212,7 @@ export function CreateProvider({ children }: { children: ReactNode }) {
                 clearTimeout(syncTimeoutRef.current);
             }
         };
-    }, [isHydrated, submissionId, submitter, mode, selectedProjectIds, generalInfoState, designStyleState, creativeDirectionState, deliverableDetailsState]);
+    }, [isHydrated, submissionId, submitter, selectedAccount, isExistingSubmission, mode, selectedProjectIds, generalInfoState, designStyleState, creativeDirectionState, deliverableDetailsState, getAccountPreferences, updateAccountPreferences]);
 
     // Wrapped setters that update state
     const setSubmissionId = useCallback((id: string | null) => {
@@ -207,6 +265,18 @@ export function CreateProvider({ children }: { children: ReactNode }) {
         });
     }, []);
 
+    const setIsExistingSubmission = useCallback((value: boolean) => {
+        setIsExistingSubmissionInternal(value);
+        // Reset the QR shown ref when changing submission type
+        if (!value) {
+            existingQRShownRef.current = false;
+        }
+    }, []);
+
+    const setIsFormReady = useCallback((value: boolean) => {
+        setIsFormReadyInternal(value);
+    }, []);
+
     const clearFormState = useCallback(() => {
         // Reset mobile QR notification for the current submission before clearing
         if (submissionId) {
@@ -215,6 +285,8 @@ export function CreateProvider({ children }: { children: ReactNode }) {
         setSubmissionIdInternal(null);
         setSubmitterInternal(null);
         setSelectedAccountInternal(null);
+        setIsExistingSubmissionInternal(false);
+        setIsFormReadyInternal(false);
         setModeInternal("simple");
         setSelectedProjectIdsInternal([]);
         setAllProjectsInternal([]);
@@ -225,6 +297,7 @@ export function CreateProvider({ children }: { children: ReactNode }) {
         // Reset initial setup flag so new submission won't trigger immediate sync
         isInitialSetupRef.current = true;
         lastSyncedDataRef.current = null;
+        existingQRShownRef.current = false;
     }, [submissionId]);
 
     // Load submission from Supabase
@@ -250,7 +323,6 @@ export function CreateProvider({ children }: { children: ReactNode }) {
             setCreativeDirectionStateInternal((formData.creativeDirection as CreativeDirectionState) || null);
             setDeliverableDetailsStateInternal((formData.deliverableDetails as DeliverableDetailsState) || null);
 
-            console.log("Loaded submission from Supabase:", id);
             isLoadingRef.current = false;
             return true;
         } catch (error) {
@@ -269,6 +341,10 @@ export function CreateProvider({ children }: { children: ReactNode }) {
                 setSubmitter,
                 selectedAccount,
                 setSelectedAccount,
+                isExistingSubmission,
+                setIsExistingSubmission,
+                isFormReady,
+                setIsFormReady,
                 mode,
                 setMode,
                 selectedProjectIds,

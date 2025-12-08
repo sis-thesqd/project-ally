@@ -28,6 +28,8 @@ export default function CreateStepPage() {
         setSubmissionId,
         submitter,
         setSubmitter,
+        isExistingSubmission,
+        setIsFormReady,
         mode,
         setMode,
         selectedProjectIds,
@@ -244,8 +246,28 @@ export default function CreateStepPage() {
         router.push(`/create/${submissionId}/4`);
     }, [router, submissionId]);
 
-    // Get the removeProject action from the project store
+    // Get the project store actions
     const removeProjectFromStore = useProjectStore(state => state.removeProject);
+    const setProjectsInStore = useProjectStore(state => state.setSelectedProjects);
+    const storeSelectedProjects = useProjectStore(state => state.selectedProjects);
+
+    // Sync CreateContext selectedProjectIds to the Zustand store on initial load only
+    // This ensures the ProjectSelection component shows the correct selections when loading an existing submission
+    // We use a ref to track if initial sync has been done to avoid loops
+    const initialSyncDoneRef = useRef(false);
+    useEffect(() => {
+        // Only sync once on initial load when we have loaded selections
+        if (isLoading || initialSyncDoneRef.current) return;
+
+        // Mark as done regardless of whether we have selections
+        // This prevents future syncs even if context selections change later
+        initialSyncDoneRef.current = true;
+
+        // Sync context selections to store (for existing submissions with saved selections)
+        if (selectedProjectIds.length > 0) {
+            setProjectsInStore(selectedProjectIds);
+        }
+    }, [isLoading, selectedProjectIds, setProjectsInStore]);
 
     // Handle project removal from deliverable details
     const handleProjectRemoved = useCallback(
@@ -293,6 +315,13 @@ export default function CreateStepPage() {
     // Determine if we should show the loading overlay
     // Show until both: data is ready AND minimum 1 second has passed
     const showLoadingOverlay = isLoading || !isReady || !data || !minLoadingComplete;
+
+    // Set isFormReady when loading is complete (for existing submission QR trigger)
+    useEffect(() => {
+        if (!showLoadingOverlay && isExistingSubmission) {
+            setIsFormReady(true);
+        }
+    }, [showLoadingOverlay, isExistingSubmission, setIsFormReady]);
 
     // Show loading overlay while loading submission, auth data, or minimum time hasn't elapsed
     if (showLoadingOverlay) {

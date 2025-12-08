@@ -12,10 +12,16 @@ interface PageItem {
     position: number;
 }
 
+export interface AccountPreferences {
+    default_submission_mode?: 'simple' | 'advanced';
+    dont_show_mobile_qr_code_again?: boolean;
+}
+
 interface AccountItem {
     account_number: number;
     church_name: string;
     prf_account_id: number | null;
+    pa_preferences: AccountPreferences | null;
 }
 
 interface Preferences {
@@ -51,6 +57,8 @@ interface InitDataContextType {
     isReady: boolean;
     isFetching: boolean;
     updatePreferences: (preferences: Partial<Preferences>) => Promise<void>;
+    updateAccountPreferences: (accountNumber: number, preferences: Partial<AccountPreferences>) => Promise<void>;
+    getAccountPreferences: (accountNumber: number) => AccountPreferences | null;
 }
 
 const CACHE_KEY = 'pa_init_data';
@@ -63,6 +71,8 @@ const InitDataContext = createContext<InitDataContextType>({
     isReady: false,
     isFetching: false,
     updatePreferences: async () => {},
+    updateAccountPreferences: async () => {},
+    getAccountPreferences: () => null,
 });
 
 // Module-level state to persist across navigations
@@ -225,8 +235,55 @@ export function InitDataProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const getAccountPreferences = (accountNumber: number): AccountPreferences | null => {
+        if (!data) return null;
+        const account = data.accounts.find(a => a.account_number === accountNumber);
+        return account?.pa_preferences ?? null;
+    };
+
+    const updateAccountPreferences = async (accountNumber: number, preferences: Partial<AccountPreferences>) => {
+        if (!data) return;
+
+        try {
+            const response = await fetch('/api/account-preferences', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ account_number: accountNumber, preferences }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update account preferences');
+            }
+
+            // Update local state and cache
+            const updatedAccounts = data.accounts.map(account => {
+                if (account.account_number === accountNumber) {
+                    return {
+                        ...account,
+                        pa_preferences: {
+                            ...account.pa_preferences,
+                            ...preferences,
+                        },
+                    };
+                }
+                return account;
+            });
+
+            const updatedData: InitData = {
+                ...data,
+                accounts: updatedAccounts,
+            };
+
+            moduleData = updatedData;
+            setData(updatedData);
+            saveToSessionStorage(updatedData);
+        } catch (e) {
+            console.error('Error updating account preferences:', e);
+        }
+    };
+
     return (
-        <InitDataContext.Provider value={{ data, sidebarItems, isReady, isFetching, updatePreferences }}>
+        <InitDataContext.Provider value={{ data, sidebarItems, isReady, isFetching, updatePreferences, updateAccountPreferences, getAccountPreferences }}>
             {children}
         </InitDataContext.Provider>
     );
