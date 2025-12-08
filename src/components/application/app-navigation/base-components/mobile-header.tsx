@@ -27,11 +27,13 @@ export const MobileNavigationHeader = ({ children }: { children: ReactNode }) =>
     return (
         <AriaDialogTrigger>
             <header className="flex h-16 items-center justify-between border-b border-secondary bg-primary py-3 pr-2 pl-4 lg:hidden">
-                <img
-                    src="/logos/Badge Slanted_Blue-01.svg"
-                    alt="MySquad Logo"
-                    className="h-10"
-                />
+                <a href="/" className="transition-opacity hover:opacity-80">
+                    <img
+                        src="/logos/Badge Slanted_Blue-01.svg"
+                        alt="MySquad Logo"
+                        className="h-10"
+                    />
+                </a>
 
                 <AriaButton
                     aria-label="Expand navigation menu"

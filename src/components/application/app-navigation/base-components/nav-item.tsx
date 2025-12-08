@@ -21,7 +21,7 @@ interface NavItemBaseProps {
     /** URL to navigate to when the nav item is clicked. */
     href?: string;
     /** Type of the nav item. */
-    type: "link" | "collapsible" | "collapsible-child";
+    type: "link" | "button" | "collapsible" | "collapsible-child";
     /** Icon component to display. */
     icon?: FC<HTMLAttributes<HTMLOrSVGElement>>;
     /** Badge to display. */
@@ -41,8 +41,8 @@ export const NavItemBase = ({ current, type, badge, href, icon: Icon, children, 
 
     const handleClick: MouseEventHandler = (e) => {
         onClick?.(e);
-        // Close mobile nav when navigating (only for link types)
-        if (type === "link" || type === "collapsible-child") {
+        // Close mobile nav when navigating or taking action
+        if (type === "link" || type === "collapsible-child" || type === "button") {
             mobileNav?.close();
         }
     };
@@ -101,6 +101,20 @@ export const NavItemBase = ({ current, type, badge, href, icon: Icon, children, 
                 {externalIcon}
                 {badgeElement}
             </AriaLink>
+        );
+    }
+
+    if (type === "button") {
+        return (
+            <button
+                type="button"
+                className={cx("px-3 py-2", styles.root, current && styles.rootSelected)}
+                onClick={handleClick}
+            >
+                {iconElement}
+                {labelElement}
+                {badgeElement}
+            </button>
         );
     }
 

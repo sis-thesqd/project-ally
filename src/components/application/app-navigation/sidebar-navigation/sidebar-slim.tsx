@@ -3,7 +3,7 @@
 import React from "react";
 import type { FC } from "react";
 import { useEffect, useRef, useState } from "react";
-import { LogOut01, Moon01, Plus, Settings01 } from "@untitledui/icons";
+import { LogOut01, Moon01, Plus, RefreshCcw01, Settings01 } from "@untitledui/icons";
 import { AnimatePresence, motion } from "motion/react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
@@ -324,23 +324,24 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                     <NavList items={items} />
 
                     <div className="mt-auto flex flex-col gap-5 px-2 py-4">
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-1">
+                            <NavItemBase type="link" href="/settings">
+                                Settings
+                            </NavItemBase>
                             <div className="flex items-center justify-between rounded-md px-3 py-2">
-                                <div className="flex items-center gap-3">
-                                    <span className="text-md font-semibold text-secondary">Dark mode</span>
-                                </div>
+                                <span className="text-md font-semibold text-secondary">Dark mode</span>
                                 <Toggle
                                     size="sm"
                                     isSelected={isDarkMode}
                                     onChange={handleThemeChange}
                                 />
                             </div>
-                            <NavItemBase type="link" href="/settings">
-                                Settings
+                            <NavItemBase type="button" onClick={handleRefresh}>
+                                Refresh data
                             </NavItemBase>
                         </div>
 
-                        <div className="relative flex items-center gap-3 border-t border-secondary pt-6 pr-8 pl-2">
+                        <div className="relative flex items-center gap-3 border-t border-secondary pt-6 pr-12 pl-2">
                             <AvatarLabelGroup
                                 status="online"
                                 size="md"
@@ -349,16 +350,13 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                                 title={userName}
                                 subtitle={userEmail}
                             />
-
-                            <div className="absolute top-1/2 right-0 -translate-y-1/2">
-                                <Button
-                                    size="sm"
-                                    color="tertiary"
-                                    iconLeading={<LogOut01 className="size-5 text-fg-quaternary transition-inherit-all group-hover:text-fg-quaternary_hover" />}
-                                    className="p-1.5!"
-                                    onClick={handleLogout}
-                                />
-                            </div>
+                            <button
+                                type="button"
+                                onClick={handleLogout}
+                                className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-lg p-2 text-fg-quaternary outline-focus-ring transition hover:bg-primary_hover hover:text-fg-quaternary_hover focus-visible:outline-2 focus-visible:outline-offset-2"
+                            >
+                                <LogOut01 className="size-5" />
+                            </button>
                         </div>
                     </div>
                 </aside>

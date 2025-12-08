@@ -80,9 +80,9 @@ export const GlobalInfoBanner = () => {
             )}
         >
             <div className="p-4 md:py-3.5">
-                <div className="flex flex-col gap-0.5 md:flex-row md:justify-center md:gap-1.5 md:text-center">
+                <div className="flex flex-row flex-wrap justify-center gap-x-1.5 gap-y-0.5 text-center">
                     <p
-                        className={cx("pr-8 text-md font-semibold md:truncate md:pr-0", !isWarning && "text-primary_on-brand")}
+                        className={cx("text-md font-semibold md:truncate", !isWarning && "text-primary_on-brand")}
                         style={isWarning ? { color: "#b45309" } : undefined}
                     >
                         {message}
