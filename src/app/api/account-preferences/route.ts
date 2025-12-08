@@ -6,6 +6,7 @@ interface AccountPreferencesBody {
     preferences: {
         default_submission_mode?: 'simple' | 'advanced';
         dont_show_mobile_qr_code_again?: boolean;
+        hidden_banners?: string[];
     };
 }
 
@@ -41,9 +42,22 @@ export async function POST(request: NextRequest) {
         }
 
         // Merge new preferences with existing ones
+        const existingPrefs = currentAccount?.pa_preferences || {};
+
+        // Special handling for hidden_banners - append to existing array instead of replacing
+        let mergedHiddenBanners = existingPrefs.hidden_banners || [];
+        if (preferences.hidden_banners && preferences.hidden_banners.length > 0) {
+            // Add new banner IDs that aren't already in the array
+            const newBannerIds = preferences.hidden_banners.filter(
+                (id: string) => !mergedHiddenBanners.includes(id)
+            );
+            mergedHiddenBanners = [...mergedHiddenBanners, ...newBannerIds];
+        }
+
         const updatedPreferences = {
-            ...(currentAccount?.pa_preferences || {}),
+            ...existingPrefs,
             ...preferences,
+            hidden_banners: mergedHiddenBanners,
         };
 
         // Update the account's pa_preferences

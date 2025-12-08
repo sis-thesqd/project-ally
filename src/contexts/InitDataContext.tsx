@@ -15,6 +15,7 @@ interface PageItem {
 export interface AccountPreferences {
     default_submission_mode?: 'simple' | 'advanced';
     dont_show_mobile_qr_code_again?: boolean;
+    hidden_banners?: string[];
 }
 
 interface AccountItem {
@@ -39,6 +40,23 @@ interface SidebarItem {
     icon: FC<{ className?: string }>;
 }
 
+// Config item types from pa_config table
+export type ConfigType = 'loading_message' | 'notification' | 'global_info_banner';
+
+export interface ConfigItem {
+    id: string;
+    type: ConfigType;
+    content: string;
+    metadata: Record<string, unknown> | null;
+}
+
+// Known config IDs for type-safe access
+export const CONFIG_IDS = {
+    LOADING_MESSAGE: '72d8c03f-b046-48eb-9d52-f38637a65048',
+    QR_NOTIFICATION: '96e66479-1bae-4025-8460-19afb574b2c3',
+    GLOBAL_INFO_BANNER: '63151ec8-d9b8-496e-90d5-8634db68ded3',
+} as const;
+
 interface InitData {
     username: string | null;
     email: string;
@@ -49,6 +67,7 @@ interface InitData {
     preferences: Preferences;
     accounts: AccountItem[];
     pages: PageItem[];
+    config: ConfigItem[];
 }
 
 interface InitDataContextType {
@@ -59,6 +78,10 @@ interface InitDataContextType {
     updatePreferences: (preferences: Partial<Preferences>) => Promise<void>;
     updateAccountPreferences: (accountNumber: number, preferences: Partial<AccountPreferences>) => Promise<void>;
     getAccountPreferences: (accountNumber: number) => AccountPreferences | null;
+    getConfig: (id: string) => ConfigItem | null;
+    getConfigByType: (type: ConfigType) => ConfigItem | null;
+    isBannerHidden: (bannerId: string, accountNumber: number) => boolean;
+    hideBanner: (bannerId: string, accountNumber: number) => Promise<void>;
     refreshData: () => Promise<void>;
 }
 
@@ -74,6 +97,10 @@ const InitDataContext = createContext<InitDataContextType>({
     updatePreferences: async () => {},
     updateAccountPreferences: async () => {},
     getAccountPreferences: () => null,
+    getConfig: () => null,
+    getConfigByType: () => null,
+    isBannerHidden: () => false,
+    hideBanner: async () => {},
     refreshData: async () => {},
 });
 
@@ -243,6 +270,37 @@ export function InitDataProvider({ children }: { children: React.ReactNode }) {
         return account?.pa_preferences ?? null;
     };
 
+    const getConfig = (id: string): ConfigItem | null => {
+        if (!data?.config) return null;
+        return data.config.find(c => c.id === id) ?? null;
+    };
+
+    const getConfigByType = (type: ConfigType): ConfigItem | null => {
+        if (!data?.config) return null;
+        return data.config.find(c => c.type === type) ?? null;
+    };
+
+    const isBannerHidden = (bannerId: string, accountNumber: number): boolean => {
+        const prefs = getAccountPreferences(accountNumber);
+        return prefs?.hidden_banners?.includes(bannerId) ?? false;
+    };
+
+    const hideBanner = async (bannerId: string, accountNumber: number): Promise<void> => {
+        if (!data) return;
+
+        // Get current hidden banners
+        const prefs = getAccountPreferences(accountNumber);
+        const currentHiddenBanners = prefs?.hidden_banners ?? [];
+
+        // Skip if already hidden
+        if (currentHiddenBanners.includes(bannerId)) return;
+
+        // Update via API (which appends to existing array)
+        await updateAccountPreferences(accountNumber, {
+            hidden_banners: [bannerId],
+        });
+    };
+
     const updateAccountPreferences = async (accountNumber: number, preferences: Partial<AccountPreferences>) => {
         if (!data) return;
 
@@ -260,11 +318,23 @@ export function InitDataProvider({ children }: { children: React.ReactNode }) {
             // Update local state and cache
             const updatedAccounts = data.accounts.map(account => {
                 if (account.account_number === accountNumber) {
+                    const existingPrefs = account.pa_preferences || {};
+
+                    // Special handling for hidden_banners - append to existing array
+                    let mergedHiddenBanners = existingPrefs.hidden_banners || [];
+                    if (preferences.hidden_banners && preferences.hidden_banners.length > 0) {
+                        const newBannerIds = preferences.hidden_banners.filter(
+                            id => !mergedHiddenBanners.includes(id)
+                        );
+                        mergedHiddenBanners = [...mergedHiddenBanners, ...newBannerIds];
+                    }
+
                     return {
                         ...account,
                         pa_preferences: {
-                            ...account.pa_preferences,
+                            ...existingPrefs,
                             ...preferences,
+                            hidden_banners: mergedHiddenBanners,
                         },
                     };
                 }
@@ -314,7 +384,7 @@ export function InitDataProvider({ children }: { children: React.ReactNode }) {
     };
 
     return (
-        <InitDataContext.Provider value={{ data, sidebarItems, isReady, isFetching, updatePreferences, updateAccountPreferences, getAccountPreferences, refreshData }}>
+        <InitDataContext.Provider value={{ data, sidebarItems, isReady, isFetching, updatePreferences, updateAccountPreferences, getAccountPreferences, getConfig, getConfigByType, isBannerHidden, hideBanner, refreshData }}>
             {children}
         </InitDataContext.Provider>
     );

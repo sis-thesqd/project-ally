@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { SidebarNavigationSlim } from '@/components/application/app-navigation/sidebar-navigation/sidebar-slim';
+import { GlobalInfoBanner } from '@/components/application/banners/global-info-banner';
 import { useInitData } from '@/contexts/InitDataContext';
 import { CreateProvider } from './create/CreateContext';
 
@@ -56,12 +57,15 @@ export function AppLayoutClient({ children }: { children: React.ReactNode }) {
 
     return (
         <CreateProvider>
-            <div className="flex flex-col bg-primary lg:flex-row h-screen overflow-y-auto lg:overflow-y-scroll lg:scrollbar-auto">
-                <SidebarNavigationSlim
-                    activeUrl={pathname}
-                    items={sidebarItems}
-                />
-                {children}
+            <div className="flex flex-col h-screen">
+                <GlobalInfoBanner />
+                <div className="flex flex-col bg-primary lg:flex-row flex-1 min-h-0 overflow-y-auto lg:overflow-y-scroll lg:scrollbar-auto">
+                    <SidebarNavigationSlim
+                        activeUrl={pathname}
+                        items={sidebarItems}
+                    />
+                    {children}
+                </div>
             </div>
         </CreateProvider>
     );

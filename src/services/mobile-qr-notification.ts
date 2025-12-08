@@ -9,7 +9,8 @@ import { toast } from "sonner";
 import { createElement } from "react";
 import { QRCodeNotification } from "@/components/application/notifications/notifications";
 
-const NOTIFICATION_DURATION = 30000; // 30 seconds display time
+const DEFAULT_NOTIFICATION_DURATION = 30000; // 30 seconds display time
+const DEFAULT_NOTIFICATION_DESCRIPTION = "Scan this QR code to continue this submission on your mobile device.";
 const NOTIFICATION_DELAY = 3000; // 3 seconds delay before showing
 const DESKTOP_BREAKPOINT = 1024; // lg breakpoint - only show on desktop
 
@@ -32,6 +33,10 @@ interface ShowMobileQRNotificationOptions {
     submissionId: string;
     dontShowAgain?: boolean;
     onDontShowAgain?: () => void;
+    /** Custom description from config */
+    description?: string;
+    /** Custom duration from config (in ms) */
+    duration?: number;
 }
 
 /**
@@ -43,7 +48,9 @@ interface ShowMobileQRNotificationOptions {
  * @param options.onDontShowAgain - Callback when user clicks "Don't show again"
  */
 export function showMobileQRNotification(options: ShowMobileQRNotificationOptions): void {
-    const { submissionId, dontShowAgain, onDontShowAgain } = options;
+    const { submissionId, dontShowAgain, onDontShowAgain, description, duration } = options;
+    const notificationDescription = description ?? DEFAULT_NOTIFICATION_DESCRIPTION;
+    const notificationDuration = duration ?? DEFAULT_NOTIFICATION_DURATION;
 
     console.log("[QR Notification] showMobileQRNotification called:", {
         submissionId,
@@ -91,7 +98,7 @@ export function showMobileQRNotification(options: ShowMobileQRNotificationOption
             (t) =>
                 createElement(QRCodeNotification, {
                     title: "Continue on mobile",
-                    description: "Scan this QR code to continue this submission on your mobile device.",
+                    description: notificationDescription,
                     qrValue: currentUrl,
                     dontShowAgainLabel: "Don't show again",
                     onClose: () => {
@@ -107,7 +114,7 @@ export function showMobileQRNotification(options: ShowMobileQRNotificationOption
                     },
                 }),
             {
-                duration: NOTIFICATION_DURATION,
+                duration: notificationDuration,
                 position: "bottom-right",
                 onAutoClose: () => {
                     currentToastId = null;

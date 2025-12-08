@@ -8,7 +8,7 @@ import type { CreativeDirectionState } from "@sis-thesqd/prf-creative-direction"
 import type { DeliverableDetailsState, Project } from "@sis-thesqd/prf-deliverable-details";
 import { upsertSubmission, getSubmission, detectDeviceType, type SubmissionFormData } from "@/services/submissions";
 import { showMobileQRNotification, resetMobileQRNotification } from "@/services/mobile-qr-notification";
-import { useInitData } from "@/contexts/InitDataContext";
+import { useInitData, CONFIG_IDS } from "@/contexts/InitDataContext";
 
 interface CreateContextType {
     // Submission ID
@@ -70,7 +70,12 @@ interface CreateContextType {
 const CreateContext = createContext<CreateContextType | null>(null);
 
 export function CreateProvider({ children }: { children: ReactNode }) {
-    const { getAccountPreferences, updateAccountPreferences } = useInitData();
+    const { getAccountPreferences, updateAccountPreferences, getConfig } = useInitData();
+
+    // Get QR notification config
+    const qrNotificationConfig = getConfig(CONFIG_IDS.QR_NOTIFICATION);
+    const qrDescription = qrNotificationConfig?.content;
+    const qrDuration = (qrNotificationConfig?.metadata as { duration?: number })?.duration;
     const [isHydrated, setIsHydrated] = useState(false);
     const [submissionId, setSubmissionIdInternal] = useState<string | null>(null);
     const [submitter, setSubmitterInternal] = useState<string | null>(null);
@@ -124,6 +129,8 @@ export function CreateProvider({ children }: { children: ReactNode }) {
                             updateAccountPreferences(selectedAccount, { dont_show_mobile_qr_code_again: true });
                         }
                     },
+                    description: qrDescription,
+                    duration: qrDuration,
                 });
             }
         }, 3000);
@@ -176,6 +183,8 @@ export function CreateProvider({ children }: { children: ReactNode }) {
                         updateAccountPreferences(selectedAccount, { dont_show_mobile_qr_code_again: true });
                     }
                 },
+                description: qrDescription,
+                duration: qrDuration,
             });
         }
 
