@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { CloseButton } from "@/components/base/buttons/close-button";
 import { useInitData, CONFIG_IDS } from "@/contexts/InitDataContext";
+import { cx } from "@/utils/cx";
 
 const BANNER_HEIGHT_VAR = "--global-banner-height";
 
@@ -13,10 +14,11 @@ export const GlobalInfoBanner = () => {
 
     const config = getConfig(CONFIG_IDS.GLOBAL_INFO_BANNER);
     const message = config?.content ?? "";
-    const metadata = config?.metadata as { link?: string; link_label?: string; can_be_hidden?: boolean } | null;
+    const metadata = config?.metadata as { link?: string; link_label?: string; can_be_hidden?: boolean; type?: "default" | "warning" } | null;
     const link = metadata?.link ?? "#";
     const linkLabel = metadata?.link_label ?? "Learn more";
     const canBeHidden = metadata?.can_be_hidden ?? true;
+    const bannerType = metadata?.type ?? "default";
 
     // Get user's default account
     const defaultAccount = data?.preferences?.default_account;
@@ -67,12 +69,22 @@ export const GlobalInfoBanner = () => {
         return null;
     }
 
+    const isWarning = bannerType === "warning";
+
     return (
-        <div ref={bannerRef} className="relative z-40 shrink-0 border-b border-brand_alt bg-brand-section_subtle md:border-brand">
+        <div
+            ref={bannerRef}
+            className={cx(
+                "relative z-40 shrink-0 border-b",
+                isWarning ? "border-warning bg-secondary_subtle" : "border-brand_alt bg-brand-section_subtle md:border-brand"
+            )}
+        >
             <div className="p-4 md:py-3.5">
                 <div className="flex flex-col gap-0.5 md:flex-row md:justify-center md:gap-1.5 md:text-center">
-                    <p className="pr-8 text-md font-semibold text-primary_on-brand md:truncate md:pr-0">{message}</p>
-                    <p className="text-md text-tertiary_on-brand md:truncate">
+                    <p className={cx("pr-8 text-md font-semibold md:truncate md:pr-0", isWarning ? "text-secondary" : "text-primary_on-brand")}>
+                        {message}
+                    </p>
+                    <p className={cx("text-md md:truncate", isWarning ? "text-tertiary" : "text-tertiary_on-brand")}>
                         <a
                             href={link}
                             className="rounded-xs underline underline-offset-3 outline-focus-ring focus-visible:outline-2 focus-visible:outline-offset-2"
@@ -84,7 +96,7 @@ export const GlobalInfoBanner = () => {
             </div>
             {canBeHidden && (
                 <div className="absolute top-2 right-2 md:top-1.5 md:right-2">
-                    <CloseButton size="md" theme="dark" label="Dismiss" onPress={handleDismiss} />
+                    <CloseButton size="md" theme={isWarning ? "light" : "dark"} label="Dismiss" onPress={handleDismiss} />
                 </div>
             )}
         </div>
