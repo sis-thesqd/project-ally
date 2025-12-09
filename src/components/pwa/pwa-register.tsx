@@ -45,18 +45,32 @@ export function PWARegister() {
 
     // Function to request notification permission and subscribe
     const subscribeToPush = async () => {
-        if (!registration) {
-            console.error("[PWA] No service worker registration");
-            return null;
+        console.log("[PWA] subscribeToPush called");
+        console.log("[PWA] registration:", registration);
+        console.log("[PWA] VAPID_PUBLIC_KEY:", VAPID_PUBLIC_KEY ? "set" : "not set");
+
+        // Wait for service worker to be ready
+        let swRegistration = registration;
+        if (!swRegistration) {
+            console.log("[PWA] Waiting for service worker...");
+            try {
+                swRegistration = await navigator.serviceWorker.ready;
+                console.log("[PWA] Service worker ready:", swRegistration);
+            } catch (err) {
+                console.error("[PWA] Service worker not ready:", err);
+                return null;
+            }
         }
 
         if (!VAPID_PUBLIC_KEY) {
             console.error("[PWA] VAPID public key not configured");
+            alert("Push notifications not configured. Missing VAPID key.");
             return null;
         }
 
         try {
             // Request notification permission
+            console.log("[PWA] Requesting notification permission...");
             const permission = await Notification.requestPermission();
             console.log("[PWA] Notification permission:", permission);
 
@@ -66,14 +80,16 @@ export function PWARegister() {
             }
 
             // Subscribe to push
-            const subscription = await registration.pushManager.subscribe({
+            console.log("[PWA] Creating push subscription...");
+            const subscription = await swRegistration.pushManager.subscribe({
                 userVisibleOnly: true,
                 applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
             });
 
-            console.log("[PWA] Push subscription:", JSON.stringify(subscription));
+            console.log("[PWA] Push subscription created:", JSON.stringify(subscription));
 
             // Send subscription to server
+            console.log("[PWA] Sending subscription to server...");
             const response = await fetch("/api/push/subscribe", {
                 method: "POST",
                 headers: {
@@ -82,16 +98,21 @@ export function PWARegister() {
                 body: JSON.stringify(subscription),
             });
 
+            const responseText = await response.text();
+            console.log("[PWA] Server response:", response.status, responseText);
+
             if (response.ok) {
                 console.log("[PWA] Subscription saved to server");
                 setIsSubscribed(true);
                 return subscription;
             } else {
-                console.error("[PWA] Failed to save subscription to server");
+                console.error("[PWA] Failed to save subscription to server:", responseText);
+                alert("Failed to save subscription: " + responseText);
                 return null;
             }
         } catch (error) {
             console.error("[PWA] Error subscribing to push:", error);
+            alert("Error subscribing to push: " + (error instanceof Error ? error.message : String(error)));
             return null;
         }
     };
@@ -117,20 +138,25 @@ export function usePushNotifications() {
     }, []);
 
     const requestPermission = async () => {
-        if (!isSupported) return null;
-
-        const result = await Notification.requestPermission();
-        setPermission(result);
-
-        if (result === "granted") {
-            // Trigger subscription via global function
-            const subscribeFn = (window as unknown as { subscribeToPush?: () => Promise<PushSubscription | null> }).subscribeToPush;
-            if (subscribeFn) {
-                return subscribeFn();
-            }
+        if (!isSupported) {
+            console.log("[PWA] Push not supported");
+            return null;
         }
 
-        return null;
+        // Just call subscribeToPush which handles everything
+        const subscribeFn = (window as unknown as { subscribeToPush?: () => Promise<PushSubscription | null> }).subscribeToPush;
+        if (subscribeFn) {
+            console.log("[PWA] Calling subscribeToPush...");
+            const result = await subscribeFn();
+            setPermission(Notification.permission);
+            return result;
+        } else {
+            console.error("[PWA] subscribeToPush not found on window");
+            // Fallback: just request permission
+            const result = await Notification.requestPermission();
+            setPermission(result);
+            return null;
+        }
     };
 
     return {
