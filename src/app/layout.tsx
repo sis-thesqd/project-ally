@@ -6,6 +6,7 @@ import { InitDataProvider } from "@/contexts/InitDataContext";
 import { Toaster } from "@/components/application/notifications/toaster";
 import { PWARegister } from "@/components/pwa/pwa-register";
 import { NotificationPrompt } from "@/components/pwa/notification-prompt";
+import { IOSInstallPrompt } from "@/components/pwa/ios-install-prompt";
 import "@/styles/globals.css";
 import { cx } from "@/utils/cx";
 
@@ -87,6 +88,7 @@ export default function RootLayout({
                             <Toaster />
                             <PWARegister />
                             <NotificationPrompt />
+                            <IOSInstallPrompt />
                         </InitDataProvider>
                     </Theme>
                 </RouteProvider>
