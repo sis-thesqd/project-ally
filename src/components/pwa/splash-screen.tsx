@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 export function SplashScreen() {
-    const [isVisible, setIsVisible] = useState(true);
+    const [isVisible, setIsVisible] = useState(false);
     const [isFading, setIsFading] = useState(false);
 
     useEffect(() => {
@@ -13,10 +13,12 @@ export function SplashScreen() {
             (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
 
         if (!isStandalone) {
-            // Not a PWA, hide immediately
-            setIsVisible(false);
+            // Not a PWA, don't show splash
             return;
         }
+
+        // Show splash screen for PWA
+        setIsVisible(true);
 
         // Start fading out after a short delay
         const fadeTimer = setTimeout(() => {
