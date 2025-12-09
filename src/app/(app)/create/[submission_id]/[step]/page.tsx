@@ -21,6 +21,7 @@ import { notFound } from "next/navigation";
 import { LoadingOverlay } from "@/components/application/loading-overlay/loading-overlay";
 import { ContinueSubmissionModal } from "@/components/application/modals/continue-submission-modal";
 import { getSubmission, createSubmission, detectDeviceType, type Submission } from "@/services/submissions";
+import { useScrollToBottom, ScrollToBottomButton } from "@/hooks/use-scroll-to-bottom";
 
 export default function CreateStepPage() {
     const params = useParams();
@@ -67,6 +68,9 @@ export default function CreateStepPage() {
     const [showContinueModal, setShowContinueModal] = useState(false);
     const [existingSubmission, setExistingSubmission] = useState<Submission | null>(null);
     const hasCheckedForRefreshRef = useRef(false);
+
+    // Scroll to bottom button for mobile (all steps)
+    const { showButton: showScrollButton, scrollToBottom } = useScrollToBottom();
 
     // Minimum 1 second loading overlay
     useEffect(() => {
@@ -713,137 +717,151 @@ export default function CreateStepPage() {
     // Step 5: Deliverable Details
     if (step === "5") {
         return (
-            <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
-                <div className="max-w-7xl mx-auto w-full">
-                    {FormStepper}
-                </div>
-                <div className="pb-8 max-w-7xl mx-auto w-full">
-                    <div className="min-h-[3.5rem] sm:min-h-0">
-                        <h1 className="text-xl sm:text-2xl font-semibold text-primary">Deliverable Details</h1>
-                        <p className="text-secondary mt-1 text-sm sm:text-base h-5 sm:h-6">
-                            Add specific details for each project type you selected.
-                        </p>
+            <>
+                <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
+                    <div className="max-w-7xl mx-auto w-full">
+                        {FormStepper}
                     </div>
-                </div>
+                    <div className="pb-8 max-w-7xl mx-auto w-full">
+                        <div className="min-h-[3.5rem] sm:min-h-0">
+                            <h1 className="text-xl sm:text-2xl font-semibold text-primary">Deliverable Details</h1>
+                            <p className="text-secondary mt-1 text-sm sm:text-base h-5 sm:h-6">
+                                Add specific details for each project type you selected.
+                            </p>
+                        </div>
+                    </div>
 
-                <div className="max-w-7xl mx-auto w-full">
-                    <DeliverableDetails
-                        giid="" // TODO: Generate giid during form submission
-                        accountId={accountId}
-                        memberId={memberId}
-                        userId={userId}
-                        email={data?.email || ""}
-                        selectedProjectIds={selectedProjectIds}
-                        allProjects={allProjects}
-                        apiConfig={deliverableDetailsApiConfig}
-                        initialState={deliverableDetailsState || undefined}
-                        onStateChange={handleDeliverableDetailsStateChange}
-                        onBack={handleDeliverableDetailsBack}
-                        onContinue={handleDeliverableDetailsContinue}
-                        onProjectRemoved={handleProjectRemoved}
-                        trackEvent={handleTrackEvent}
-                    />
-                </div>
-            </main>
+                    <div className="max-w-7xl mx-auto w-full">
+                        <DeliverableDetails
+                            giid="" // TODO: Generate giid during form submission
+                            accountId={accountId}
+                            memberId={memberId}
+                            userId={userId}
+                            email={data?.email || ""}
+                            selectedProjectIds={selectedProjectIds}
+                            allProjects={allProjects}
+                            apiConfig={deliverableDetailsApiConfig}
+                            initialState={deliverableDetailsState || undefined}
+                            onStateChange={handleDeliverableDetailsStateChange}
+                            onBack={handleDeliverableDetailsBack}
+                            onContinue={handleDeliverableDetailsContinue}
+                            onProjectRemoved={handleProjectRemoved}
+                            trackEvent={handleTrackEvent}
+                        />
+                    </div>
+                </main>
+                <ScrollToBottomButton show={showScrollButton} onClick={scrollToBottom} />
+            </>
         );
     }
 
     // Step 4: Creative Direction
     if (step === "4") {
         return (
-            <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
-                <div className="max-w-7xl mx-auto w-full">
-                    {FormStepper}
-                </div>
-                <div className="pb-8 max-w-7xl mx-auto w-full">
-                    <div className="min-h-[3.5rem] sm:min-h-0">
-                        <h1 className="text-xl sm:text-2xl font-semibold text-primary">Creative Direction</h1>
-                        <p className="text-secondary mt-1 text-sm sm:text-base h-5 sm:h-6">
-                            Share your vision and inspiration for this project.
-                        </p>
+            <>
+                <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
+                    <div className="max-w-7xl mx-auto w-full">
+                        {FormStepper}
                     </div>
-                </div>
+                    <div className="pb-8 max-w-7xl mx-auto w-full">
+                        <div className="min-h-[3.5rem] sm:min-h-0">
+                            <h1 className="text-xl sm:text-2xl font-semibold text-primary">Creative Direction</h1>
+                            <p className="text-secondary mt-1 text-sm sm:text-base h-5 sm:h-6">
+                                Share your vision and inspiration for this project.
+                            </p>
+                        </div>
+                    </div>
 
-                <div className="max-w-7xl mx-auto w-full">
-                    <CreativeDirection
-                        apiConfig={creativeDirectionApiConfig}
-                        initialState={creativeDirectionState || undefined}
-                        onStateChange={handleCreativeDirectionStateChange}
-                        onBack={handleCreativeDirectionBack}
-                        onContinue={handleCreativeDirectionContinue}
-                        trackEvent={handleTrackEvent}
-                        generalInfo={generalInfoState as unknown as Record<string, unknown> | undefined}
-                        designStyle={designStyleState as unknown as Record<string, unknown> | undefined}
-                    />
-                </div>
-            </main>
+                    <div className="max-w-7xl mx-auto w-full">
+                        <CreativeDirection
+                            apiConfig={creativeDirectionApiConfig}
+                            initialState={creativeDirectionState || undefined}
+                            onStateChange={handleCreativeDirectionStateChange}
+                            onBack={handleCreativeDirectionBack}
+                            onContinue={handleCreativeDirectionContinue}
+                            trackEvent={handleTrackEvent}
+                            generalInfo={generalInfoState as unknown as Record<string, unknown> | undefined}
+                            designStyle={designStyleState as unknown as Record<string, unknown> | undefined}
+                        />
+                    </div>
+                </main>
+                <ScrollToBottomButton show={showScrollButton} onClick={scrollToBottom} />
+            </>
         );
     }
 
     // Step 3: Design Style
     if (step === "3") {
         return (
-            <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
-                <div className="max-w-7xl mx-auto w-full">
-                    {FormStepper}
-                </div>
-                <div className="pb-8 max-w-7xl mx-auto w-full">
-                    <div className="min-h-[3.5rem] sm:min-h-0">
-                        <h1 className="text-xl sm:text-2xl font-semibold text-primary">Design Style</h1>
-                        <p className="text-secondary mt-1 text-sm sm:text-base h-5 sm:h-6">
-                            Choose a design style that best matches your vision, or skip and we'll be creative.
-                        </p>
+            <>
+                <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
+                    <div className="max-w-7xl mx-auto w-full">
+                        {FormStepper}
                     </div>
-                </div>
+                    <div className="pb-8 max-w-7xl mx-auto w-full">
+                        <div className="min-h-[3.5rem] sm:min-h-0">
+                            <h1 className="text-xl sm:text-2xl font-semibold text-primary">Design Style</h1>
+                            <p className="text-secondary mt-1 text-sm sm:text-base h-5 sm:h-6">
+                                Choose a design style that best matches your vision, or skip and we'll be creative.
+                            </p>
+                        </div>
+                    </div>
 
-                <div className="max-w-7xl mx-auto w-full">
-                    <DesignStyle
-                        apiConfig={{
-                            memberId: String(memberId),
-                            ...designStyleApiConfig,
-                        }}
-                        initialState={designStyleState || undefined}
-                        onStateChange={handleDesignStyleStateChange}
-                        onBack={handleDesignStyleBack}
-                        onContinue={handleDesignStyleContinue}
-                        trackEvent={handleTrackEvent}
-                        showStyleGuideTabs={designStyleUiConfig.showStyleGuideTabs}
-                    />
-                </div>
-            </main>
+                    <div className="max-w-7xl mx-auto w-full">
+                        <DesignStyle
+                            apiConfig={{
+                                memberId: String(memberId),
+                                ...designStyleApiConfig,
+                            }}
+                            initialState={designStyleState || undefined}
+                            onStateChange={handleDesignStyleStateChange}
+                            onBack={handleDesignStyleBack}
+                            onContinue={handleDesignStyleContinue}
+                            trackEvent={handleTrackEvent}
+                            showStyleGuideTabs={designStyleUiConfig.showStyleGuideTabs}
+                        />
+                    </div>
+                </main>
+
+                {/* Mobile scroll to bottom button */}
+                <ScrollToBottomButton show={showScrollButton} onClick={scrollToBottom} />
+            </>
         );
     }
 
     // Step 2: General Info
     if (step === "2") {
         return (
-            <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
-                <div className="max-w-7xl mx-auto w-full">
-                    {FormStepper}
-                </div>
-                <div className="pb-8 max-w-7xl mx-auto w-full">
-                    <div className="min-h-[3.5rem] sm:min-h-0">
-                        <h1 className="text-xl sm:text-2xl font-semibold text-primary">General Information</h1>
-                        <p className="text-secondary mt-1 text-sm sm:text-base h-5 sm:h-6">
-                            Help us understand your project better by providing some basic information.
-                        </p>
+            <>
+                <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
+                    <div className="max-w-7xl mx-auto w-full">
+                        {FormStepper}
                     </div>
-                </div>
+                    <div className="pb-8 max-w-7xl mx-auto w-full">
+                        <div className="min-h-[3.5rem] sm:min-h-0">
+                            <h1 className="text-xl sm:text-2xl font-semibold text-primary">General Information</h1>
+                            <p className="text-secondary mt-1 text-sm sm:text-base h-5 sm:h-6">
+                                Help us understand your project better by providing some basic information.
+                            </p>
+                        </div>
+                    </div>
 
-                <div className="max-w-7xl mx-auto w-full">
-                    <GeneralInfo
-                        apiConfig={{
-                            memberId: String(memberId),
-                            ...generalInfoApiConfig,
-                        }}
-                        selectedProjectIds={selectedProjectIds}
-                        initialState={generalInfoState || undefined}
-                        onStateChange={handleGeneralInfoStateChange}
-                        onBack={handleGeneralInfoBack}
-                        onContinue={handleGeneralInfoContinue}
-                    />
-                </div>
-            </main>
+                    <div className="max-w-7xl mx-auto w-full">
+                        <GeneralInfo
+                            apiConfig={{
+                                memberId: String(memberId),
+                                ...generalInfoApiConfig,
+                            }}
+                            selectedProjectIds={selectedProjectIds}
+                            initialState={generalInfoState || undefined}
+                            onStateChange={handleGeneralInfoStateChange}
+                            onBack={handleGeneralInfoBack}
+                            onContinue={handleGeneralInfoContinue}
+                        />
+                    </div>
+                </main>
+                <ScrollToBottomButton show={showScrollButton} onClick={scrollToBottom} />
+            </>
         );
     }
 
