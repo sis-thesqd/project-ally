@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-// Initialize Supabase client with service role for server-side operations
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Lazy Supabase client initialization
+function getSupabase() {
+    return createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+}
 
 interface PushSubscription {
     endpoint: string;
@@ -18,6 +20,7 @@ interface PushSubscription {
 
 export async function POST(request: NextRequest) {
     try {
+        const supabase = getSupabase();
         const subscription: PushSubscription = await request.json();
 
         if (!subscription || !subscription.endpoint) {
@@ -69,6 +72,7 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
     try {
+        const supabase = getSupabase();
         const { endpoint } = await request.json();
 
         if (!endpoint) {
