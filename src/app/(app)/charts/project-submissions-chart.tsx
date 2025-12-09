@@ -119,27 +119,26 @@ export const ProjectSubmissionsChart = ({ selectedAccount }: ProjectSubmissionsC
 
     return (
         <div className="flex flex-1 flex-col rounded-xl shadow-xs ring-1 ring-secondary ring-inset">
-            <div className="flex justify-between gap-4 border-b border-secondary px-4 py-5 lg:px-6">
+            <div className="flex flex-col gap-3 border-b border-secondary px-4 py-4 lg:flex-row lg:items-center lg:justify-between lg:gap-4 lg:py-5 lg:px-6">
                 <div className="flex flex-col gap-0.5 lg:gap-0">
                     <p className="text-lg font-semibold text-primary">My project submissions</p>
                     <p className="text-sm text-tertiary">See your submissions over time</p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <ButtonGroup 
-                        selectedKeys={[viewMode]}
-                        onSelectionChange={(keys) => {
-                            const selected = Array.from(keys)[0];
-                            if (selected === "weekly" || selected === "monthly") {
-                                setViewMode(selected);
-                            }
-                        }}
-                    >
-                        <ButtonGroupItem id="weekly">Weekly</ButtonGroupItem>
-                        <ButtonGroupItem id="monthly">Monthly</ButtonGroupItem>
-                    </ButtonGroup>
-                </div>
+                <ButtonGroup
+                    className="w-full lg:w-auto"
+                    selectedKeys={[viewMode]}
+                    onSelectionChange={(keys) => {
+                        const selected = Array.from(keys)[0];
+                        if (selected === "weekly" || selected === "monthly") {
+                            setViewMode(selected);
+                        }
+                    }}
+                >
+                    <ButtonGroupItem id="weekly" className="flex-1 justify-center lg:flex-none">Weekly</ButtonGroupItem>
+                    <ButtonGroupItem id="monthly" className="flex-1 justify-center lg:flex-none">Monthly</ButtonGroupItem>
+                </ButtonGroup>
             </div>
-            <div className="h-70 px-4 py-5 lg:h-63 lg:p-6">
+            <div className="h-52 px-4 py-5 lg:h-52 lg:p-6">
                 {isLoading ? (
                     <BarChartSkeleton />
                 ) : chartData.length === 0 ? (
@@ -195,8 +194,8 @@ export const ProjectSubmissionsChart = ({ selectedAccount }: ProjectSubmissionsC
                                 name="Projects"
                                 type="monotone"
                                 fill="currentColor"
-                                maxBarSize={isDesktop ? 56 : 24}
-                                barSize={isDesktop ? 48 : 20}
+                                maxBarSize={isDesktop ? 72 : 40}
+                                barSize={isDesktop ? 64 : 36}
                                 radius={[6, 6, 0, 0]}
                             />
                         </BarChart>
