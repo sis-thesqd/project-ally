@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useInitData } from "@/contexts/InitDataContext";
 
 // Get VAPID public key from environment
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
@@ -19,6 +20,7 @@ function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
 export function PWARegister() {
     const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
     const [isSubscribed, setIsSubscribed] = useState(false);
+    const { data: initData } = useInitData();
 
     useEffect(() => {
         // Register service worker
@@ -88,14 +90,19 @@ export function PWARegister() {
 
             console.log("[PWA] Push subscription created:", JSON.stringify(subscription));
 
-            // Send subscription to server
+            // Send subscription to server with user email
             console.log("[PWA] Sending subscription to server...");
+            const subscriptionData = {
+                ...subscription.toJSON(),
+                email: initData?.email || null,
+            };
+            console.log("[PWA] Subscription data:", subscriptionData);
             const response = await fetch("/api/push/subscribe", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(subscription),
+                body: JSON.stringify(subscriptionData),
             });
 
             const responseText = await response.text();
@@ -120,7 +127,7 @@ export function PWARegister() {
     // Expose subscribe function globally for easy access
     useEffect(() => {
         (window as unknown as { subscribeToPush?: typeof subscribeToPush }).subscribeToPush = subscribeToPush;
-    }, [registration]);
+    }, [registration, initData]);
 
     return null; // This component doesn't render anything
 }

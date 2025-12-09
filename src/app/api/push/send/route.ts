@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
 
         // Otherwise, send to all subscriptions
         const { data: subscriptions, error } = await supabase
-            .from("push_subscriptions")
+            .from("pa_push_users")
             .select("*");
 
         if (error) {
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
                     // If subscription is expired (410 Gone), remove it
                     if (error.statusCode === 410) {
                         await supabase
-                            .from("push_subscriptions")
+                            .from("pa_push_users")
                             .delete()
                             .eq("endpoint", sub.endpoint);
                     }

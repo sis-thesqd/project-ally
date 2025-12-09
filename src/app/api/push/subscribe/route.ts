@@ -16,6 +16,7 @@ interface PushSubscription {
         p256dh: string;
         auth: string;
     };
+    email?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -32,13 +33,14 @@ export async function POST(request: NextRequest) {
 
         // Store subscription in Supabase
         const { data, error } = await supabase
-            .from("push_subscriptions")
+            .from("pa_push_users")
             .upsert(
                 {
                     endpoint: subscription.endpoint,
                     expiration_time: subscription.expirationTime,
                     p256dh: subscription.keys.p256dh,
                     auth: subscription.keys.auth,
+                    email: subscription.email || null,
                     created_at: new Date().toISOString(),
                     updated_at: new Date().toISOString(),
                 },
@@ -83,7 +85,7 @@ export async function DELETE(request: NextRequest) {
         }
 
         const { error } = await supabase
-            .from("push_subscriptions")
+            .from("pa_push_users")
             .delete()
             .eq("endpoint", endpoint);
 
