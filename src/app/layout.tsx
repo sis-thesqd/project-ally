@@ -5,6 +5,7 @@ import { Theme } from "@/providers/theme";
 import { InitDataProvider } from "@/contexts/InitDataContext";
 import { Toaster } from "@/components/application/notifications/toaster";
 import { PWARegister } from "@/components/pwa/pwa-register";
+import { NotificationPrompt } from "@/components/pwa/notification-prompt";
 import "@/styles/globals.css";
 import { cx } from "@/utils/cx";
 
@@ -85,6 +86,7 @@ export default function RootLayout({
                             {children}
                             <Toaster />
                             <PWARegister />
+                            <NotificationPrompt />
                         </InitDataProvider>
                     </Theme>
                 </RouteProvider>
