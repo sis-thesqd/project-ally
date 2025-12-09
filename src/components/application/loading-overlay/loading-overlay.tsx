@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { LoadingIndicator } from "@/components/application/loading-indicator/loading-indicator";
 
@@ -9,7 +11,13 @@ interface LoadingOverlayProps {
 }
 
 export const LoadingOverlay = ({ isVisible, label = "Loading..." }: LoadingOverlayProps) => {
-    return (
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const overlay = (
         <AnimatePresence>
             {isVisible && (
                 <motion.div
@@ -41,4 +49,8 @@ export const LoadingOverlay = ({ isVisible, label = "Loading..." }: LoadingOverl
             )}
         </AnimatePresence>
     );
+
+    // Use portal to render at document.body level, ensuring it's above all modals
+    if (!mounted) return null;
+    return createPortal(overlay, document.body);
 };

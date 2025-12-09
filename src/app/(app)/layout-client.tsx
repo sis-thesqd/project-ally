@@ -58,8 +58,15 @@ export function AppLayoutClient({ children }: { children: React.ReactNode }) {
     return (
         <CreateProvider>
             <div className="flex flex-col h-screen">
-                <GlobalInfoBanner />
+                {/* Desktop: Banner outside scroll area (sticky at top) */}
+                <div className="hidden lg:block">
+                    <GlobalInfoBanner />
+                </div>
                 <div className="flex flex-col bg-primary lg:flex-row flex-1 min-h-0 overflow-y-auto lg:overflow-y-scroll lg:scrollbar-auto">
+                    {/* Mobile: Banner inside scroll area (scrolls with content) */}
+                    <div className="lg:hidden">
+                        <GlobalInfoBanner />
+                    </div>
                     <SidebarNavigationSlim
                         activeUrl={pathname}
                         items={sidebarItems}

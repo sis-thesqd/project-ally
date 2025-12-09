@@ -82,14 +82,18 @@ export const GlobalInfoBanner = () => {
             <div className="p-4 md:py-3.5">
                 <div className="flex flex-row flex-wrap justify-center gap-x-1.5 gap-y-0.5 text-center">
                     <p
-                        className={cx("text-md font-semibold md:truncate", !isWarning && "text-primary_on-brand")}
-                        style={isWarning ? { color: "#b45309" } : undefined}
+                        className={cx(
+                            "text-md font-semibold md:truncate",
+                            isWarning ? "text-amber-700 dark:text-white" : "text-primary_on-brand"
+                        )}
                     >
                         {message}
                     </p>
                     <p
-                        className={cx("text-md md:truncate", !isWarning && "text-tertiary_on-brand")}
-                        style={isWarning ? { color: "#b45309" } : undefined}
+                        className={cx(
+                            "text-md md:truncate",
+                            isWarning ? "text-amber-700 dark:text-white" : "text-tertiary_on-brand"
+                        )}
                     >
                         <a
                             href={link}

@@ -1,7 +1,8 @@
 "use client";
 
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useEffect, useRef } from "react";
 import type { ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { X as CloseIcon, Menu02 } from "@untitledui/icons";
 import {
     Button as AriaButton,
@@ -21,6 +22,23 @@ const MobileNavContext = createContext<MobileNavContextType | null>(null);
 
 export const useMobileNav = () => {
     return useContext(MobileNavContext);
+};
+
+// Helper component to close modal on route change
+const RouteChangeCloseHandler = ({ onClose }: { onClose: () => void }) => {
+    const pathname = usePathname();
+    const initialPathRef = useRef(pathname);
+    const hasClosedRef = useRef(false);
+
+    useEffect(() => {
+        // Close modal when route changes (but not on initial mount)
+        if (pathname !== initialPathRef.current && !hasClosedRef.current) {
+            hasClosedRef.current = true;
+            onClose();
+        }
+    }, [pathname, onClose]);
+
+    return null;
 };
 
 export const MobileNavigationHeader = ({ children }: { children: ReactNode }) => {
@@ -56,6 +74,7 @@ export const MobileNavigationHeader = ({ children }: { children: ReactNode }) =>
             >
                 {({ state }) => (
                     <>
+                        <RouteChangeCloseHandler onClose={() => state.close()} />
                         <AriaButton
                             aria-label="Close navigation menu"
                             onPress={() => state.close()}
