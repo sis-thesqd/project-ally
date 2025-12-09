@@ -12,6 +12,10 @@ import { useInitData } from "@/contexts/InitDataContext";
 import { ButtonGroup, ButtonGroupItem } from "@/components/base/button-group/button-group";
 import { projectSelectionApiConfig, projectSelectionFilterConfig, generalInfoApiConfig, designStyleApiConfig, designStyleUiConfig, creativeDirectionApiConfig, deliverableDetailsApiConfig } from "@/config";
 import { BoxIcon, MagicWandIcon } from "@/components/icons";
+import { cx } from "@/utils/cx";
+import { Progress } from "@/components/application/progress-steps/progress-steps";
+import { Box, File02, Palette, Lightbulb02, ClipboardCheck } from "@untitledui/icons";
+import type { ProgressFeaturedIconType } from "@/components/application/progress-steps/progress-types";
 import { useCreateContext } from "../../CreateContext";
 import { notFound } from "next/navigation";
 import { LoadingOverlay } from "@/components/application/loading-overlay/loading-overlay";
@@ -77,6 +81,182 @@ export default function CreateStepPage() {
     if (step !== "1" && step !== "2" && step !== "3" && step !== "4" && step !== "5") {
         notFound();
     }
+
+    // Step configuration based on imported form components
+    const stepConfig = useMemo(() => [
+        { step: "1", title: "Project Selection", description: "Choose your deliverables", icon: Box },
+        { step: "2", title: "General Info", description: "Basic project details", icon: File02 },
+        { step: "3", title: "Design Style", description: "Visual preferences", icon: Palette },
+        { step: "4", title: "Creative Direction", description: "Your vision", icon: Lightbulb02 },
+        { step: "5", title: "Deliverable Details", description: "Specific requirements", icon: ClipboardCheck },
+    ], []);
+
+    // Determine the furthest step the user has reached (for navigation validation)
+    const furthestStep = useMemo(() => {
+        // Check what data exists to determine progress
+        if (deliverableDetailsState) return 5;
+        if (creativeDirectionState) return 4;
+        if (designStyleState) return 3;
+        if (generalInfoState) return 2;
+        if (selectedProjectIds.length > 0) return 1;
+        return 1;
+    }, [deliverableDetailsState, creativeDirectionState, designStyleState, generalInfoState, selectedProjectIds]);
+
+    // Generate progress steps with proper status
+    const progressSteps: ProgressFeaturedIconType[] = useMemo(() => {
+        const currentStepNum = parseInt(step);
+        return stepConfig.map((s, index) => {
+            const stepNum = index + 1;
+            let status: "complete" | "current" | "incomplete";
+            if (stepNum < currentStepNum) {
+                status = "complete";
+            } else if (stepNum === currentStepNum) {
+                status = "current";
+            } else {
+                status = "incomplete";
+            }
+            return {
+                title: s.title,
+                description: s.description,
+                icon: s.icon,
+                status,
+                connector: index !== stepConfig.length - 1,
+            };
+        });
+    }, [step, stepConfig]);
+
+    // Handle step navigation via stepper
+    const handleStepClick = useCallback((targetStep: number) => {
+        const currentStepNum = parseInt(step);
+
+        // Can always go back to completed steps
+        if (targetStep < currentStepNum) {
+            router.push(`/create/${submissionId}/${targetStep}`);
+            return;
+        }
+
+        // Can go to current step (no-op)
+        if (targetStep === currentStepNum) {
+            return;
+        }
+
+        // Can only go forward if we've been to that step before
+        if (targetStep <= furthestStep) {
+            router.push(`/create/${submissionId}/${targetStep}`);
+        }
+    }, [step, furthestStep, router, submissionId]);
+
+    // Clickable Stepper component
+    const FormStepper = useMemo(() => {
+        const currentStepNum = parseInt(step);
+
+        return (
+            <div className="w-full pb-6">
+                {/* Desktop stepper - horizontal with text */}
+                <div className="hidden md:flex justify-center">
+                    <div className="max-w-3xl w-full">
+                        <div className="grid items-start justify-start gap-4" style={{ gridTemplateColumns: `repeat(${stepConfig.length}, minmax(0, 1fr))` }}>
+                            {progressSteps.map((item, index) => {
+                                const stepNum = index + 1;
+                                const isClickable = stepNum <= furthestStep || stepNum < currentStepNum;
+                                const Icon = item.icon;
+
+                                return (
+                                    <button
+                                        key={index}
+                                        type="button"
+                                        onClick={() => handleStepClick(stepNum)}
+                                        disabled={!isClickable}
+                                        className={cx(
+                                            "flex w-full flex-col items-center justify-center gap-3 transition-opacity",
+                                            isClickable ? "cursor-pointer hover:opacity-80" : "cursor-default",
+                                            !isClickable && item.status === "incomplete" && "opacity-60"
+                                        )}
+                                    >
+                                        <div className="relative flex w-full flex-col items-center self-stretch">
+                                            <div className={cx(
+                                                "z-10 flex items-center justify-center rounded-full size-10",
+                                                item.status === "complete" && "bg-brand-solid",
+                                                item.status === "current" && "bg-secondary ring-2 ring-brand ring-offset-2 ring-offset-bg-primary",
+                                                item.status === "incomplete" && "bg-secondary"
+                                            )}>
+                                                {item.status === "complete" ? (
+                                                    <svg width="16" height="16" viewBox="0 0 12 12" fill="none">
+                                                        <path d="M10 3L4.5 8.5L2 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                                    </svg>
+                                                ) : (
+                                                    Icon && <Icon className={cx("size-5", item.status === "current" ? "text-brand-secondary" : "text-quaternary")} />
+                                                )}
+                                            </div>
+                                            {item.connector && (
+                                                <span className={cx(
+                                                    "absolute top-1/2 left-[53%] z-0 w-full flex-1 -translate-y-1/2 rounded-xs border-t-2",
+                                                    item.status === "complete" ? "border-brand" : "border-secondary"
+                                                )} />
+                                            )}
+                                        </div>
+                                        <div className="flex w-full flex-col items-start gap-0 self-stretch">
+                                            <p className={cx(
+                                                "w-full text-center text-sm font-semibold",
+                                                item.status === "current" ? "text-brand-secondary" : "text-secondary"
+                                            )}>{item.title}</p>
+                                            <p className={cx(
+                                                "w-full text-center text-sm",
+                                                item.status === "current" ? "text-brand-tertiary" : "text-tertiary"
+                                            )}>{item.description}</p>
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Mobile stepper - minimal connected icons */}
+                <div className="flex md:hidden w-full items-center justify-center">
+                    {progressSteps.map((item, index) => {
+                        const stepNum = index + 1;
+                        const isClickable = stepNum <= furthestStep || stepNum < currentStepNum;
+
+                        return (
+                            <div key={index} className="flex items-center justify-center">
+                                <button
+                                    type="button"
+                                    onClick={() => handleStepClick(stepNum)}
+                                    disabled={!isClickable}
+                                    className={cx(
+                                        "z-10 flex items-center justify-center rounded-full size-6 transition-opacity",
+                                        isClickable ? "cursor-pointer" : "cursor-default",
+                                        item.status === "complete" && "bg-brand-solid",
+                                        item.status === "current" && "bg-brand-solid ring-2 ring-focus-ring ring-offset-bg-primary ring-offset-2",
+                                        item.status === "incomplete" && "bg-disabled_subtle ring-[1.5px] ring-inset ring-disabled_subtle"
+                                    )}
+                                >
+                                    {item.status === "complete" && (
+                                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="size-3">
+                                            <path d="M10 3L4.5 8.5L2 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                        </svg>
+                                    )}
+                                    {item.status === "current" && (
+                                        <span className="rounded-full size-2 bg-fg-white" />
+                                    )}
+                                    {item.status === "incomplete" && (
+                                        <span className="rounded-full size-2 bg-fg-disabled_subtle" />
+                                    )}
+                                </button>
+                                {index !== progressSteps.length - 1 && (
+                                    <span className={cx(
+                                        "w-12 flex-1 border-t-2",
+                                        item.status === "complete" ? "border-brand" : "border-secondary"
+                                    )} />
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    }, [step, stepConfig, progressSteps, furthestStep, handleStepClick]);
 
     // Load submission from Supabase if not already loaded in context
     // On hard refresh (needsLoad=true), show the continue/start fresh modal
@@ -535,6 +715,9 @@ export default function CreateStepPage() {
     if (step === "5") {
         return (
             <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
+                <div className="max-w-7xl mx-auto w-full">
+                    {FormStepper}
+                </div>
                 <div className="pb-8 max-w-7xl mx-auto w-full">
                     <div className="min-h-[3.5rem] sm:min-h-0">
                         <h1 className="text-xl sm:text-2xl font-semibold text-primary">Deliverable Details</h1>
@@ -570,6 +753,9 @@ export default function CreateStepPage() {
     if (step === "4") {
         return (
             <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
+                <div className="max-w-7xl mx-auto w-full">
+                    {FormStepper}
+                </div>
                 <div className="pb-8 max-w-7xl mx-auto w-full">
                     <div className="min-h-[3.5rem] sm:min-h-0">
                         <h1 className="text-xl sm:text-2xl font-semibold text-primary">Creative Direction</h1>
@@ -599,6 +785,9 @@ export default function CreateStepPage() {
     if (step === "3") {
         return (
             <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
+                <div className="max-w-7xl mx-auto w-full">
+                    {FormStepper}
+                </div>
                 <div className="pb-8 max-w-7xl mx-auto w-full">
                     <div className="min-h-[3.5rem] sm:min-h-0">
                         <h1 className="text-xl sm:text-2xl font-semibold text-primary">Design Style</h1>
@@ -630,6 +819,9 @@ export default function CreateStepPage() {
     if (step === "2") {
         return (
             <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
+                <div className="max-w-7xl mx-auto w-full">
+                    {FormStepper}
+                </div>
                 <div className="pb-8 max-w-7xl mx-auto w-full">
                     <div className="min-h-[3.5rem] sm:min-h-0">
                         <h1 className="text-xl sm:text-2xl font-semibold text-primary">General Information</h1>
@@ -659,6 +851,9 @@ export default function CreateStepPage() {
     // Step 1: Project Selection (default)
     return (
         <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
+            <div className="max-w-7xl mx-auto w-full">
+                {FormStepper}
+            </div>
             <div className="pb-8 max-w-7xl mx-auto w-full">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-h-[3.5rem] sm:min-h-0">
