@@ -173,12 +173,14 @@ export default function CreateStepPage() {
                                         )}
                                     >
                                         <div className="relative flex w-full flex-col items-center self-stretch">
-                                            <div className={cx(
-                                                "z-10 flex items-center justify-center rounded-full size-6",
-                                                item.status === "complete" && "bg-brand-solid",
-                                                item.status === "current" && "bg-brand-solid ring-2 ring-focus-ring ring-offset-bg-primary ring-offset-2",
-                                                item.status === "incomplete" && "bg-disabled_subtle ring-[1.5px] ring-inset ring-disabled_subtle"
-                                            )}>
+                                            <div
+                                                className={cx(
+                                                    "z-10 flex items-center justify-center rounded-full size-6",
+                                                    item.status === "complete" && "bg-brand-solid",
+                                                    item.status === "incomplete" && "bg-disabled_subtle ring-[1.5px] ring-inset ring-disabled_subtle"
+                                                )}
+                                                style={item.status === "current" ? { backgroundColor: "rgb(113, 118, 128)" } : undefined}
+                                            >
                                                 {item.status === "complete" && (
                                                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="size-3">
                                                         <path d="M10 3L4.5 8.5L2 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -225,9 +227,9 @@ export default function CreateStepPage() {
                                         "z-10 flex items-center justify-center rounded-full size-6 transition-opacity",
                                         isClickable ? "cursor-pointer" : "cursor-default",
                                         item.status === "complete" && "bg-brand-solid",
-                                        item.status === "current" && "bg-brand-solid ring-2 ring-focus-ring ring-offset-bg-primary ring-offset-2",
                                         item.status === "incomplete" && "bg-disabled_subtle ring-[1.5px] ring-inset ring-disabled_subtle"
                                     )}
+                                    style={item.status === "current" ? { backgroundColor: "rgb(113, 118, 128)" } : undefined}
                                 >
                                     {item.status === "complete" && (
                                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="size-3">
