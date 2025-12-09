@@ -2,18 +2,29 @@ import { NextRequest, NextResponse } from "next/server";
 import webpush from "web-push";
 import { createClient } from "@supabase/supabase-js";
 
-// Configure web-push with VAPID keys
-webpush.setVapidDetails(
-    process.env.VAPID_SUBJECT || "mailto:admin@example.com",
-    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-    process.env.VAPID_PRIVATE_KEY!
-);
+// Lazy initialization flag
+let vapidConfigured = false;
 
-// Initialize Supabase client
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function configureVapid() {
+    if (vapidConfigured) return;
+
+    const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    const privateKey = process.env.VAPID_PRIVATE_KEY;
+    const subject = process.env.VAPID_SUBJECT || "mailto:admin@example.com";
+
+    if (publicKey && privateKey) {
+        webpush.setVapidDetails(subject, publicKey, privateKey);
+        vapidConfigured = true;
+    }
+}
+
+// Lazy Supabase client
+function getSupabase() {
+    return createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+}
 
 interface PushPayload {
     title?: string;
@@ -27,11 +38,10 @@ interface PushPayload {
 
 export async function POST(request: NextRequest) {
     try {
-        // Optional: Add authentication check here
-        // const authHeader = request.headers.get("authorization");
-        // if (authHeader !== `Bearer ${process.env.PUSH_API_KEY}`) {
-        //     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        // }
+        // Configure VAPID on first request
+        configureVapid();
+
+        const supabase = getSupabase();
 
         const body = await request.json();
         const { subscription, payload } = body as {
