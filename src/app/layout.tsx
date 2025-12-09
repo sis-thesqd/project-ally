@@ -7,6 +7,7 @@ import { Toaster } from "@/components/application/notifications/toaster";
 import { PWARegister } from "@/components/pwa/pwa-register";
 import { NotificationPrompt } from "@/components/pwa/notification-prompt";
 import { IOSInstallPrompt } from "@/components/pwa/ios-install-prompt";
+import { SplashScreen } from "@/components/pwa/splash-screen";
 import "@/styles/globals.css";
 import { cx } from "@/utils/cx";
 
@@ -57,6 +58,8 @@ export default function RootLayout({
     return (
         <html lang="en" suppressHydrationWarning>
             <head>
+                {/* iOS Splash Screen - uses CSS to show logo centered on theme-appropriate background */}
+                <meta name="apple-mobile-web-app-capable" content="yes" />
                 <style dangerouslySetInnerHTML={{
                     __html: `
                         /* Prevent theme flash during navigation */
@@ -81,6 +84,7 @@ export default function RootLayout({
                 />
             </head>
             <body className={cx(inter.variable, "bg-primary antialiased")}>
+                <SplashScreen />
                 <RouteProvider>
                     <Theme>
                         <InitDataProvider>
