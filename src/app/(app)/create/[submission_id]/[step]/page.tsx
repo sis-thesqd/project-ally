@@ -152,14 +152,13 @@ export default function CreateStepPage() {
 
         return (
             <div className="w-full pb-6">
-                {/* Desktop stepper - horizontal with text */}
+                {/* Desktop stepper - horizontal with titles only */}
                 <div className="hidden md:flex justify-center">
-                    <div className="max-w-3xl w-full">
+                    <div className="max-w-4xl w-full">
                         <div className="grid items-start justify-start gap-4" style={{ gridTemplateColumns: `repeat(${stepConfig.length}, minmax(0, 1fr))` }}>
                             {progressSteps.map((item, index) => {
                                 const stepNum = index + 1;
                                 const isClickable = stepNum <= furthestStep || stepNum < currentStepNum;
-                                const Icon = item.icon;
 
                                 return (
                                     <button
@@ -168,24 +167,28 @@ export default function CreateStepPage() {
                                         onClick={() => handleStepClick(stepNum)}
                                         disabled={!isClickable}
                                         className={cx(
-                                            "flex w-full flex-col items-center justify-center gap-3 transition-opacity",
+                                            "flex w-full flex-col items-center justify-center gap-1.5 transition-opacity",
                                             isClickable ? "cursor-pointer hover:opacity-80" : "cursor-default",
                                             !isClickable && item.status === "incomplete" && "opacity-60"
                                         )}
                                     >
                                         <div className="relative flex w-full flex-col items-center self-stretch">
                                             <div className={cx(
-                                                "z-10 flex items-center justify-center rounded-full size-10",
+                                                "z-10 flex items-center justify-center rounded-full size-6",
                                                 item.status === "complete" && "bg-brand-solid",
-                                                item.status === "current" && "bg-secondary ring-2 ring-brand ring-offset-2 ring-offset-bg-primary",
-                                                item.status === "incomplete" && "bg-secondary"
+                                                item.status === "current" && "bg-brand-solid ring-2 ring-focus-ring ring-offset-bg-primary ring-offset-2",
+                                                item.status === "incomplete" && "bg-disabled_subtle ring-[1.5px] ring-inset ring-disabled_subtle"
                                             )}>
-                                                {item.status === "complete" ? (
-                                                    <svg width="16" height="16" viewBox="0 0 12 12" fill="none">
+                                                {item.status === "complete" && (
+                                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="size-3">
                                                         <path d="M10 3L4.5 8.5L2 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                                     </svg>
-                                                ) : (
-                                                    Icon && <Icon className={cx("size-5", item.status === "current" ? "text-brand-secondary" : "text-quaternary")} />
+                                                )}
+                                                {item.status === "current" && (
+                                                    <span className="rounded-full size-2 bg-fg-white" />
+                                                )}
+                                                {item.status === "incomplete" && (
+                                                    <span className="rounded-full size-2 bg-fg-disabled_subtle" />
                                                 )}
                                             </div>
                                             {item.connector && (
@@ -195,16 +198,10 @@ export default function CreateStepPage() {
                                                 )} />
                                             )}
                                         </div>
-                                        <div className="flex w-full flex-col items-start gap-0 self-stretch">
-                                            <p className={cx(
-                                                "w-full text-center text-sm font-semibold",
-                                                item.status === "current" ? "text-brand-secondary" : "text-secondary"
-                                            )}>{item.title}</p>
-                                            <p className={cx(
-                                                "w-full text-center text-sm",
-                                                item.status === "current" ? "text-brand-tertiary" : "text-tertiary"
-                                            )}>{item.description}</p>
-                                        </div>
+                                        <p className={cx(
+                                            "w-full text-center text-xs font-medium",
+                                            item.status === "current" ? "text-brand-secondary" : "text-secondary"
+                                        )}>{item.title}</p>
                                     </button>
                                 );
                             })}
