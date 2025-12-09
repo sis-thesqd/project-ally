@@ -833,7 +833,7 @@ export default function CreateStepPage() {
     if (step === "2") {
         return (
             <>
-                <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
+                <main className="flex flex-col w-full p-4 sm:p-6 lg:p-8">
                     <div className="max-w-7xl mx-auto w-full">
                         {FormStepper}
                     </div>

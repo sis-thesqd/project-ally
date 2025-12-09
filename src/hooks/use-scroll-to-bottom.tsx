@@ -77,17 +77,14 @@ export function useScrollToBottom(options: UseScrollToBottomOptions = {}) {
     }, [enabled, delay, hideThreshold]);
 
     const scrollToBottom = useCallback(() => {
-        const scrollOptions: ScrollToOptions = { top: 999999, behavior: "smooth" };
-
         // The app uses a specific scroll container with overflow-y-auto
-        // Find it by looking for the container that actually scrolls
         const scrollContainer = document.querySelector(".overflow-y-auto");
         if (scrollContainer) {
-            scrollContainer.scrollTo(scrollOptions);
+            scrollContainer.scrollTo({
+                top: scrollContainer.scrollHeight - scrollContainer.clientHeight,
+                behavior: "smooth",
+            });
         }
-
-        // Also try window scroll as fallback
-        window.scrollTo(scrollOptions);
 
         setShowButton(false);
     }, []);
