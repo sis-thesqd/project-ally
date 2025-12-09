@@ -15,6 +15,8 @@ import { BoxIcon, MagicWandIcon } from "@/components/icons";
 import { useCreateContext } from "../../CreateContext";
 import { notFound } from "next/navigation";
 import { LoadingOverlay } from "@/components/application/loading-overlay/loading-overlay";
+import { ContinueSubmissionModal } from "@/components/application/modals/continue-submission-modal";
+import { getSubmission, createSubmission, detectDeviceType, type Submission } from "@/services/submissions";
 
 export default function CreateStepPage() {
     const params = useParams();
@@ -29,6 +31,7 @@ export default function CreateStepPage() {
         submitter,
         setSubmitter,
         isExistingSubmission,
+        setIsExistingSubmission,
         setIsFormReady,
         mode,
         setMode,
@@ -45,6 +48,8 @@ export default function CreateStepPage() {
         deliverableDetailsState,
         setDeliverableDetailsState,
         loadSubmission,
+        clearFormState,
+        setSelectedAccount,
         isSyncing,
     } = useCreateContext();
 
@@ -53,6 +58,11 @@ export default function CreateStepPage() {
     const [isLoading, setIsLoading] = useState(needsLoad);
     const [minLoadingComplete, setMinLoadingComplete] = useState(false);
     const loadStartTimeRef = useRef<number>(Date.now());
+
+    // Modal state for hard refresh
+    const [showContinueModal, setShowContinueModal] = useState(false);
+    const [existingSubmission, setExistingSubmission] = useState<Submission | null>(null);
+    const hasCheckedForRefreshRef = useRef(false);
 
     // Minimum 1 second loading overlay
     useEffect(() => {
@@ -69,23 +79,53 @@ export default function CreateStepPage() {
     }
 
     // Load submission from Supabase if not already loaded in context
+    // On hard refresh (needsLoad=true), show the continue/start fresh modal
     useEffect(() => {
         const initSubmission = async () => {
-            // If context already has this submission, we're good
+            // If context already has this submission, we're good (client-side navigation)
             if (contextSubmissionId === submissionId) {
                 setIsLoading(false);
                 return;
             }
 
-            // Try to load from Supabase
-            const loaded = await loadSubmission(submissionId);
-            if (!loaded) {
-                // Submission not found, redirect to home
-                router.push("/");
+            // This is a hard refresh - check if we've already shown the modal decision
+            if (hasCheckedForRefreshRef.current) {
                 return;
             }
+            hasCheckedForRefreshRef.current = true;
 
-            setIsLoading(false);
+            // Fetch the submission to check if it has progress
+            try {
+                const submission = await getSubmission(submissionId);
+                if (!submission) {
+                    // Submission not found, redirect to home
+                    router.push("/");
+                    return;
+                }
+
+                // Check if submission has any progress (beyond initial state)
+                const hasProgress =
+                    submission.status === "in_progress" &&
+                    ((submission.form_data.selectedProjectIds?.length ?? 0) > 0 ||
+                        submission.form_data.generalInfo ||
+                        submission.form_data.designStyle ||
+                        submission.form_data.creativeDirection ||
+                        submission.form_data.deliverableDetails);
+
+                if (hasProgress) {
+                    // Show the continue/start fresh modal
+                    setExistingSubmission(submission);
+                    setShowContinueModal(true);
+                    setIsLoading(false);
+                } else {
+                    // No progress, just load the submission directly
+                    await loadSubmission(submissionId);
+                    setIsLoading(false);
+                }
+            } catch (error) {
+                console.error("Failed to check submission:", error);
+                router.push("/");
+            }
         };
 
         initSubmission();
@@ -250,6 +290,7 @@ export default function CreateStepPage() {
     const removeProjectFromStore = useProjectStore(state => state.removeProject);
     const setProjectsInStore = useProjectStore(state => state.setSelectedProjects);
     const storeSelectedProjects = useProjectStore(state => state.selectedProjects);
+    const clearProjectStore = useProjectStore(state => state.clearProjects);
 
     // Sync CreateContext selectedProjectIds to the Zustand store on initial load only
     // This ensures the ProjectSelection component shows the correct selections when loading an existing submission
@@ -268,6 +309,80 @@ export default function CreateStepPage() {
             setProjectsInStore(selectedProjectIds);
         }
     }, [isLoading, selectedProjectIds, setProjectsInStore]);
+
+    // Fetch projects data when needed (e.g., when landing directly on step 5 via hard refresh)
+    // This effect runs when we have selected projects but no project data
+    useEffect(() => {
+        // Skip if not on step 5
+        if (step !== "5") return;
+
+        // Skip if we already have projects or don't have selections
+        if (allProjects.length > 0 || selectedProjectIds.length === 0) return;
+
+        // Skip if still loading submission
+        if (isLoading) return;
+
+        let cancelled = false;
+
+        const fetchProjects = async () => {
+            try {
+                const response = await fetch(projectSelectionApiConfig.projectsEndpoint);
+                if (cancelled) return;
+
+                if (!response.ok) {
+                    console.error("Failed to fetch projects:", response.statusText);
+                    return;
+                }
+                const responseData = await response.json();
+                // API returns { data: [...], error: null } or { projectTypes: [...] }
+                const projectsArray = responseData.data || responseData.projectTypes;
+                if (cancelled) return;
+
+                if (projectsArray && Array.isArray(projectsArray)) {
+                    const mappedProjects = projectsArray.map((p: {
+                        id: number;
+                        title: string;
+                        description?: string;
+                        image_urls?: Array<{
+                            url?: string;
+                            sizes?: {
+                                thumbnail?: string;
+                                preview?: string;
+                                full?: string;
+                            };
+                        }>;
+                        filter_categories?: string[];
+                        related_projects?: (string | number)[];
+                    }) => ({
+                        id: p.id,
+                        title: p.title,
+                        description: p.description || null,
+                        image_urls: (p.image_urls || []).map(img => ({
+                            url: img?.url || "",
+                            sizes: img?.sizes ? {
+                                thumbnail: img.sizes.thumbnail,
+                                medium: img.sizes.preview,
+                                large: img.sizes.full,
+                            } : undefined,
+                        })),
+                        filter_categories: p.filter_categories || undefined,
+                        related_projects: p.related_projects,
+                    }));
+                    if (!cancelled) {
+                        setAllProjects(mappedProjects);
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching projects:", error);
+            }
+        };
+
+        fetchProjects();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [step, allProjects.length, selectedProjectIds.length, isLoading, setAllProjects]);
 
     // Handle project removal from deliverable details
     const handleProjectRemoved = useCallback(
@@ -312,9 +427,84 @@ export default function CreateStepPage() {
         console.log("Analytics event:", eventName, properties);
     }, []);
 
+    // Handle continue existing submission from modal
+    const handleContinueSubmission = useCallback(async (submission: Submission) => {
+        setShowContinueModal(false);
+        setIsLoading(true);
+
+        // Mark as existing submission for QR notification
+        setIsExistingSubmission(true);
+
+        // Load the submission data into context
+        await loadSubmission(submission.submission_id);
+
+        // Sync selectedProjectIds to Zustand store
+        if (submission.form_data.selectedProjectIds && submission.form_data.selectedProjectIds.length > 0) {
+            setProjectsInStore(submission.form_data.selectedProjectIds);
+        }
+
+        setIsLoading(false);
+    }, [loadSubmission, setIsExistingSubmission, setProjectsInStore]);
+
+    // Handle start fresh from modal
+    const handleStartFresh = useCallback(async () => {
+        setShowContinueModal(false);
+        setIsLoading(true);
+
+        // Clear existing form state
+        clearFormState();
+        clearProjectStore();
+
+        // Get submitter and account info
+        const newSubmitter = data?.email || data?.clickup_id?.toString() || "unknown";
+        const accountNumber = data?.preferences?.default_account;
+
+        if (!accountNumber) {
+            console.error("No default account configured");
+            router.push("/");
+            return;
+        }
+
+        try {
+            // Create new submission
+            const newSubmission = await createSubmission({
+                submitter: newSubmitter,
+                status: "started",
+                form_data: {
+                    mode: "simple",
+                    selectedProjectIds: [],
+                },
+                device_last_viewed_on: detectDeviceType(),
+                selected_account: accountNumber,
+            });
+
+            // Set submission data in context
+            setSubmissionId(newSubmission.submission_id);
+            setSubmitter(newSubmitter);
+            setSelectedAccount(accountNumber);
+            setMode("simple");
+            setIsExistingSubmission(false);
+
+            // Navigate to step 1 of new submission
+            router.push(`/create/${newSubmission.submission_id}/1`);
+        } catch (error) {
+            console.error("Failed to create new submission:", error);
+            router.push("/");
+        }
+    }, [clearFormState, clearProjectStore, data, router, setSubmissionId, setSubmitter, setSelectedAccount, setMode, setIsExistingSubmission]);
+
+    // Handle closing the modal (same as continue)
+    const handleCloseModal = useCallback(() => {
+        if (existingSubmission) {
+            handleContinueSubmission(existingSubmission);
+        }
+    }, [existingSubmission, handleContinueSubmission]);
+
     // Determine if we should show the loading overlay
     // Show until both: data is ready AND minimum 1 second has passed
-    const showLoadingOverlay = isLoading || !isReady || !data || !minLoadingComplete;
+    // Also show on step 5 if we have selected projects but no project data yet (fetching projects)
+    const isLoadingProjects = step === "5" && selectedProjectIds.length > 0 && allProjects.length === 0;
+    const showLoadingOverlay = isLoading || !isReady || !data || !minLoadingComplete || isLoadingProjects;
 
     // Set isFormReady when loading is complete (for existing submission QR trigger)
     useEffect(() => {
@@ -324,13 +514,25 @@ export default function CreateStepPage() {
     }, [showLoadingOverlay, isExistingSubmission, setIsFormReady]);
 
     // Show loading overlay while loading submission, auth data, or minimum time hasn't elapsed
-    if (showLoadingOverlay) {
+    if (showLoadingOverlay && !showContinueModal) {
         return <LoadingOverlay isVisible={true} label="Loading..." />;
+    }
+
+    // Show continue/start fresh modal on hard refresh
+    if (showContinueModal) {
+        return (
+            <ContinueSubmissionModal
+                isOpen={showContinueModal}
+                onClose={handleCloseModal}
+                onContinue={handleContinueSubmission}
+                onStartFresh={handleStartFresh}
+                existingSubmission={existingSubmission}
+            />
+        );
     }
 
     // Step 5: Deliverable Details
     if (step === "5") {
-        console.log("Step 5 rendering - selectedProjectIds:", selectedProjectIds, "allProjects count:", allProjects.length);
         return (
             <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
                 <div className="pb-8 max-w-7xl mx-auto w-full">
