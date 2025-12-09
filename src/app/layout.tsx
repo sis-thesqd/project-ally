@@ -18,6 +18,12 @@ export const metadata: Metadata = {
     description: "App for Squad members",
     icons: {
         icon: "/logos/Badge Slanted_Blue-01.svg",
+        apple: "/apple-touch-icon.png",
+    },
+    appleWebApp: {
+        capable: true,
+        statusBarStyle: "default",
+        title: "MySquad",
     },
 };
 
