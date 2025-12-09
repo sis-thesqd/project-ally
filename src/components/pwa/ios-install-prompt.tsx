@@ -45,11 +45,7 @@ export function IOSInstallPrompt() {
             <div className="bg-primary rounded-xl border border-primary p-4 shadow-lg">
                 <div className="flex items-start gap-3">
                     {/* App icon */}
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-solid">
-                        <svg className="h-7 w-7 text-white" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                        </svg>
-                    </div>
+                    <img src="/icons/icon-192x192.png" alt="MySquad" className="h-12 shrink-0 rounded-xl" />
                     <div className="flex-1">
                         <h3 className="text-primary text-sm font-semibold">Install MySquad</h3>
                         <p className="text-secondary mt-0.5 text-sm">Add to your home screen for the best experience.</p>
