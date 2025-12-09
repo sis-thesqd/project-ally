@@ -301,7 +301,7 @@ export default function CreateStepPage() {
         (state: DeliverableDetailsState) => {
             console.log('[project-ally] Received state change:', {
                 primaryProjectId: state.primaryProjectId,
-                selectedProjectIds: state.selectedProjectIds,
+                inProgressFormsCount: state.inProgressForms.length,
             });
             setDeliverableDetailsState(state);
         },
