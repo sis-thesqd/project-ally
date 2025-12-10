@@ -3,7 +3,7 @@
 import React from "react";
 import type { FC } from "react";
 import { useEffect, useRef, useState } from "react";
-import { LogOut01, Moon01, Plus, RefreshCcw01, Settings01 } from "@untitledui/icons";
+import { LogOut01, Moon01, Plus, RefreshCcw01, Settings01, SearchLg, ZapFast, User01, Mail01, Image01, Map01, Box } from "@untitledui/icons";
 import { AnimatePresence, motion } from "motion/react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
@@ -25,6 +25,12 @@ import { CreateNewButton } from "../base-components/create-new-button";
 import { LoadingOverlay } from "@/components/application/loading-overlay/loading-overlay";
 import type { NavItemType } from "../config";
 import { useInitData } from "@/contexts/InitDataContext";
+import { useHotkeys } from "react-hotkeys-hook";
+import { Heading as AriaHeading } from "react-aria-components";
+import type { CommandDropdownMenuItemProps } from "@/components/application/command-menus/base-components/command-menu-item";
+import { CommandMenu } from "@/components/application/command-menus/command-menu";
+import { EmptyState } from "@/components/application/empty-state/empty-state";
+import { settingsConfig } from "@/config";
 
 interface SidebarNavigationSlimProps {
     /** URL of the currently active item. */
@@ -69,6 +75,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
     const [selectedAccountNumber, setSelectedAccountNumber] = useState<number | undefined>(undefined);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [isCommandMenuOpen, setIsCommandMenuOpen] = useState(false);
     const accountInitialized = useRef(false);
 
     // Set default account from preferences when data loads
@@ -131,6 +138,76 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
             setIsRefreshing(false);
         }
     };
+
+    // Keyboard shortcut for command menu
+    useHotkeys('shift+k', (e) => {
+        e.preventDefault();
+        setIsCommandMenuOpen(true);
+    }, { enableOnFormTags: true });
+
+    // Icon mapping
+    const iconMap: Record<string, FC<{ className?: string }>> = {
+        User01,
+        Mail01,
+        Image01,
+        Map01,
+        Settings01,
+        Plus,
+        Box,
+    };
+
+    // Prepare command menu items
+    const commandMenuItems: CommandDropdownMenuItemProps[] = settingsConfig.commandMenuItems.map((item) => ({
+        id: item.id,
+        type: "icon",
+        label: item.label,
+        icon: iconMap[item.icon] || SearchLg,
+        size: "sm",
+        description: item.description,
+        stacked: true,
+    }));
+
+    const commandMenuGroups = [
+        { id: "actions", title: "Quick Actions", items: commandMenuItems.filter(i => ['create', 'projects'].includes(i.id)) },
+        { id: "settings", title: "Settings", items: commandMenuItems.filter(i => !['create', 'projects'].includes(i.id)) },
+    ];
+
+    const handleCommandMenuSelection = (keys: any) => {
+        // Handle both Set and single key
+        let selectedKey: string;
+        if (keys instanceof Set) {
+            const keyArray = Array.from(keys);
+            if (keyArray.length === 0) return;
+            selectedKey = keyArray[0].toString();
+        } else {
+            selectedKey = keys.toString();
+        }
+        
+        const item = settingsConfig.commandMenuItems.find(s => s.id === selectedKey);
+        
+        if (item) {
+            // Check if it's a direct href or a settings item
+            if ('href' in item && item.href) {
+                // Close modal immediately and navigate
+                setIsCommandMenuOpen(false);
+                // Use router.push for instant navigation
+                router.push(item.href);
+            } else if ('tab' in item && 'sectionId' in item) {
+                // Close modal immediately
+                setIsCommandMenuOpen(false);
+                // Navigate to settings with query params
+                const url = `/settings?focus=${item.sectionId}&tab=${item.tab}`;
+                router.push(url);
+            }
+        }
+    };
+
+    // Prefetch common routes for faster navigation
+    useEffect(() => {
+        router.prefetch('/create');
+        router.prefetch('/projects');
+        router.prefetch('/settings');
+    }, [router]);
 
     const isSecondarySidebarVisible = isHovering && Boolean(currentItem?.items?.length);
 
@@ -202,6 +279,17 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                             ))}
                         </ul>
                     )}
+
+                    {/* Command menu button - Desktop only */}
+                    <button
+                        type="button"
+                        onClick={() => setIsCommandMenuOpen(true)}
+                        className="hidden lg:flex flex-col items-center justify-center gap-1 w-full py-3 rounded-lg text-fg-quaternary hover:bg-primary_hover hover:text-fg-quaternary_hover transition-colors"
+                        aria-label="Command menu"
+                    >
+                        <ZapFast className="size-5" />
+                        <span className="text-[10px] font-medium text-quaternary">⇧K</span>
+                    </button>
 
                     <AriaDialogTrigger isOpen={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
                         <AriaButton
@@ -283,6 +371,37 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
     return (
         <>
             <LoadingOverlay isVisible={isRefreshing} label="Refreshing..." />
+
+            {/* Command Menu */}
+            <CommandMenu
+                isOpen={isCommandMenuOpen}
+                items={commandMenuGroups}
+                onOpenChange={setIsCommandMenuOpen}
+                onSelectionChange={handleCommandMenuSelection}
+                emptyState={
+                    <EmptyState size="sm" className="overflow-hidden p-6 pb-10">
+                        <EmptyState.Header>
+                            <EmptyState.FeaturedIcon color="gray" />
+                        </EmptyState.Header>
+                        <EmptyState.Content className="mb-0">
+                            <EmptyState.Title>No settings found</EmptyState.Title>
+                            <EmptyState.Description>
+                                Your search did not match any settings. <br />
+                                Please try again.
+                            </EmptyState.Description>
+                        </EmptyState.Content>
+                    </EmptyState>
+                }
+            >
+                <AriaHeading slot="title" className="sr-only">
+                    Settings
+                </AriaHeading>
+                <CommandMenu.Group>
+                    <CommandMenu.List className="min-h-49">
+                        {(group) => <CommandMenu.Section {...group}>{(item) => <CommandMenu.Item key={item.id} {...item} />}</CommandMenu.Section>}
+                    </CommandMenu.List>
+                </CommandMenu.Group>
+            </CommandMenu>
 
             {/* Desktop sidebar navigation */}
             <div

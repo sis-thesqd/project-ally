@@ -115,7 +115,7 @@ export function ProfileContent() {
 
             {/* Form content */}
             <div className="flex flex-col gap-5">
-                <div className="grid grid-cols-1 lg:grid-cols-[minmax(200px,280px)_minmax(400px,512px)] lg:gap-8">
+                <div id="display-name" className="grid grid-cols-1 lg:grid-cols-[minmax(200px,280px)_minmax(400px,512px)] lg:gap-8 scroll-mt-8">
                     <SectionLabel.Root isRequired size="sm" title="Display name" className="max-lg:hidden" />
 
                     <TextField isRequired name="displayName" defaultValue={data?.username || data?.name || ""}>
@@ -126,7 +126,7 @@ export function ProfileContent() {
 
                 <hr className="h-px w-full border-none bg-border-secondary" />
 
-                <div className="grid grid-cols-1 lg:grid-cols-[minmax(200px,280px)_minmax(400px,512px)] lg:gap-8">
+                <div id="email" className="grid grid-cols-1 lg:grid-cols-[minmax(200px,280px)_minmax(400px,512px)] lg:gap-8 scroll-mt-8">
                     <SectionLabel.Root isRequired size="sm" title="Email address" className="max-lg:hidden" />
 
                     <TextField isRequired name="email" type="email" defaultValue={data?.email || ""} isDisabled>
@@ -137,7 +137,7 @@ export function ProfileContent() {
 
                 <hr className="h-px w-full border-none bg-border-secondary" />
 
-                <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(200px,280px)_minmax(400px,512px)] lg:gap-8">
+                <div id="photo" className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(200px,280px)_minmax(400px,512px)] lg:gap-8 scroll-mt-8">
                     <SectionLabel.Root
                         size="sm"
                         title="Your photo"
@@ -147,7 +147,7 @@ export function ProfileContent() {
 
                 <hr className="h-px w-full border-none bg-border-secondary" />
 
-                <div className="grid grid-cols-1 lg:grid-cols-[minmax(200px,280px)_minmax(400px,512px)] lg:gap-8">
+                <div id="timezone" className="grid grid-cols-1 lg:grid-cols-[minmax(200px,280px)_minmax(400px,512px)] lg:gap-8 scroll-mt-8">
                     <SectionLabel.Root size="sm" title="Timezone" className="max-lg:hidden" />
 
                     <div className="flex flex-col gap-2">

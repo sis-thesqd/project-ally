@@ -73,7 +73,7 @@ export function DefaultsContent() {
         <div className="flex flex-col gap-6 px-4 lg:px-8">
 
             <div className="flex flex-col gap-5">
-                <div className="grid grid-cols-1 lg:grid-cols-[minmax(200px,280px)_minmax(400px,512px)] lg:gap-8">
+                <div id="submission-mode" className="grid grid-cols-1 lg:grid-cols-[minmax(200px,280px)_minmax(400px,512px)] lg:gap-8 scroll-mt-8">
                     <SectionLabel.Root
                         size="sm"
                         title="Default submission mode"
