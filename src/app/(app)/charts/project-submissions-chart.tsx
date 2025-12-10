@@ -38,14 +38,22 @@ type ViewMode = "weekly" | "monthly";
 
 interface ProjectSubmissionsChartProps {
     selectedAccount: number | null | undefined;
+    chartPeriod?: 'weekly' | 'monthly' | null;
 }
 
-export const ProjectSubmissionsChart = ({ selectedAccount }: ProjectSubmissionsChartProps) => {
+export const ProjectSubmissionsChart = ({ selectedAccount, chartPeriod }: ProjectSubmissionsChartProps) => {
     const isDesktop = useBreakpoint("lg");
-    const [viewMode, setViewMode] = useState<ViewMode>("monthly");
+    const [viewMode, setViewMode] = useState<ViewMode>(chartPeriod || "monthly");
     const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [statsData, setStatsData] = useState<AccountStatsResponse | null>(null);
+
+    // Update view mode when chartPeriod changes
+    useEffect(() => {
+        if (chartPeriod) {
+            setViewMode(chartPeriod);
+        }
+    }, [chartPeriod]);
 
     // Fetch chart data when account changes
     useEffect(() => {

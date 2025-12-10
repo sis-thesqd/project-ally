@@ -12,6 +12,7 @@ const DEFAULT_LOADING_MESSAGE = "Loading your experience...";
 export const Dashboard = () => {
     const { data, isReady, isFetching, getConfig } = useInitData();
     const selectedAccount = data?.preferences?.default_account;
+    const chartPeriod = data?.preferences?.chart_period;
 
     // Get loading message from config
     const loadingConfig = getConfig(CONFIG_IDS.LOADING_MESSAGE);
@@ -52,7 +53,7 @@ export const Dashboard = () => {
                 </div>
 
                 <div className="flex flex-col gap-6 px-4 lg:flex-row lg:px-8">
-                    <ProjectSubmissionsChart selectedAccount={selectedAccount} />
+                    <ProjectSubmissionsChart selectedAccount={selectedAccount} chartPeriod={chartPeriod} />
                     <ProjectCountCard selectedAccount={selectedAccount} />
                 </div>
             </main>

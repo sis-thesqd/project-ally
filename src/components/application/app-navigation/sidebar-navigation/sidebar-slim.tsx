@@ -3,7 +3,7 @@
 import React from "react";
 import type { FC } from "react";
 import { useEffect, useRef, useState } from "react";
-import { LogOut01, Moon01, Plus, RefreshCcw01, Settings01, SearchLg, ZapFast, User01, Mail01, Image01, Map01, Box } from "@untitledui/icons";
+import { LogOut01, Moon01, Plus, RefreshCcw01, Settings01, SearchLg, ZapFast, User01, Mail01, Image01, Map01, Box, BarChart03, BarChart12 } from "@untitledui/icons";
 import { AnimatePresence, motion } from "motion/react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
@@ -154,6 +154,8 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
         Settings01,
         Plus,
         Box,
+        BarChart03,
+        BarChart12,
     };
 
     // Prepare command menu items
@@ -169,10 +171,11 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
 
     const commandMenuGroups = [
         { id: "actions", title: "Quick Actions", items: commandMenuItems.filter(i => ['create', 'projects'].includes(i.id)) },
-        { id: "settings", title: "Settings", items: commandMenuItems.filter(i => !['create', 'projects'].includes(i.id)) },
+        { id: "stats", title: "Stats", items: commandMenuItems.filter(i => ['stats-weekly', 'stats-monthly'].includes(i.id)) },
+        { id: "settings", title: "Settings", items: commandMenuItems.filter(i => !['create', 'projects', 'stats-weekly', 'stats-monthly'].includes(i.id)) },
     ];
 
-    const handleCommandMenuSelection = (keys: any) => {
+    const handleCommandMenuSelection = async (keys: any) => {
         // Handle both Set and single key
         let selectedKey: string;
         if (keys instanceof Set) {
@@ -183,22 +186,37 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
             selectedKey = keys.toString();
         }
         
+        console.log('Selected key:', selectedKey);
         const item = settingsConfig.commandMenuItems.find(s => s.id === selectedKey);
+        console.log('Found item:', item);
         
-        if (item) {
-            // Check if it's a direct href or a settings item
-            if ('href' in item && item.href) {
-                // Close modal immediately and navigate
-                setIsCommandMenuOpen(false);
-                // Use router.push for instant navigation
-                router.push(item.href);
-            } else if ('tab' in item && 'sectionId' in item) {
-                // Close modal immediately
-                setIsCommandMenuOpen(false);
-                // Navigate to settings with query params
-                const url = `/settings?focus=${item.sectionId}&tab=${item.tab}`;
-                router.push(url);
-            }
+        if (!item) return;
+        
+        setIsCommandMenuOpen(false);
+        
+        // Check for special actions (chart period)
+        if ('action' in item && item.action === 'setChartPeriod' && 'chartPeriod' in item) {
+            console.log('Setting chart period to:', item.chartPeriod);
+            // Update chart period preference behind the scenes
+            await updatePreferences({ chart_period: item.chartPeriod as 'weekly' | 'monthly' });
+            // Navigate to dashboard (clean URL)
+            router.push('/');
+        }
+        // Check if it's a direct href
+        else if ('href' in item && item.href) {
+            console.log('Navigating to href:', item.href);
+            router.push(item.href);
+        }
+        // Check if it's a settings item
+        else if ('tab' in item && 'sectionId' in item) {
+            console.log('Navigating to settings section:', item.sectionId);
+            // Store focus info in sessionStorage (temporary, only for this navigation)
+            sessionStorage.setItem('settings_focus', JSON.stringify({
+                sectionId: item.sectionId,
+                tab: item.tab,
+            }));
+            // Navigate to settings (clean URL)
+            router.push('/settings');
         }
     };
 
@@ -287,8 +305,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                         className="hidden lg:flex flex-col items-center justify-center gap-1 w-full py-3 rounded-lg text-fg-quaternary hover:bg-primary_hover hover:text-fg-quaternary_hover transition-colors"
                         aria-label="Command menu"
                     >
-                        <ZapFast className="size-5" />
-                        <span className="text-[10px] font-medium text-quaternary">⇧K</span>
+                        <span className="text-[12px] font-medium text-quaternary">⇧K</span>
                     </button>
 
                     <AriaDialogTrigger isOpen={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
@@ -378,6 +395,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                 items={commandMenuGroups}
                 onOpenChange={setIsCommandMenuOpen}
                 onSelectionChange={handleCommandMenuSelection}
+                shortcut={null}
                 emptyState={
                     <EmptyState size="sm" className="overflow-hidden p-6 pb-10">
                         <EmptyState.Header>

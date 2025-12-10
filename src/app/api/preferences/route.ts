@@ -9,6 +9,7 @@ interface PreferencesBody {
     mmq_auto_collapse_empty?: boolean;
     mmq_table_filter?: string;
     timezone?: string;
+    chart_period?: 'weekly' | 'monthly';
 }
 
 export async function POST(request: NextRequest) {
@@ -38,6 +39,7 @@ export async function POST(request: NextRequest) {
         if (body.mmq_auto_collapse_empty !== undefined) updateData.mmq_auto_collapse_empty = body.mmq_auto_collapse_empty;
         if (body.mmq_table_filter !== undefined) updateData.mmq_table_filter = body.mmq_table_filter;
         if (body.timezone !== undefined) updateData.timezone = body.timezone;
+        if (body.chart_period !== undefined) updateData.chart_period = body.chart_period;
 
         const { data, error } = await supabase
             .from('pa_user_preferences')

@@ -33,6 +33,7 @@ interface Preferences {
     mmq_auto_collapse_empty: boolean | null;
     mmq_table_filter: string | null;
     timezone?: string | null;
+    chart_period?: 'weekly' | 'monthly' | null;
 }
 
 interface SidebarItem {

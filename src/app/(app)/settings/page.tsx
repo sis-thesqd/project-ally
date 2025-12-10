@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { SearchLg } from "@untitledui/icons";
 import { TabList, Tabs } from "@/components/application/tabs/tabs";
 import { InputBase, TextField } from "@/components/base/input/input";
@@ -11,32 +10,40 @@ import { ProfileContent } from "./profile-content";
 import { DefaultsContent } from "./defaults-content";
 
 export default function SettingsPage() {
-    const searchParams = useSearchParams();
-    const focusParam = searchParams.get('focus');
-    const tabParam = searchParams.get('tab');
-    
-    const [selectedTab, setSelectedTab] = useState<string>(tabParam || settingsConfig.defaultTab);
+    const [selectedTab, setSelectedTab] = useState<string>(settingsConfig.defaultTab);
     const [searchQuery, setSearchQuery] = useState("");
     const [showSearchResults, setShowSearchResults] = useState(false);
     const [highlightedIndex, setHighlightedIndex] = useState(0);
     const searchInputRef = useRef<HTMLInputElement>(null);
 
-    // Handle focus from command menu
+    // Handle focus from command menu or search (via sessionStorage)
     useEffect(() => {
-        if (focusParam && tabParam) {
-            setSelectedTab(tabParam);
-            setTimeout(() => {
-                const element = document.getElementById(focusParam);
-                if (element) {
-                    element.scrollIntoView({ behavior: "smooth", block: "center" });
-                    element.classList.add("ring-1", "ring-brand/30", "rounded-lg", "transition-all", "-m-4", "p-4");
-                    setTimeout(() => {
-                        element.classList.remove("ring-1", "ring-brand/30", "-m-4", "p-4");
-                    }, 2000);
-                }
-            }, 100);
+        const focusData = sessionStorage.getItem('settings_focus');
+        if (focusData) {
+            try {
+                const { sectionId, tab } = JSON.parse(focusData);
+                // Clear it immediately so it only works once
+                sessionStorage.removeItem('settings_focus');
+                
+                // Switch to the correct tab
+                setSelectedTab(tab);
+                
+                // Scroll to and highlight the section
+                setTimeout(() => {
+                    const element = document.getElementById(sectionId);
+                    if (element) {
+                        element.scrollIntoView({ behavior: "smooth", block: "center" });
+                        element.classList.add("ring-1", "ring-brand/30", "rounded-lg", "transition-all", "-m-4", "p-4");
+                        setTimeout(() => {
+                            element.classList.remove("ring-1", "ring-brand/30", "-m-4", "p-4");
+                        }, 2000);
+                    }
+                }, 100);
+            } catch (e) {
+                console.error('Error parsing settings focus data:', e);
+            }
         }
-    }, [focusParam, tabParam]);
+    }, []);
 
     // Global keyboard shortcut listener for Shift+K
     useEffect(() => {
@@ -88,12 +95,11 @@ export default function SettingsPage() {
         setShowSearchResults(false);
         setHighlightedIndex(0);
         
-        // Scroll to the section after a brief delay to allow tab switch
+        // Scroll to and highlight the section
         setTimeout(() => {
             const element = document.getElementById(setting.sectionId);
             if (element) {
                 element.scrollIntoView({ behavior: "smooth", block: "center" });
-                // Add a subtle highlight effect with padding
                 element.classList.add("ring-1", "ring-brand/30", "rounded-lg", "transition-all", "-m-4", "p-4");
                 setTimeout(() => {
                     element.classList.remove("ring-1", "ring-brand/30", "-m-4", "p-4");
