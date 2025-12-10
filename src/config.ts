@@ -144,3 +144,14 @@ export const deliverableDetailsApiConfig = {
     baseUrl: process.env.NEXT_PUBLIC_SQUAD_API_URL || "https://mmq-api-vercel.vercel.app",
     formIdsEndpoint: "/api/projects/form-ids",
 } as const;
+
+/**
+ * Settings Page Configuration
+ */
+export const settingsConfig = {
+    tabs: [
+        { id: "profile", label: "Profile" },
+        { id: "defaults", label: "My Defaults" },
+    ],
+    defaultTab: "profile",
+} as const;
