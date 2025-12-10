@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createSubmission, detectDeviceType } from "@/services/submissions";
 import { handleError } from "@/services/error-reporting";
@@ -15,10 +15,12 @@ export default function CreatePage() {
     const { clearFormState, setSubmissionId, setSubmitter, setSelectedAccount } = useCreateContext();
     const clearProjectStore = useProjectStore(state => state.clearProjects);
     const [showOverlay, setShowOverlay] = useState(true);
+    const hasCreatedRef = useRef(false);
 
     useEffect(() => {
         const createAndRedirect = async () => {
-            if (!isReady) return;
+            if (!isReady || hasCreatedRef.current) return;
+            hasCreatedRef.current = true;
 
             // Clear any existing form state first (both CreateContext and Zustand store)
             clearFormState();
@@ -78,7 +80,7 @@ export default function CreatePage() {
 
     return (
         <>
-            <LoadingOverlay isVisible={showOverlay} label="Creating new request..." />
+            <LoadingOverlay isVisible={showOverlay} label="Getting your project request ready..." />
             <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
                 <div className="mb-6 sm:mb-8 max-w-7xl mx-auto w-full">
                     <h1 className="text-xl sm:text-2xl font-semibold text-primary align-center">New Project Request</h1>
