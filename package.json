@@ -38,6 +38,7 @@
         "react-aria-components": "^1.12.0",
         "react-dom": "19.1.1",
         "react-hotkeys-hook": "^5.1.0",
+        "react-timezone-select": "^3.2.8",
         "recharts": "^3.5.0",
         "sonner": "^2.0.7",
         "tailwind-merge": "^3.3.1",

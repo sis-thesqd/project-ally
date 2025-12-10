@@ -154,4 +154,16 @@ export const settingsConfig = {
         { id: "defaults", label: "My Defaults" },
     ],
     defaultTab: "profile",
+    /** Whether to show the photo uploader in profile settings */
+    showPhotoUploader: false,
+    /** Timezone labels for common North American timezones */
+    timezones: {
+        'Pacific/Honolulu': 'Hawaii Time',
+        'America/Anchorage': 'Alaska Time',
+        'America/Los_Angeles': 'Pacific Time',
+        'America/Denver': 'Mountain Time',
+        'America/Chicago': 'Central Time',
+        'America/New_York': 'Eastern Time',
+        'America/Halifax': 'Atlantic Time',
+    },
 } as const;

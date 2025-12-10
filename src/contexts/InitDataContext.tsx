@@ -32,6 +32,7 @@ interface Preferences {
     default_mmq_view: 'board' | 'table' | null;
     mmq_auto_collapse_empty: boolean | null;
     mmq_table_filter: string | null;
+    timezone?: string | null;
 }
 
 interface SidebarItem {
