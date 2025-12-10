@@ -41,7 +41,7 @@ interface SidebarItem {
 }
 
 // Config item types from pa_config table
-export type ConfigType = 'loading_message' | 'notification' | 'global_info_banner';
+export type ConfigType = 'loading_message' | 'notification' | 'global_info_banner' | 'create_page_loading_message';
 
 export interface ConfigItem {
     id: string;

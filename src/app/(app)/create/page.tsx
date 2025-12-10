@@ -11,11 +11,15 @@ import { useProjectStore } from "@sis-thesqd/prf-project-selection";
 
 export default function CreatePage() {
     const router = useRouter();
-    const { data, isReady } = useInitData();
+    const { data, isReady, getConfigByType } = useInitData();
     const { clearFormState, setSubmissionId, setSubmitter, setSelectedAccount } = useCreateContext();
     const clearProjectStore = useProjectStore(state => state.clearProjects);
     const [showOverlay, setShowOverlay] = useState(true);
     const hasCreatedRef = useRef(false);
+
+    // Get loading message from config
+    const loadingConfig = getConfigByType('create_page_loading_message');
+    const loadingMessage = loadingConfig?.content || "Getting everything ready...";
 
     useEffect(() => {
         const createAndRedirect = async () => {
@@ -80,7 +84,7 @@ export default function CreatePage() {
 
     return (
         <>
-            <LoadingOverlay isVisible={showOverlay} label="Getting your project request ready..." />
+            <LoadingOverlay isVisible={showOverlay} label={loadingMessage} />
             <main className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
                 <div className="mb-6 sm:mb-8 max-w-7xl mx-auto w-full">
                     <h1 className="text-xl sm:text-2xl font-semibold text-primary align-center">New Project Request</h1>
