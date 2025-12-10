@@ -16,33 +16,47 @@ export default function SettingsPage() {
     const [highlightedIndex, setHighlightedIndex] = useState(0);
     const searchInputRef = useRef<HTMLInputElement>(null);
 
-    // Handle focus from command menu or search (via sessionStorage)
+    // Handle focus from command menu or search
+    const handleSettingsFocus = (sectionId: string, tab: string) => {
+        // Switch to the correct tab
+        setSelectedTab(tab);
+        
+        // Scroll to and highlight the section
+        setTimeout(() => {
+            const element = document.getElementById(sectionId);
+            if (element) {
+                element.scrollIntoView({ behavior: "smooth", block: "center" });
+                element.classList.add("ring-1", "ring-brand/30", "rounded-lg", "transition-all", "-m-4", "p-4");
+                setTimeout(() => {
+                    element.classList.remove("ring-1", "ring-brand/30", "-m-4", "p-4");
+                }, 2000);
+            }
+        }, 100);
+    };
+
+    // Handle focus from command menu (via sessionStorage or custom event)
     useEffect(() => {
+        // Check sessionStorage on mount (for navigation from other pages)
         const focusData = sessionStorage.getItem('settings_focus');
         if (focusData) {
             try {
                 const { sectionId, tab } = JSON.parse(focusData);
                 // Clear it immediately so it only works once
                 sessionStorage.removeItem('settings_focus');
-                
-                // Switch to the correct tab
-                setSelectedTab(tab);
-                
-                // Scroll to and highlight the section
-                setTimeout(() => {
-                    const element = document.getElementById(sectionId);
-                    if (element) {
-                        element.scrollIntoView({ behavior: "smooth", block: "center" });
-                        element.classList.add("ring-1", "ring-brand/30", "rounded-lg", "transition-all", "-m-4", "p-4");
-                        setTimeout(() => {
-                            element.classList.remove("ring-1", "ring-brand/30", "-m-4", "p-4");
-                        }, 2000);
-                    }
-                }, 100);
+                handleSettingsFocus(sectionId, tab);
             } catch (e) {
                 console.error('Error parsing settings focus data:', e);
             }
         }
+
+        // Listen for custom event (for when already on settings page)
+        const handleCustomEvent = (e: CustomEvent) => {
+            const { sectionId, tab } = e.detail;
+            handleSettingsFocus(sectionId, tab);
+        };
+
+        window.addEventListener('settings-focus', handleCustomEvent as EventListener);
+        return () => window.removeEventListener('settings-focus', handleCustomEvent as EventListener);
     }, []);
 
     // Global keyboard shortcut listener for Shift+K
@@ -156,7 +170,6 @@ export default function SettingsPage() {
                                         size="sm" 
                                         placeholder="Search settings" 
                                         icon={SearchLg}
-                                        shortcut="⇧K"
                                         onFocus={() => setShowSearchResults(true)}
                                         onBlur={() => {
                                             // Delay to allow click on results

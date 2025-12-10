@@ -114,7 +114,7 @@ export function ProfileContent() {
         >
 
             {/* Form content */}
-            <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-8">
                 <div id="display-name" className="grid grid-cols-1 lg:grid-cols-[minmax(200px,280px)_minmax(400px,512px)] lg:gap-8 scroll-mt-8">
                     <SectionLabel.Root isRequired size="sm" title="Display name" className="max-lg:hidden" />
 
@@ -123,8 +123,6 @@ export function ProfileContent() {
                         <InputBase size="md" />
                     </TextField>
                 </div>
-
-                <hr className="h-px w-full border-none bg-border-secondary" />
 
                 <div id="email" className="grid grid-cols-1 lg:grid-cols-[minmax(200px,280px)_minmax(400px,512px)] lg:gap-8 scroll-mt-8">
                     <SectionLabel.Root isRequired size="sm" title="Email address" className="max-lg:hidden" />
@@ -135,8 +133,6 @@ export function ProfileContent() {
                     </TextField>
                 </div>
 
-                <hr className="h-px w-full border-none bg-border-secondary" />
-
                 <div id="photo" className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(200px,280px)_minmax(400px,512px)] lg:gap-8 scroll-mt-8">
                     <SectionLabel.Root
                         size="sm"
@@ -144,8 +140,6 @@ export function ProfileContent() {
                     />
                     <Avatar size="2xl" src={data?.profile_picture || "https://www.untitledui.com/images/avatars/olivia-rhye?fm=webp&q=80"} />
                 </div>
-
-                <hr className="h-px w-full border-none bg-border-secondary" />
 
                 <div id="timezone" className="grid grid-cols-1 lg:grid-cols-[minmax(200px,280px)_minmax(400px,512px)] lg:gap-8 scroll-mt-8">
                     <SectionLabel.Root size="sm" title="Timezone" className="max-lg:hidden" />

@@ -210,13 +210,27 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
         // Check if it's a settings item
         else if ('tab' in item && 'sectionId' in item) {
             console.log('Navigating to settings section:', item.sectionId);
-            // Store focus info in sessionStorage (temporary, only for this navigation)
-            sessionStorage.setItem('settings_focus', JSON.stringify({
-                sectionId: item.sectionId,
-                tab: item.tab,
-            }));
-            // Navigate to settings (clean URL)
-            router.push('/settings');
+            
+            // Check if we're already on the settings page
+            const isOnSettings = window.location.pathname === '/settings';
+            
+            if (isOnSettings) {
+                // Trigger focus directly without navigation
+                window.dispatchEvent(new CustomEvent('settings-focus', {
+                    detail: {
+                        sectionId: item.sectionId,
+                        tab: item.tab,
+                    }
+                }));
+            } else {
+                // Store focus info in sessionStorage (temporary, only for this navigation)
+                sessionStorage.setItem('settings_focus', JSON.stringify({
+                    sectionId: item.sectionId,
+                    tab: item.tab,
+                }));
+                // Navigate to settings (clean URL)
+                router.push('/settings');
+            }
         }
     };
 
@@ -396,6 +410,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                 onOpenChange={setIsCommandMenuOpen}
                 onSelectionChange={handleCommandMenuSelection}
                 shortcut={null}
+                overlayClassName="flex items-center justify-center p-4"
                 emptyState={
                     <EmptyState size="sm" className="overflow-hidden p-6 pb-10">
                         <EmptyState.Header>
@@ -462,6 +477,9 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
 
                     <div className="mt-auto flex flex-col gap-5 px-2 py-4">
                         <div className="flex flex-col gap-1">
+                            <NavItemBase type="button" onClick={() => setIsCommandMenuOpen(true)}>
+                                Search
+                            </NavItemBase>
                             <NavItemBase type="link" href="/settings">
                                 Settings
                             </NavItemBase>
