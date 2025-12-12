@@ -3,7 +3,7 @@
 import React from "react";
 import type { FC } from "react";
 import { useEffect, useRef, useState } from "react";
-import { LogOut01, Moon01, Plus, RefreshCcw01, Settings01, SearchLg, ZapFast, User01, Mail01, Image01, Map01, Box, BarChart03, BarChart12 } from "@untitledui/icons";
+import { LogOut01, Moon01, Plus, RefreshCcw01, Settings01, SearchLg, ZapFast, User01, Mail01, Image01, Map01, Box, BarChart03, BarChart12, Sun } from "@untitledui/icons";
 import { AnimatePresence, motion } from "motion/react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
@@ -434,6 +434,31 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                         {(group) => <CommandMenu.Section {...group}>{(item) => <CommandMenu.Item key={item.id} {...item} />}</CommandMenu.Section>}
                     </CommandMenu.List>
                 </CommandMenu.Group>
+                {/* Custom controls section */}
+                <div className="border-t border-secondary px-4 py-3">
+                    <div className="flex items-center justify-between gap-4">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setIsCommandMenuOpen(false);
+                                handleRefresh();
+                            }}
+                            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-secondary hover:bg-primary_hover hover:text-primary transition-colors"
+                        >
+                            <RefreshCcw01 className="size-4" />
+                            Refresh data
+                        </button>
+                        <div className="flex items-center gap-2">
+                            <Sun className="size-4 text-tertiary" />
+                            <Toggle
+                                size="sm"
+                                isSelected={isDarkMode}
+                                onChange={handleThemeChange}
+                            />
+                            <Moon01 className="size-4 text-tertiary" />
+                        </div>
+                    </div>
+                </div>
             </CommandMenu>
 
             {/* Desktop sidebar navigation */}
@@ -456,7 +481,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
             />
 
             {/* Mobile header navigation */}
-            <MobileNavigationHeader>
+            <MobileNavigationHeader onSearchClick={() => setIsCommandMenuOpen(true)}>
                 <aside className="group flex h-full max-h-full w-full max-w-full flex-col justify-between overflow-y-auto bg-primary pt-4">
                     <div className="px-4">
                         <a href="/" className="inline-block transition-opacity hover:opacity-80">
@@ -475,27 +500,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
 
                     <NavList items={items} />
 
-                    <div className="mt-auto flex flex-col gap-5 px-2 py-4">
-                        <div className="flex flex-col gap-1">
-                            <NavItemBase type="button" onClick={() => setIsCommandMenuOpen(true)}>
-                                Search
-                            </NavItemBase>
-                            <NavItemBase type="link" href="/settings">
-                                Settings
-                            </NavItemBase>
-                            <div className="flex items-center justify-between rounded-md px-3 py-2">
-                                <span className="text-md font-semibold text-secondary">Dark mode</span>
-                                <Toggle
-                                    size="sm"
-                                    isSelected={isDarkMode}
-                                    onChange={handleThemeChange}
-                                />
-                            </div>
-                            <NavItemBase type="button" onClick={handleRefresh}>
-                                Refresh data
-                            </NavItemBase>
-                        </div>
-
+                    <div className="mt-auto flex flex-col gap-5 px-2 pb-8 pt-4">
                         <div className="relative flex items-center gap-3 border-t border-secondary pt-6 pr-12 pl-2">
                             <AvatarLabelGroup
                                 status="online"

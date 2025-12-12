@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Share01, DotsHorizontal } from "@untitledui/icons";
 
 const STORAGE_KEY = "ios-install-prompt-dismissed";
 
@@ -58,21 +59,15 @@ export function IOSInstallPrompt() {
                 </div>
 
                 {/* Instructions */}
-                <div className="mt-4 flex items-center gap-3 rounded-lg bg-secondary p-3">
-                    <div className="flex items-center gap-2 text-sm">
-                        <span className="text-secondary">Tap</span>
-                        {/* Share icon */}
-                        <svg className="text-brand-600 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={1.5}
-                                d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-                            />
-                        </svg>
-                        <span className="text-secondary">then</span>
-                        <span className="text-primary font-medium">&quot;Add to Home Screen&quot;</span>
-                    </div>
+                <div className="mt-3 rounded-lg bg-secondary px-3 py-2.5">
+                    <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-sm text-secondary">
+                        Tap
+                        <Share01 className="inline h-4 w-4 text-brand-600" />
+                        , tap
+                        <DotsHorizontal className="inline h-4 w-4 text-primary" />
+                        more, then
+                        <span className="whitespace-nowrap font-medium text-primary">&quot;Add to Home Screen&quot;</span>
+                    </p>
                 </div>
             </div>
         </div>
