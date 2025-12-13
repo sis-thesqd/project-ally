@@ -70,6 +70,7 @@ interface InitData {
     accounts: AccountItem[];
     pages: PageItem[];
     config: ConfigItem[];
+    notifications_enabled?: boolean | null;
 }
 
 interface InitDataContextType {

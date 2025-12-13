@@ -34,7 +34,7 @@ export function DefaultsContent() {
     }, []);
 
     // Get notifications status from init data
-    const notificationsEnabled = (data as { notifications_enabled?: boolean | null })?.notifications_enabled;
+    const notificationsEnabled = data?.notifications_enabled;
 
     // Get default account number
     const accountNumber = useMemo(() => {
