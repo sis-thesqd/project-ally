@@ -205,7 +205,7 @@ export function DefaultsContent() {
                                 {notificationsEnabled !== true && (
                                     <Button
                                         size="md"
-                                        variant="secondary"
+                                        color="secondary"
                                         onClick={handleEnableNotifications}
                                         isDisabled={isEnablingNotifications}
                                     >
@@ -215,7 +215,7 @@ export function DefaultsContent() {
                                 {notificationsEnabled === true && (
                                     <Button
                                         size="md"
-                                        variant="secondary-error"
+                                        color="secondary-destructive"
                                         onClick={handleDisableNotifications}
                                         isDisabled={isDisablingNotifications}
                                     >
