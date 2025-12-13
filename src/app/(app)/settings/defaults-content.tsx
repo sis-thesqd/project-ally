@@ -2,17 +2,39 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Key } from "react-aria";
+import { useTheme } from "next-themes";
+import { Bell03, Sun, Moon01, Monitor03 } from "@untitledui/icons";
 import { useInitData } from "@/contexts/InitDataContext";
 import { ButtonGroup, ButtonGroupItem } from "@/components/base/button-group/button-group";
+import { Button } from "@/components/base/buttons/button";
 import { BoxIcon, MagicWandIcon } from "@/components/icons";
 import { SectionHeader } from "@/components/application/section-headers/section-headers";
 import { SectionLabel } from "@/components/application/section-headers/section-label";
 import { updateAccountPreferences, type SubmissionMode } from "@/services/settings";
+import { usePushNotifications } from "@/components/pwa/pwa-register";
 
 export function DefaultsContent() {
-    const { data, getAccountPreferences, updateAccountPreferences: updateAccountPrefs } = useInitData();
+    const { data, getAccountPreferences, updateAccountPreferences: updateAccountPrefs, updatePreferences, refreshData } = useInitData();
     const [submissionMode, setSubmissionMode] = useState<SubmissionMode>("simple");
     const [isSaving, setIsSaving] = useState(false);
+    const { theme, setTheme } = useTheme();
+    const { isSupported: isPushSupported, permission, requestPermission } = usePushNotifications();
+    const [isEnablingNotifications, setIsEnablingNotifications] = useState(false);
+    const [isDisablingNotifications, setIsDisablingNotifications] = useState(false);
+
+    // Check if running in PWA mode
+    const [isPWA, setIsPWA] = useState(false);
+    useEffect(() => {
+        const checkPWA = () => {
+            const isStandalone = window.matchMedia("(display-mode: standalone)").matches ||
+                               (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
+            setIsPWA(isStandalone);
+        };
+        checkPWA();
+    }, []);
+
+    // Get notifications status from init data
+    const notificationsEnabled = (data as { notifications_enabled?: boolean | null })?.notifications_enabled;
 
     // Get default account number
     const accountNumber = useMemo(() => {
@@ -61,6 +83,56 @@ export function DefaultsContent() {
         [submissionMode, accountNumber, updateAccountPrefs]
     );
 
+    // Handle theme change
+    const handleThemeChange = useCallback(
+        async (keys: "all" | Set<Key>) => {
+            const newTheme = Array.from(keys as Set<Key>)[0] as string;
+            setTheme(newTheme);
+            // Persist to database
+            await updatePreferences({ default_theme: newTheme as 'light' | 'dark' });
+        },
+        [setTheme, updatePreferences]
+    );
+
+    // Handle enable notifications
+    const handleEnableNotifications = async () => {
+        setIsEnablingNotifications(true);
+        try {
+            await requestPermission();
+            // Refresh init data to get updated notification status
+            await refreshData();
+        } catch (error) {
+            console.error("Failed to enable notifications:", error);
+        } finally {
+            setIsEnablingNotifications(false);
+        }
+    };
+
+    // Handle disable notifications
+    const handleDisableNotifications = async () => {
+        setIsDisablingNotifications(true);
+        try {
+            const response = await fetch("/api/push/subscribe", {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ email: data?.email }),
+            });
+
+            if (response.ok) {
+                // Refresh init data to get updated notification status
+                await refreshData();
+            } else {
+                console.error("Failed to disable notifications");
+            }
+        } catch (error) {
+            console.error("Failed to disable notifications:", error);
+        } finally {
+            setIsDisablingNotifications(false);
+        }
+    };
+
     if (accountNumber === null) {
         return (
             <div className="px-4 lg:px-8">
@@ -73,11 +145,93 @@ export function DefaultsContent() {
         <div className="flex flex-col gap-6 px-4 lg:px-8">
 
             <div className="flex flex-col gap-5">
+                {/* Theme selector */}
+                <div id="theme" className="grid grid-cols-1 lg:grid-cols-[minmax(200px,280px)_minmax(400px,512px)] lg:gap-8 scroll-mt-8">
+                    <SectionLabel.Root
+                        size="sm"
+                        title="Theme"
+                        description="Choose your preferred color theme"
+                    />
+
+                    <div className="flex flex-col gap-2">
+                        <ButtonGroup
+                            selectedKeys={new Set([theme || 'system'])}
+                            onSelectionChange={handleThemeChange}
+                        >
+                            {isPWA && (
+                                <ButtonGroupItem id="system" iconLeading={Monitor03}>
+                                    System
+                                </ButtonGroupItem>
+                            )}
+                            <ButtonGroupItem id="light" iconLeading={Sun}>
+                                Light
+                            </ButtonGroupItem>
+                            <ButtonGroupItem id="dark" iconLeading={Moon01}>
+                                Dark
+                            </ButtonGroupItem>
+                        </ButtonGroup>
+                    </div>
+                </div>
+
+                {/* Push Notifications - PWA Only */}
+                {isPWA && isPushSupported && (
+                    <div id="push-notifications" className="grid grid-cols-1 lg:grid-cols-[minmax(200px,280px)_minmax(400px,512px)] lg:gap-8 scroll-mt-8">
+                        <SectionLabel.Root
+                            size="sm"
+                            title="Push notifications"
+                            description="Manage your push notification preferences"
+                        />
+
+                        <div className="flex flex-col gap-4">
+                            {/* Current status */}
+                            <div className="flex items-center gap-2 rounded-lg border border-secondary bg-tertiary px-4 py-3">
+                                <Bell03 className={`h-5 w-5 ${notificationsEnabled ? "text-brand-600" : "text-tertiary"}`} />
+                                <div className="flex-1">
+                                    <p className="text-sm font-medium text-primary">
+                                        {notificationsEnabled === true && "Notifications enabled"}
+                                        {notificationsEnabled === false && "Notifications disabled"}
+                                        {notificationsEnabled === null && "Notifications not set up"}
+                                    </p>
+                                    <p className="text-xs text-secondary">
+                                        {notificationsEnabled === true && "You'll receive push notifications for updates"}
+                                        {notificationsEnabled === false && "You won't receive push notifications"}
+                                        {notificationsEnabled === null && "Enable notifications to stay updated"}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Action buttons */}
+                            <div className="flex flex-col gap-2">
+                                {notificationsEnabled !== true && (
+                                    <Button
+                                        size="md"
+                                        variant="secondary"
+                                        onClick={handleEnableNotifications}
+                                        isDisabled={isEnablingNotifications}
+                                    >
+                                        {isEnablingNotifications ? "Enabling..." : "Enable notifications"}
+                                    </Button>
+                                )}
+                                {notificationsEnabled === true && (
+                                    <Button
+                                        size="md"
+                                        variant="secondary-error"
+                                        onClick={handleDisableNotifications}
+                                        isDisabled={isDisablingNotifications}
+                                    >
+                                        {isDisablingNotifications ? "Disabling..." : "Disable notifications"}
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 <div id="submission-mode" className="grid grid-cols-1 lg:grid-cols-[minmax(200px,280px)_minmax(400px,512px)] lg:gap-8 scroll-mt-8">
                     <SectionLabel.Root
                         size="sm"
                         title="Default submission mode"
-                        description="Choose how you want to create new project requests by default."
+                        description="Choose your default project request mode."
                     />
 
                     <div className="flex flex-col gap-2">

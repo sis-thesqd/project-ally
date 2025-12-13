@@ -62,7 +62,7 @@ export function AppLayoutClient({ children }: { children: React.ReactNode }) {
                 <div className="hidden lg:block">
                     <GlobalInfoBanner />
                 </div>
-                <div className="flex flex-col bg-primary lg:flex-row flex-1 min-h-0 overflow-y-auto lg:overflow-y-scroll lg:scrollbar-auto">
+                <div className="flex flex-col bg-primary lg:flex-row flex-1 min-h-0 overflow-y-auto lg:overflow-y-scroll lg:scrollbar-auto pt-16 lg:pt-0">
                     {/* Mobile: Banner inside scroll area (scrolls with content) */}
                     <div className="lg:hidden">
                         <GlobalInfoBanner />

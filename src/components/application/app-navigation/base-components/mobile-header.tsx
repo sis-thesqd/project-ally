@@ -49,7 +49,7 @@ interface MobileNavigationHeaderProps {
 export const MobileNavigationHeader = ({ children, onSearchClick }: MobileNavigationHeaderProps) => {
     return (
         <AriaDialogTrigger>
-            <header className="flex h-16 items-center justify-between border-b border-secondary bg-primary py-3 pr-2 pl-4 lg:hidden">
+            <header className="fixed top-0 left-0 right-0 z-40 flex h-16 items-center justify-between border-b border-secondary bg-primary py-3 pr-2 pl-4 lg:hidden">
                 <a href="/" className="transition-opacity hover:opacity-80">
                     <img
                         src="/logos/Badge Slanted_Blue-01.svg"

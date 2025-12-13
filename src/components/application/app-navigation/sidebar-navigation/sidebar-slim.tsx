@@ -448,15 +448,6 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
                             <RefreshCcw01 className="size-4" />
                             Refresh data
                         </button>
-                        <div className="flex items-center gap-2">
-                            <Sun className="size-4 text-tertiary" />
-                            <Toggle
-                                size="sm"
-                                isSelected={isDarkMode}
-                                onChange={handleThemeChange}
-                            />
-                            <Moon01 className="size-4 text-tertiary" />
-                        </div>
                     </div>
                 </div>
             </CommandMenu>
