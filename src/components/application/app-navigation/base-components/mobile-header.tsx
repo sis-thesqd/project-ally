@@ -44,9 +44,10 @@ const RouteChangeCloseHandler = ({ onClose }: { onClose: () => void }) => {
 interface MobileNavigationHeaderProps {
     children: ReactNode;
     onSearchClick?: () => void;
+    onMenuOpen?: () => void;
 }
 
-export const MobileNavigationHeader = ({ children, onSearchClick }: MobileNavigationHeaderProps) => {
+export const MobileNavigationHeader = ({ children, onSearchClick, onMenuOpen }: MobileNavigationHeaderProps) => {
     return (
         <AriaDialogTrigger>
             <header className="fixed top-0 left-0 right-0 z-40 flex h-16 items-center justify-between border-b border-secondary bg-primary py-3 pr-2 pl-4 lg:hidden">
@@ -71,6 +72,7 @@ export const MobileNavigationHeader = ({ children, onSearchClick }: MobileNaviga
                     )}
                     <AriaButton
                         aria-label="Expand navigation menu"
+                        onPress={onMenuOpen}
                         className="group flex items-center justify-center rounded-lg bg-primary p-2 text-fg-secondary outline-focus-ring hover:bg-primary_hover hover:text-fg-secondary_hover focus-visible:outline-2 focus-visible:outline-offset-2"
                     >
                         <Menu02 className="size-6 transition duration-200 ease-in-out group-aria-expanded:opacity-0" />
