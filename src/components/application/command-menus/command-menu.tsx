@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentPropsWithRef, ReactNode } from "react";
-import { Children, Fragment, createContext, useContext, useMemo, useRef, useState } from "react";
+import { Children, Fragment, createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { AutocompleteProps, DialogTriggerProps, Key, ListBoxProps, ListBoxSectionProps, ModalOverlayProps } from "react-aria-components";
 import {
     Autocomplete as AriaAutocomplete,
@@ -90,6 +90,13 @@ const CommandMenuRoot = ({
 
     const [selectedKeys, setSelectedKeys] = useState<Iterable<Key>>(defaultSelectedKeys ?? new Set());
 
+    // Check if device is mobile to prevent auto-focus keyboard popup
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        setIsMobile(window.innerWidth < 768);
+    }, []);
+
     // Flatten the items and register hotkeys for items with shortcut keys.
     const resolvedItems = items ?? defaultItems ?? [];
     const flatItems = resolvedItems.reduce<CommandDropdownMenuItemProps[]>((acc, group) => [...acc, ...group.items], []);
@@ -142,7 +149,7 @@ const CommandMenuRoot = ({
                 <AriaAutocomplete {...{ inputValue, onInputChange }} filter={filter === false ? undefined : filter || contains}>
                     <AriaTextField aria-label="Search">
                         <CommandInput
-                            autoFocus
+                            autoFocus={!isMobile}
                             shortcutKeys={shortcut ? [shortcut] : undefined}
                             placeholder={placeholder}
                             ref={mergeRefs([inputRef, useHotkeysRef])}

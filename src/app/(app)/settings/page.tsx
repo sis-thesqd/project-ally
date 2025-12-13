@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { SearchLg } from "@untitledui/icons";
 import { TabList, Tabs } from "@/components/application/tabs/tabs";
 import { InputBase, TextField } from "@/components/base/input/input";
-import { NativeSelect } from "@/components/base/select/select-native";
+import { Select } from "@/components/base/select/select";
 import { settingsConfig } from "@/config";
 import { ProfileContent } from "./profile-content";
 import { DefaultsContent } from "./defaults-content";
@@ -161,14 +161,14 @@ export default function SettingsPage() {
                                 <h1 className="text-xl font-semibold text-primary lg:text-display-xs">Settings</h1>
                             </div>
                             <div className="flex flex-col gap-4 lg:flex-row relative">
-                                <TextField 
+                                <TextField
                                     className="lg:w-80"
                                     value={searchQuery}
                                     onChange={setSearchQuery}
                                 >
-                                    <InputBase 
-                                        size="sm" 
-                                        placeholder="Search settings" 
+                                    <InputBase
+                                        size="sm"
+                                        placeholder="Search settings"
                                         icon={SearchLg}
                                         onFocus={() => setShowSearchResults(true)}
                                         onBlur={() => {
@@ -178,7 +178,7 @@ export default function SettingsPage() {
                                         onKeyDown={handleKeyDown}
                                     />
                                 </TextField>
-                                
+
                                 {/* Search results dropdown */}
                                 {showSearchResults && searchResults.length > 0 && (
                                     <div className="absolute top-full right-0 mt-2 w-80 bg-primary rounded-lg shadow-lg ring-1 ring-primary z-50 max-h-96 overflow-auto">
@@ -206,18 +206,21 @@ export default function SettingsPage() {
                                         ))}
                                     </div>
                                 )}
-                                
+
                             </div>
                         </div>
                     </div>
 
-                    <NativeSelect
-                        aria-label="Page tabs"
-                        className="md:hidden"
-                        value={selectedTab}
-                        onChange={(event) => handleTabChange(event.target.value)}
-                        options={settingsConfig.tabs.map((tab) => ({ label: tab.label, value: tab.id }))}
-                    />
+                    <div className="md:hidden">
+                        <Select
+                            size="md"
+                            selectedKey={selectedTab}
+                            onSelectionChange={(key) => handleTabChange(key as string)}
+                            items={settingsConfig.tabs}
+                        >
+                            {(item) => <Select.Item id={item.id} label={item.label} />}
+                        </Select>
+                    </div>
                     <div className="-mx-4 -my-1 scrollbar-hide flex overflow-auto px-4 py-1 lg:-mx-8 lg:px-8">
                         <Tabs className="hidden md:flex md:w-auto" selectedKey={selectedTab} onSelectionChange={(value) => handleTabChange(value as string)}>
                             <TabList type="button-minimal" items={[...settingsConfig.tabs]} />

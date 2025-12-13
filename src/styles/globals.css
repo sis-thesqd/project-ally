@@ -12,15 +12,6 @@
 @plugin "tailwindcss-react-aria-components";
 @plugin "tailwindcss-animate";
 
-@theme {
-    --color-card: initial;
-    --color-card-foreground: initial;
-    --color-muted-foreground: initial;
-    --color-border: initial;
-    --color-background: initial;
-    --color-foreground: initial;
-}
-
 @custom-variant dark (&:where(.dark-mode, .dark-mode *));
 @custom-variant label (& [data-label]);
 @custom-variant focus-input-within (&:has(input:focus));
@@ -122,30 +113,4 @@ input[type="number"] {
 /* Hide the default clear button (X) from search inputs. */
 input[type="search"]::-webkit-search-cancel-button {
     -webkit-appearance: none;
-}
-
-/* Minimal shadcn-compatible variables mapped to Untitled UI colors */
-@layer base {
-    * {
-        border-color: var(--color-border);
-    }
-
-    :root {
-        /* Light mode defaults */
-        --color-card: var(--color-white);
-        --color-card-foreground: var(--color-gray-900);
-        --color-muted-foreground: var(--color-gray-600);
-        --color-border: var(--color-gray-300);
-        --color-background: var(--color-white);
-        --color-foreground: var(--color-gray-900);
-    }
-
-    .dark-mode {
-        --color-card: var(--color-gray-900);
-        --color-card-foreground: var(--color-gray-50);
-        --color-muted-foreground: var(--color-gray-400);
-        --color-border: var(--color-gray-700);
-        --color-background: var(--color-gray-950);
-        --color-foreground: var(--color-gray-50);
-    }
 }

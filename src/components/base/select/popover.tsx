@@ -14,6 +14,7 @@ export const Popover = (props: PopoverProps) => {
     return (
         <AriaPopover
             placement="bottom"
+            shouldFlip={false}
             containerPadding={0}
             offset={4}
             {...props}
