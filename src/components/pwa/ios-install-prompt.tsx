@@ -2,13 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { Share01, DotsHorizontal } from "@untitledui/icons";
+import { useInitData } from "@/contexts/InitDataContext";
 
 const STORAGE_KEY = "ios-install-prompt-dismissed";
 
 export function IOSInstallPrompt() {
     const [showPrompt, setShowPrompt] = useState(false);
+    const { data: initData, isReady } = useInitData();
 
     useEffect(() => {
+        // Don't show prompt until user is logged in and data is ready
+        if (!isReady || !initData) {
+            return;
+        }
+
         // Check if already dismissed
         if (localStorage.getItem(STORAGE_KEY) === "true") {
             return;
@@ -32,7 +39,7 @@ export function IOSInstallPrompt() {
             }, 3000);
             return () => clearTimeout(timer);
         }
-    }, []);
+    }, [isReady, initData]);
 
     const handleDismiss = () => {
         setShowPrompt(false);
