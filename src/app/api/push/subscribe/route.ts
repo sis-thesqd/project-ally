@@ -41,10 +41,10 @@ export async function POST(request: NextRequest) {
                     p256dh: subscription.keys.p256dh,
                     auth: subscription.keys.auth,
                     email: subscription.email || null,
-                    created_at: new Date().toISOString(),
+                    opt_in: true,
                     updated_at: new Date().toISOString(),
                 },
-                { onConflict: "endpoint" }
+                { onConflict: "email" }
             )
             .select()
             .single();
@@ -75,31 +75,45 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
     try {
         const supabase = getSupabase();
-        const { endpoint } = await request.json();
+        const { email } = await request.json();
 
-        if (!endpoint) {
+        if (!email) {
             return NextResponse.json(
-                { error: "Endpoint required" },
+                { error: "Email required" },
                 { status: 400 }
             );
         }
 
+        // Instead of deleting, set opt_in to false to track that user opted out
         const { error } = await supabase
             .from("pa_push_users")
-            .delete()
-            .eq("endpoint", endpoint);
+            .upsert(
+                {
+                    email: email,
+                    opt_in: false,
+                    updated_at: new Date().toISOString(),
+                    // Clear subscription data when opting out
+                    endpoint: null,
+                    p256dh: null,
+                    auth: null,
+                    expiration_time: null,
+                },
+                { onConflict: "email" }
+            );
 
         if (error) {
             console.error("[Push Unsubscribe] Supabase error:", error);
             return NextResponse.json(
-                { error: "Failed to remove subscription" },
+                { error: "Failed to opt out of notifications" },
                 { status: 500 }
             );
         }
 
+        console.log("[Push Unsubscribe] User opted out:", email);
+
         return NextResponse.json({
             success: true,
-            message: "Subscription removed",
+            message: "Opted out of notifications",
         });
     } catch (error) {
         console.error("[Push Unsubscribe] Error:", error);
