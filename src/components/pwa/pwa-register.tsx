@@ -51,6 +51,28 @@ export function PWARegister() {
         console.log("[PWA] registration:", registration);
         console.log("[PWA] VAPID_PUBLIC_KEY:", VAPID_PUBLIC_KEY ? "set" : "not set");
 
+        // Get fresh user email from init API
+        let userEmail: string | null = initData?.email || null;
+        if (!userEmail) {
+            console.log("[PWA] initData email not available, fetching fresh...");
+            try {
+                const response = await fetch("/api/init");
+                if (response.ok) {
+                    const freshData = await response.json();
+                    userEmail = freshData?.email || null;
+                    console.log("[PWA] Fresh email:", userEmail);
+                }
+            } catch (error) {
+                console.error("[PWA] Failed to fetch fresh init data:", error);
+            }
+        }
+
+        if (!userEmail) {
+            console.error("[PWA] No email available for subscription");
+            alert("Cannot subscribe: User email not available. Please try refreshing the page.");
+            return null;
+        }
+
         // Wait for service worker to be ready
         let swRegistration = registration;
         if (!swRegistration) {
@@ -91,12 +113,11 @@ export function PWARegister() {
             console.log("[PWA] Push subscription created:", JSON.stringify(subscription));
 
             // Send subscription to server with user email
-            console.log("[PWA] Sending subscription to server...");
+            console.log("[PWA] Sending subscription to server with email:", userEmail);
             const subscriptionData = {
                 ...subscription.toJSON(),
-                email: initData?.email || null,
+                email: userEmail,
             };
-            console.log("[PWA] Subscription data:", subscriptionData);
             const response = await fetch("/api/push/subscribe", {
                 method: "POST",
                 headers: {
