@@ -20,7 +20,7 @@ function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
 export function PWARegister() {
     const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
     const [isSubscribed, setIsSubscribed] = useState(false);
-    const { data: initData } = useInitData();
+    const { data: initData, refreshData } = useInitData();
 
     useEffect(() => {
         // Register service worker
@@ -132,6 +132,11 @@ export function PWARegister() {
             if (response.ok) {
                 console.log("[PWA] Subscription saved to server");
                 setIsSubscribed(true);
+
+                // Refresh init data to update notifications_enabled status
+                console.log("[PWA] Refreshing init data...");
+                await refreshData();
+
                 return subscription;
             } else {
                 console.error("[PWA] Failed to save subscription to server:", responseText);
