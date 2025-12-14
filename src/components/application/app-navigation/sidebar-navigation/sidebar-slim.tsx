@@ -25,7 +25,6 @@ import { CreateNewButton } from "../base-components/create-new-button";
 import { LoadingOverlay } from "@/components/application/loading-overlay/loading-overlay";
 import type { NavItemType } from "../config";
 import { useInitData } from "@/contexts/InitDataContext";
-import { useMMQPrefetch } from "@/contexts/MMQPrefetchContext";
 import { useHotkeys } from "react-hotkeys-hook";
 import { Heading as AriaHeading } from "react-aria-components";
 import type { CommandDropdownMenuItemProps } from "@/components/application/command-menus/base-components/command-menu-item";
@@ -57,7 +56,6 @@ function getInitials(name: string | null | undefined): string {
 
 export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hideBorder, hideRightBorder }: SidebarNavigationSlimProps) => {
     const { data, updatePreferences, refreshData } = useInitData();
-    const { prefetchProjectsData } = useMMQPrefetch();
     const { theme, setTheme } = useTheme();
     const router = useRouter();
     const isDarkMode = theme === 'dark';
@@ -243,13 +241,6 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
         router.prefetch('/settings');
     }, [router]);
 
-    // Handle projects hover - prefetch MMQ data
-    const handleProjectsHover = () => {
-        if (defaultAccount) {
-            prefetchProjectsData(defaultAccount);
-        }
-    };
-
     const isSecondarySidebarVisible = isHovering && Boolean(currentItem?.items?.length);
 
     const MAIN_SIDEBAR_WIDTH = 68;
@@ -291,7 +282,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
 
                 <ul className="mt-4 flex flex-col gap-0.5 px-3">
                     {items.map((item) => (
-                        <li key={item.label} onMouseEnter={item.href === '/projects' ? handleProjectsHover : undefined}>
+                        <li key={item.label}>
                             <NavItemButton
                                 size="md"
                                 current={currentItem?.href === item.href}
@@ -483,7 +474,6 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
             {/* Mobile header navigation */}
             <MobileNavigationHeader
                 onSearchClick={() => setIsCommandMenuOpen(true)}
-                onMenuOpen={handleProjectsHover}
             >
                 <aside className="group flex h-full max-h-full w-full max-w-full flex-col justify-between overflow-y-auto bg-primary pt-4">
                     <div className="px-4">

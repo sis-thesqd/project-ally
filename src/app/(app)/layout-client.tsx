@@ -6,7 +6,6 @@ import { useTheme } from 'next-themes';
 import { SidebarNavigationSlim } from '@/components/application/app-navigation/sidebar-navigation/sidebar-slim';
 import { GlobalInfoBanner } from '@/components/application/banners/global-info-banner';
 import { useInitData } from '@/contexts/InitDataContext';
-import { MMQPrefetchProvider } from '@/contexts/MMQPrefetchContext';
 import { CreateProvider } from './create/CreateContext';
 
 export function AppLayoutClient({ children }: { children: React.ReactNode }) {
@@ -57,26 +56,24 @@ export function AppLayoutClient({ children }: { children: React.ReactNode }) {
     }
 
     return (
-        <MMQPrefetchProvider>
-            <CreateProvider>
-                <div className="flex flex-col h-screen">
-                    {/* Desktop: Banner outside scroll area (sticky at top) */}
-                    <div className="hidden lg:block">
+        <CreateProvider>
+            <div className="flex flex-col h-screen">
+                {/* Desktop: Banner outside scroll area (sticky at top) */}
+                <div className="hidden lg:block">
+                    <GlobalInfoBanner />
+                </div>
+                <div className="flex flex-col bg-primary lg:flex-row flex-1 min-h-0 overflow-y-auto lg:overflow-y-scroll lg:scrollbar-auto pt-16 lg:pt-0">
+                    {/* Mobile: Banner inside scroll area (scrolls with content) */}
+                    <div className="lg:hidden">
                         <GlobalInfoBanner />
                     </div>
-                    <div className="flex flex-col bg-primary lg:flex-row flex-1 min-h-0 overflow-y-auto lg:overflow-y-scroll lg:scrollbar-auto pt-16 lg:pt-0">
-                        {/* Mobile: Banner inside scroll area (scrolls with content) */}
-                        <div className="lg:hidden">
-                            <GlobalInfoBanner />
-                        </div>
-                        <SidebarNavigationSlim
-                            activeUrl={pathname}
-                            items={sidebarItems}
-                        />
-                        {children}
-                    </div>
+                    <SidebarNavigationSlim
+                        activeUrl={pathname}
+                        items={sidebarItems}
+                    />
+                    {children}
                 </div>
-            </CreateProvider>
-        </MMQPrefetchProvider>
+            </div>
+        </CreateProvider>
     );
 }
