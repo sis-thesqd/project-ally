@@ -89,8 +89,8 @@ interface InitDataContextType {
     refreshData: () => Promise<void>;
 }
 
-const CACHE_KEY = 'pa_init_data';
-const CACHE_TIMESTAMP_KEY = 'pa_init_data_timestamp';
+const CACHE_KEY = 'pa_init_data_v2'; // v2: Added notifications_enabled field
+const CACHE_TIMESTAMP_KEY = 'pa_init_data_timestamp_v2';
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 const InitDataContext = createContext<InitDataContextType>({
