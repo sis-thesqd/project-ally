@@ -31,28 +31,38 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Store subscription in Supabase
+        if (!subscription.email) {
+            return NextResponse.json(
+                { error: "Email is required" },
+                { status: 400 }
+            );
+        }
+
+        // First, delete any existing subscription for this email to avoid conflicts
+        await supabase
+            .from("pa_push_users")
+            .delete()
+            .eq("email", subscription.email);
+
+        // Store new subscription in Supabase
         const { data, error } = await supabase
             .from("pa_push_users")
-            .upsert(
-                {
-                    endpoint: subscription.endpoint,
-                    expiration_time: subscription.expirationTime,
-                    p256dh: subscription.keys.p256dh,
-                    auth: subscription.keys.auth,
-                    email: subscription.email || null,
-                    opt_in: true,
-                    updated_at: new Date().toISOString(),
-                },
-                { onConflict: "email" }
-            )
+            .insert({
+                endpoint: subscription.endpoint,
+                expiration_time: subscription.expirationTime,
+                p256dh: subscription.keys.p256dh,
+                auth: subscription.keys.auth,
+                email: subscription.email,
+                opt_in: true,
+                updated_at: new Date().toISOString(),
+            })
             .select()
             .single();
 
         if (error) {
             console.error("[Push Subscribe] Supabase error:", error);
             return NextResponse.json(
-                { error: "Failed to save subscription" },
+                { error: "Failed to save subscription", details: error.message },
                 { status: 500 }
             );
         }
@@ -84,12 +94,18 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        // Instead of deleting, set opt_in to false to track that user opted out
-        const { error } = await supabase
+        // Check if user has a subscription
+        const { data: existing } = await supabase
             .from("pa_push_users")
-            .upsert(
-                {
-                    email: email,
+            .select("id")
+            .eq("email", email)
+            .single();
+
+        if (existing) {
+            // Update existing record to opt-out
+            const { error } = await supabase
+                .from("pa_push_users")
+                .update({
                     opt_in: false,
                     updated_at: new Date().toISOString(),
                     // Clear subscription data when opting out
@@ -97,16 +113,37 @@ export async function DELETE(request: NextRequest) {
                     p256dh: null,
                     auth: null,
                     expiration_time: null,
-                },
-                { onConflict: "email" }
-            );
+                })
+                .eq("email", email);
 
-        if (error) {
-            console.error("[Push Unsubscribe] Supabase error:", error);
-            return NextResponse.json(
-                { error: "Failed to opt out of notifications" },
-                { status: 500 }
-            );
+            if (error) {
+                console.error("[Push Unsubscribe] Supabase error:", error);
+                return NextResponse.json(
+                    { error: "Failed to opt out of notifications" },
+                    { status: 500 }
+                );
+            }
+        } else {
+            // Create new record with opt_in = false
+            const { error } = await supabase
+                .from("pa_push_users")
+                .insert({
+                    email: email,
+                    opt_in: false,
+                    endpoint: null,
+                    p256dh: null,
+                    auth: null,
+                    expiration_time: null,
+                    updated_at: new Date().toISOString(),
+                });
+
+            if (error) {
+                console.error("[Push Unsubscribe] Supabase error:", error);
+                return NextResponse.json(
+                    { error: "Failed to opt out of notifications" },
+                    { status: 500 }
+                );
+            }
         }
 
         console.log("[Push Unsubscribe] User opted out:", email);
