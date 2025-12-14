@@ -156,6 +156,7 @@ export const SidebarNavigationSlim = ({ activeUrl, items, footerItems = [], hide
         Box,
         BarChart03,
         BarChart12,
+        Sun,
     };
 
     // Prepare command menu items

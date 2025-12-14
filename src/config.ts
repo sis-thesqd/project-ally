@@ -239,6 +239,15 @@ export const settingsConfig = {
             icon: "Map01",
         },
         {
+            id: "theme",
+            label: "Theme",
+            description: "Choose your preferred color theme",
+            keywords: ["theme", "appearance", "dark", "light", "mode", "color", "settings"],
+            tab: "defaults",
+            sectionId: "theme",
+            icon: "Sun",
+        },
+        {
             id: "submission-mode",
             label: "Default submission mode",
             description: "Choose between Simple and Advanced mode",
@@ -281,6 +290,14 @@ export const settingsConfig = {
             keywords: ["timezone", "time", "zone", "location"],
             tab: "profile",
             sectionId: "timezone",
+        },
+        {
+            id: "theme",
+            label: "Theme",
+            description: "Choose your preferred color theme",
+            keywords: ["theme", "appearance", "dark", "light", "mode", "color"],
+            tab: "defaults",
+            sectionId: "theme",
         },
         {
             id: "submission-mode",
