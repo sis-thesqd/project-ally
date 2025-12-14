@@ -172,6 +172,7 @@ export function DefaultsContent() {
                     />
 
                     <div className="flex flex-col gap-2 lg:mt-0">
+                        
                         <ButtonGroup
                             selectedKeys={new Set([submissionMode])}
                             onSelectionChange={handleModeChange}
