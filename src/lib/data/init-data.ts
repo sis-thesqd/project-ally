@@ -69,7 +69,8 @@ export interface InitDataResult {
 async function fetchInitDataRaw(userEmail: string): Promise<InitDataResult> {
     console.log('[Init Data Fetcher] Starting fetch for email:', userEmail);
     try {
-        const { data, error } = await supabaseReadOnly.rpc('pa_init_data', { input_email: userEmail }, { get: true });
+        // Don't use { get: true } to ensure fresh data from primary database
+        const { data, error } = await supabaseReadOnly.rpc('pa_init_data', { input_email: userEmail });
 
         console.log('[Init Data Fetcher] Response:', data ? 'Data received' : 'No data', error);
 
