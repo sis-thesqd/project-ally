@@ -3,25 +3,18 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Key } from "react-aria";
 import { useTheme } from "next-themes";
-import { Bell03, Sun, Moon01, Monitor03 } from "@untitledui/icons";
+import { Check, Sun, Moon01, Monitor03 } from "@untitledui/icons";
 import { useInitData } from "@/contexts/InitDataContext";
 import { ButtonGroup, ButtonGroupItem } from "@/components/base/button-group/button-group";
-import { Button } from "@/components/base/buttons/button";
 import { BoxIcon, MagicWandIcon } from "@/components/icons";
-import { SectionHeader } from "@/components/application/section-headers/section-headers";
 import { SectionLabel } from "@/components/application/section-headers/section-label";
 import { updateAccountPreferences, type SubmissionMode } from "@/services/settings";
-import { usePushNotifications } from "@/components/pwa/pwa-register";
-import { revalidateInitData } from "./actions";
 
 export function DefaultsContent() {
-    const { data, getAccountPreferences, updateAccountPreferences: updateAccountPrefs, updatePreferences, refreshData } = useInitData();
+    const { data, getAccountPreferences, updateAccountPreferences: updateAccountPrefs, updatePreferences } = useInitData();
     const [submissionMode, setSubmissionMode] = useState<SubmissionMode>("simple");
     const [isSaving, setIsSaving] = useState(false);
     const { theme, setTheme } = useTheme();
-    const { isSupported: isPushSupported, permission, requestPermission } = usePushNotifications();
-    const [isEnablingNotifications, setIsEnablingNotifications] = useState(false);
-    const [isDisablingNotifications, setIsDisablingNotifications] = useState(false);
 
     // Check if running in PWA mode
     const [isPWA, setIsPWA] = useState(false);
@@ -55,7 +48,7 @@ export function DefaultsContent() {
     const handleModeChange = useCallback(
         async (keys: "all" | Set<Key>) => {
             const newMode = (Array.from(keys as Set<Key>)[0] as SubmissionMode) || "simple";
-            
+
             if (newMode === submissionMode || accountNumber === null) {
                 return;
             }
@@ -105,67 +98,6 @@ export function DefaultsContent() {
         [setTheme, updatePreferences, isPWA]
     );
 
-    // Handle enable notifications
-    const handleEnableNotifications = async () => {
-        if (!data?.email) {
-            alert("Unable to enable notifications: User email not available. Please refresh the page.");
-            return;
-        }
-
-        setIsEnablingNotifications(true);
-        try {
-            // Pass email explicitly to avoid stale initData in PWARegister
-            const result = await requestPermission(data.email);
-
-            if (!result) {
-                console.error("Failed to enable notifications - permission denied or error occurred");
-                return;
-            }
-
-            // Small delay to ensure database write completes
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            // Revalidate server cache to clear stale data
-            await revalidateInitData();
-            // Refresh init data to get updated notification status
-            await refreshData();
-        } catch (error) {
-            console.error("Failed to enable notifications:", error);
-        } finally {
-            setIsEnablingNotifications(false);
-        }
-    };
-
-    // Handle disable notifications
-    const handleDisableNotifications = async () => {
-        setIsDisablingNotifications(true);
-        try {
-            const response = await fetch("/api/push/subscribe", {
-                method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ email: data?.email }),
-            });
-
-            if (response.ok) {
-                // Small delay to ensure database write completes
-                await new Promise(resolve => setTimeout(resolve, 500));
-
-                // Revalidate server cache to clear stale data
-                await revalidateInitData();
-                // Refresh init data to get updated notification status
-                await refreshData();
-            } else {
-                console.error("Failed to disable notifications");
-            }
-        } catch (error) {
-            console.error("Failed to disable notifications:", error);
-        } finally {
-            setIsDisablingNotifications(false);
-        }
-    };
-
     if (accountNumber === null) {
         return (
             <div className="px-4 lg:px-8">
@@ -210,61 +142,24 @@ export function DefaultsContent() {
                     </div>
                 </div>
 
-                {/* Push Notifications - PWA Only */}
-                {isPWA && isPushSupported && (
+                {/* Push Notifications Status - PWA Only */}
+                {isPWA && (
                     <div id="push-notifications" className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(200px,280px)_minmax(400px,512px)] lg:gap-8 scroll-mt-8">
                         <SectionLabel.Root
                             size="sm"
                             title="Push notifications"
-                            description="Manage your push notification preferences"
+                            description="Your push notification status"
                         />
 
-                        <div className="flex flex-col gap-4">
-                            {/* Current status */}
-                            <div className="flex items-center gap-2 rounded-lg border border-secondary bg-tertiary px-4 py-3">
-                                <Bell03 className={`h-5 w-5 ${notificationsEnabled ? "text-brand-600" : "text-tertiary"}`} />
-                                <div className="flex-1">
-                                    <p className="text-sm font-medium text-primary">
-                                        {notificationsEnabled === true && "Notifications enabled"}
-                                        {notificationsEnabled === false && "Notifications disabled"}
-                                        {notificationsEnabled === null && "Notifications not set up"}
-                                    </p>
-                                    <p className="text-xs text-secondary">
-                                        {notificationsEnabled === true && "You'll receive push notifications for updates"}
-                                        {notificationsEnabled === false && "You won't receive push notifications"}
-                                        {notificationsEnabled === null && "Enable notifications to stay updated"}
-                                    </p>
-                                    <p className="text-xs font-mono text-tertiary mt-1">
-                                        DEBUG: value={JSON.stringify(notificationsEnabled)} type={typeof notificationsEnabled}
-                                        <br />
-                                        Email: {data?.email || 'NOT LOADED'}
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Action buttons */}
-                            <div className="flex flex-col gap-2">
-                                {notificationsEnabled !== true && (
-                                    <Button
-                                        size="md"
-                                        color="secondary"
-                                        onClick={handleEnableNotifications}
-                                        isDisabled={isEnablingNotifications}
-                                    >
-                                        {isEnablingNotifications ? "Enabling..." : "Enable notifications"}
-                                    </Button>
-                                )}
-                                {notificationsEnabled === true && (
-                                    <Button
-                                        size="md"
-                                        color="secondary-destructive"
-                                        onClick={handleDisableNotifications}
-                                        isDisabled={isDisablingNotifications}
-                                    >
-                                        {isDisablingNotifications ? "Disabling..." : "Disable notifications"}
-                                    </Button>
-                                )}
-                            </div>
+                        <div className="flex items-center gap-2">
+                            {notificationsEnabled === true ? (
+                                <>
+                                    <Check className="h-5 w-5 text-success-600" />
+                                    <span className="text-sm font-medium text-primary">Opted in</span>
+                                </>
+                            ) : (
+                                <span className="text-sm text-secondary">Not enabled</span>
+                            )}
                         </div>
                     </div>
                 )}
@@ -296,4 +191,3 @@ export function DefaultsContent() {
         </div>
     );
 }
-

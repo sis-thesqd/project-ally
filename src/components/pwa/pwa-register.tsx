@@ -46,12 +46,10 @@ export function PWARegister() {
     }, []);
 
     // Function to request notification permission and subscribe
-    const subscribeToPush = async (userEmail?: string) => {
+    const subscribeToPush = async () => {
         console.log("[PWA] subscribeToPush called");
         console.log("[PWA] registration:", registration);
         console.log("[PWA] VAPID_PUBLIC_KEY:", VAPID_PUBLIC_KEY ? "set" : "not set");
-        console.log("[PWA] userEmail parameter:", userEmail);
-        console.log("[PWA] initData?.email:", initData?.email);
 
         // Wait for service worker to be ready
         let swRegistration = registration;
@@ -69,14 +67,6 @@ export function PWARegister() {
         if (!VAPID_PUBLIC_KEY) {
             console.error("[PWA] VAPID public key not configured");
             alert("Push notifications not configured. Missing VAPID key.");
-            return null;
-        }
-
-        // Use provided email or fallback to initData email
-        const email = userEmail || initData?.email || null;
-        if (!email) {
-            console.error("[PWA] No email available for subscription");
-            alert("Cannot subscribe: User email not available. Please try refreshing the page.");
             return null;
         }
 
@@ -101,10 +91,10 @@ export function PWARegister() {
             console.log("[PWA] Push subscription created:", JSON.stringify(subscription));
 
             // Send subscription to server with user email
-            console.log("[PWA] Sending subscription to server with email:", email);
+            console.log("[PWA] Sending subscription to server...");
             const subscriptionData = {
                 ...subscription.toJSON(),
-                email: email,
+                email: initData?.email || null,
             };
             console.log("[PWA] Subscription data:", subscriptionData);
             const response = await fetch("/api/push/subscribe", {
@@ -154,17 +144,17 @@ export function usePushNotifications() {
         }
     }, []);
 
-    const requestPermission = async (userEmail?: string) => {
+    const requestPermission = async () => {
         if (!isSupported) {
             console.log("[PWA] Push not supported");
             return null;
         }
 
         // Just call subscribeToPush which handles everything
-        const subscribeFn = (window as unknown as { subscribeToPush?: (email?: string) => Promise<PushSubscription | null> }).subscribeToPush;
+        const subscribeFn = (window as unknown as { subscribeToPush?: () => Promise<PushSubscription | null> }).subscribeToPush;
         if (subscribeFn) {
-            console.log("[PWA] Calling subscribeToPush with email:", userEmail);
-            const result = await subscribeFn(userEmail);
+            console.log("[PWA] Calling subscribeToPush...");
+            const result = await subscribeFn();
             setPermission(Notification.permission);
             return result;
         } else {

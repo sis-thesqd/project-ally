@@ -13,15 +13,12 @@ export async function GET() {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { data, error } = await supabaseReadOnly.rpc('pa_init_data', { input_email: user.email });
+        const { data, error } = await supabaseReadOnly.rpc('pa_init_data', { input_email: user.email }, { get: true });
 
         if (error) {
-            console.error('[Init API] Supabase error:', error);
+            console.error('Supabase error:', error);
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
-
-        console.log('[Init API] Email:', user.email);
-        console.log('[Init API] notifications_enabled:', data?.notifications_enabled);
 
         return NextResponse.json(data);
     } catch (error) {
