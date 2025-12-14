@@ -109,7 +109,16 @@ export function DefaultsContent() {
     const handleEnableNotifications = async () => {
         setIsEnablingNotifications(true);
         try {
-            await requestPermission();
+            const result = await requestPermission();
+
+            if (!result) {
+                console.error("Failed to enable notifications - permission denied or error occurred");
+                return;
+            }
+
+            // Small delay to ensure database write completes
+            await new Promise(resolve => setTimeout(resolve, 500));
+
             // Revalidate server cache to clear stale data
             await revalidateInitData();
             // Refresh init data to get updated notification status
@@ -134,6 +143,9 @@ export function DefaultsContent() {
             });
 
             if (response.ok) {
+                // Small delay to ensure database write completes
+                await new Promise(resolve => setTimeout(resolve, 500));
+
                 // Revalidate server cache to clear stale data
                 await revalidateInitData();
                 // Refresh init data to get updated notification status
@@ -215,6 +227,9 @@ export function DefaultsContent() {
                                         {notificationsEnabled === true && "You'll receive push notifications for updates"}
                                         {notificationsEnabled === false && "You won't receive push notifications"}
                                         {notificationsEnabled === null && "Enable notifications to stay updated"}
+                                    </p>
+                                    <p className="text-xs font-mono text-tertiary mt-1">
+                                        DEBUG: value={JSON.stringify(notificationsEnabled)} type={typeof notificationsEnabled}
                                     </p>
                                 </div>
                             </div>
