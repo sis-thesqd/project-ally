@@ -1,3 +1,6 @@
-import { Dashboard } from "../dashboard";
+import { DashboardClient } from '../dashboard-client';
 
-export default Dashboard;
+// Server component - init data is already fetched at layout level
+export default function DashboardPage() {
+    return <DashboardClient />;
+}

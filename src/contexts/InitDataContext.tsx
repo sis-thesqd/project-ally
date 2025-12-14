@@ -28,6 +28,7 @@ interface AccountItem {
 interface Preferences {
     default_account: number | null;
     default_theme: 'light' | 'dark' | null;
+    mobile_default_theme?: 'system' | 'light' | 'dark' | null;
     mmq_split_active: boolean | null;
     default_mmq_view: 'board' | 'table' | null;
     mmq_auto_collapse_empty: boolean | null;
@@ -173,13 +174,24 @@ async function fetchInitData(): Promise<InitData | null> {
     }
 }
 
-export function InitDataProvider({ children }: { children: React.ReactNode }) {
-    const [data, setData] = useState<InitData | null>(moduleData);
-    const [isReady, setIsReady] = useState(moduleIsReady);
+export function InitDataProvider({ children, initialData }: { children: React.ReactNode; initialData?: InitData | null }) {
+    const [data, setData] = useState<InitData | null>(initialData ?? moduleData);
+    const [isReady, setIsReady] = useState(!!initialData || moduleIsReady);
     const [isFetching, setIsFetching] = useState(false);
     const initialized = useRef(false);
 
     useEffect(() => {
+        // If server provided initial data, use it immediately
+        if (initialData) {
+            moduleData = initialData;
+            moduleIsReady = true;
+            saveToSessionStorage(initialData);
+            setData(initialData);
+            setIsReady(true);
+            console.log('Using server-prefetched init data');
+            return;
+        }
+
         // Already have data from module cache
         if (moduleIsReady && moduleData) {
             setData(moduleData);
@@ -228,7 +240,7 @@ export function InitDataProvider({ children }: { children: React.ReactNode }) {
             setIsFetching(false);
             fetchPromise = null;
         });
-    }, []);
+    }, [initialData]);
 
     const sidebarItems: SidebarItem[] = (data?.pages ?? []).map((page) => ({
         label: page.label,

@@ -12,6 +12,7 @@ import { SectionHeader } from "@/components/application/section-headers/section-
 import { SectionLabel } from "@/components/application/section-headers/section-label";
 import { updateAccountPreferences, type SubmissionMode } from "@/services/settings";
 import { usePushNotifications } from "@/components/pwa/pwa-register";
+import { revalidateInitData } from "./actions";
 
 export function DefaultsContent() {
     const { data, getAccountPreferences, updateAccountPreferences: updateAccountPrefs, updatePreferences, refreshData } = useInitData();
@@ -88,10 +89,20 @@ export function DefaultsContent() {
         async (keys: "all" | Set<Key>) => {
             const newTheme = Array.from(keys as Set<Key>)[0] as string;
             setTheme(newTheme);
-            // Persist to database
-            await updatePreferences({ default_theme: newTheme as 'light' | 'dark' });
+
+            // Save to appropriate preference field based on device type
+            // PWA: save to mobile_default_theme, Desktop: save to default_theme
+            if (isPWA) {
+                await updatePreferences({
+                    mobile_default_theme: newTheme as 'system' | 'light' | 'dark'
+                });
+            } else {
+                await updatePreferences({
+                    default_theme: newTheme as 'light' | 'dark'
+                });
+            }
         },
-        [setTheme, updatePreferences]
+        [setTheme, updatePreferences, isPWA]
     );
 
     // Handle enable notifications
@@ -99,6 +110,8 @@ export function DefaultsContent() {
         setIsEnablingNotifications(true);
         try {
             await requestPermission();
+            // Revalidate server cache to clear stale data
+            await revalidateInitData();
             // Refresh init data to get updated notification status
             await refreshData();
         } catch (error) {
@@ -121,6 +134,8 @@ export function DefaultsContent() {
             });
 
             if (response.ok) {
+                // Revalidate server cache to clear stale data
+                await revalidateInitData();
                 // Refresh init data to get updated notification status
                 await refreshData();
             } else {
@@ -144,18 +159,22 @@ export function DefaultsContent() {
     return (
         <div className="flex flex-col gap-6 px-4 lg:px-8">
 
-            <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-8">
                 {/* Theme selector */}
-                <div id="theme" className="grid grid-cols-1 lg:grid-cols-[minmax(200px,280px)_minmax(400px,512px)] lg:gap-8 scroll-mt-8">
+                <div id="theme" className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(200px,280px)_minmax(400px,512px)] lg:gap-8 scroll-mt-8">
                     <SectionLabel.Root
                         size="sm"
                         title="Theme"
                         description="Choose your preferred color theme"
                     />
 
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-2 lg:mt-0">
                         <ButtonGroup
-                            selectedKeys={new Set([theme || 'system'])}
+                            selectedKeys={new Set([
+                                isPWA
+                                    ? (data?.preferences?.mobile_default_theme || theme || 'system')
+                                    : (data?.preferences?.default_theme || theme || 'light')
+                            ])}
                             onSelectionChange={handleThemeChange}
                         >
                             {isPWA && (
@@ -175,7 +194,7 @@ export function DefaultsContent() {
 
                 {/* Push Notifications - PWA Only */}
                 {isPWA && isPushSupported && (
-                    <div id="push-notifications" className="grid grid-cols-1 lg:grid-cols-[minmax(200px,280px)_minmax(400px,512px)] lg:gap-8 scroll-mt-8">
+                    <div id="push-notifications" className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(200px,280px)_minmax(400px,512px)] lg:gap-8 scroll-mt-8">
                         <SectionLabel.Root
                             size="sm"
                             title="Push notifications"
@@ -227,14 +246,14 @@ export function DefaultsContent() {
                     </div>
                 )}
 
-                <div id="submission-mode" className="grid grid-cols-1 lg:grid-cols-[minmax(200px,280px)_minmax(400px,512px)] lg:gap-8 scroll-mt-8">
+                <div id="submission-mode" className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(200px,280px)_minmax(400px,512px)] lg:gap-8 scroll-mt-8">
                     <SectionLabel.Root
                         size="sm"
                         title="Default submission mode"
                         description="Choose your default project request mode."
                     />
 
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-2 lg:mt-0">
                         <ButtonGroup
                             selectedKeys={new Set([submissionMode])}
                             onSelectionChange={handleModeChange}

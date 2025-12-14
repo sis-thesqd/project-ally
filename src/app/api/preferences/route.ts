@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 interface PreferencesBody {
     default_account?: number;
     default_theme?: 'light' | 'dark';
+    mobile_default_theme?: 'system' | 'light' | 'dark';
     mmq_split_active?: boolean;
     default_mmq_view?: 'board' | 'table';
     mmq_auto_collapse_empty?: boolean;
@@ -34,6 +35,7 @@ export async function POST(request: NextRequest) {
 
         if (body.default_account !== undefined) updateData.default_account = body.default_account;
         if (body.default_theme !== undefined) updateData.default_theme = body.default_theme;
+        if (body.mobile_default_theme !== undefined) updateData.mobile_default_theme = body.mobile_default_theme;
         if (body.mmq_split_active !== undefined) updateData.mmq_split_active = body.mmq_split_active;
         if (body.default_mmq_view !== undefined) updateData.default_mmq_view = body.default_mmq_view;
         if (body.mmq_auto_collapse_empty !== undefined) updateData.mmq_auto_collapse_empty = body.mmq_auto_collapse_empty;

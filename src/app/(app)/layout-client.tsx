@@ -25,25 +25,36 @@ export function AppLayoutClient({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (!mounted || !isReady || !data || preferencesInitialized.current) return;
 
-        const hasPreferences = data.preferences?.default_theme !== null || data.preferences?.default_account !== null;
+        // Check if running in PWA mode
+        const isPWA = window.matchMedia("(display-mode: standalone)").matches ||
+                     (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
+
+        const hasPreferences = data.preferences?.default_theme !== null ||
+                              data.preferences?.mobile_default_theme !== null ||
+                              data.preferences?.default_account !== null;
 
         if (hasPreferences) {
             // Apply existing preferences
-            if (data.preferences.default_theme) {
-                setTheme(data.preferences.default_theme);
-            }
+            // Use mobile_default_theme on mobile/PWA, default_theme on desktop
+            const themeToApply = isPWA
+                ? (data.preferences.mobile_default_theme || data.preferences.default_theme || 'system')
+                : (data.preferences.default_theme || 'light');
+
+            setTheme(themeToApply);
         } else {
             // No preferences exist - create defaults
             const defaultAccount = data.accounts[0]?.account_number;
             const defaultTheme = 'light' as const;
+            const defaultMobileTheme = 'system' as const;
 
-            // Set the theme locally
-            setTheme(defaultTheme);
+            // Set the theme locally (use mobile theme if PWA)
+            setTheme(isPWA ? defaultMobileTheme : defaultTheme);
 
             // Save defaults to database
             updatePreferences({
                 default_account: defaultAccount,
                 default_theme: defaultTheme,
+                mobile_default_theme: defaultMobileTheme,
             });
         }
 

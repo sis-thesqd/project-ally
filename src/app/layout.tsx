@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { RouteProvider } from "@/providers/router-provider";
 import { Theme } from "@/providers/theme";
-import { InitDataProvider } from "@/contexts/InitDataContext";
 import { Toaster } from "@/components/application/notifications/toaster";
 import { PWARegister } from "@/components/pwa/pwa-register";
 import { NotificationPrompt } from "@/components/pwa/notification-prompt";
@@ -87,13 +86,11 @@ export default function RootLayout({
                 <SplashScreen />
                 <RouteProvider>
                     <Theme>
-                        <InitDataProvider>
-                            {children}
-                            <Toaster />
-                            <PWARegister />
-                            <NotificationPrompt />
-                            <IOSInstallPrompt />
-                        </InitDataProvider>
+                        {children}
+                        <Toaster />
+                        <PWARegister />
+                        <NotificationPrompt />
+                        <IOSInstallPrompt />
                     </Theme>
                 </RouteProvider>
             </body>
