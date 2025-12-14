@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Key } from "react-aria";
 import { useTheme } from "next-themes";
-import { Check, Sun, Moon01, Monitor03 } from "@untitledui/icons";
+import { Sun, Moon01, Monitor03 } from "@untitledui/icons";
 import { useInitData } from "@/contexts/InitDataContext";
 import { ButtonGroup, ButtonGroupItem } from "@/components/base/button-group/button-group";
 import { BoxIcon, MagicWandIcon } from "@/components/icons";
@@ -26,9 +26,6 @@ export function DefaultsContent() {
         };
         checkPWA();
     }, []);
-
-    // Get notifications status from init data
-    const notificationsEnabled = data?.notifications_enabled;
 
     // Get default account number
     const accountNumber = useMemo(() => {
@@ -141,28 +138,6 @@ export function DefaultsContent() {
                         </ButtonGroup>
                     </div>
                 </div>
-
-                {/* Push Notifications Status - PWA Only */}
-                {isPWA && (
-                    <div id="push-notifications" className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(200px,280px)_minmax(400px,512px)] lg:gap-8 scroll-mt-8">
-                        <SectionLabel.Root
-                            size="sm"
-                            title="Push notifications"
-                            description="Your push notification status"
-                        />
-
-                        <div className="flex items-center gap-2">
-                            {notificationsEnabled === true ? (
-                                <>
-                                    <Check className="h-5 w-5 text-success-600" />
-                                    <span className="text-sm font-medium text-primary">Opted in</span>
-                                </>
-                            ) : (
-                                <span className="text-sm text-secondary">Not enabled</span>
-                            )}
-                        </div>
-                    </div>
-                )}
 
                 <div id="submission-mode" className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(200px,280px)_minmax(400px,512px)] lg:gap-8 scroll-mt-8">
                     <SectionLabel.Root
