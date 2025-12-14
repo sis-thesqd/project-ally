@@ -114,7 +114,8 @@ export function DefaultsContent() {
 
         setIsEnablingNotifications(true);
         try {
-            const result = await requestPermission();
+            // Pass email explicitly to avoid stale initData in PWARegister
+            const result = await requestPermission(data.email);
 
             if (!result) {
                 console.error("Failed to enable notifications - permission denied or error occurred");
