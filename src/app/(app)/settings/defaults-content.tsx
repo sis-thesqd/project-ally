@@ -107,6 +107,11 @@ export function DefaultsContent() {
 
     // Handle enable notifications
     const handleEnableNotifications = async () => {
+        if (!data?.email) {
+            alert("Unable to enable notifications: User email not available. Please refresh the page.");
+            return;
+        }
+
         setIsEnablingNotifications(true);
         try {
             const result = await requestPermission();
@@ -230,6 +235,8 @@ export function DefaultsContent() {
                                     </p>
                                     <p className="text-xs font-mono text-tertiary mt-1">
                                         DEBUG: value={JSON.stringify(notificationsEnabled)} type={typeof notificationsEnabled}
+                                        <br />
+                                        Email: {data?.email || 'NOT LOADED'}
                                     </p>
                                 </div>
                             </div>
