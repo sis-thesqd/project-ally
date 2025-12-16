@@ -147,6 +147,7 @@ export const deliverableDetailsApiConfig = {
 
 /**
  * Settings Page Configuration
+ * Includes command menu items and searchable settings
  */
 export const settingsConfig = {
     tabs: [
